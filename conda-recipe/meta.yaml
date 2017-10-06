@@ -1,0 +1,61 @@
+{% set version = "1.0.0" %}
+{% set buildnumber = 14 %}
+
+### If you change the iccver here, you must also set the path correctly in build.sh / bld.bat!!!
+{% set iccver = "16.0.3" %}    [unix or py3k]
+{% set iccver = "13.1.5" %}    [win and py27]
+
+package:
+    name: mkl_fft
+    version: {{ version }}
+
+source:
+    git_url: http://github.com/IntelPython/mkl_fft
+    git_tag: v{{version}}
+
+build:
+    number: {{buildnumber}}
+    features:
+      - intel
+    always_include_files:
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/__init__.py
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_float16_utils.py
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_pydfti.*
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_numpy_fft.py
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_scipy_fft.py
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/setup.py
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/tests/test_fft1d.py
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/__pycache__/*
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/tests/__pycache__/*
+
+requirements:
+    build:
+      - python
+      - setuptools
+      - intelpython
+      - mkl-devel               [not nomkl]
+      - icc_rt
+      - cython
+      - numpy x.x
+    run:
+      - python
+      - mkl                     [not nomkl]
+      - icc_rt >={{iccver}}
+      - intelpython
+      - numpy x.x
+
+test:
+    commands:
+      - nosetests -v mkl_fft
+    requires:
+      - nose
+    imports:
+      - mkl_fft
+      - mkl_fft._numpy_fft
+      - mkl_fft._scipy_fft
+
+about:
+    home: http://github.com/IntelPython/mkl_fft
+    license: BSD
+    license_file: LICENSE.txt
+    summary: NumPy-based implementation of Fast Fourier Transform using Intel (R) Math Kernel Library

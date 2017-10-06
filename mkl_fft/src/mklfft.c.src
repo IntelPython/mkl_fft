@@ -1,0 +1,1871 @@
+/*
+ Copyright (c) 2017, Intel Corporation
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+     * Redistributions of source code must retain the above copyright notice,
+       this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+     * Neither the name of Intel Corporation nor the names of its contributors
+       may be used to endorse or promote products derived from this software
+       without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "Python.h"
+#include "numpy/arrayobject.h"
+#include "mklfft.h"
+#include "multi_iter.h"
+#include "mkl.h"
+#include <limits.h>
+
+#ifdef DEBUG
+#include <stdio.h>
+#define _debug_print(...)  printf(__VA_ARGS__)
+#else
+#define _debug_print(...)
+#endif
+
+#define OK 0
+#define ERROR -1
+
+#define YES 1
+#define NO  0
+
+static NPY_INLINE MKL_LONG _to_mkl_long(npy_intp x)
+{
+    MKL_LONG lr = (MKL_LONG) x;
+    assert( (npy_intp) lr == x);
+    return lr;
+}
+
+static npy_intp ar_size(npy_intp *sh, int len)
+{
+    npy_intp r = (len > 0) ? 1 : 0;
+    npy_intp *d;
+    int i;
+
+    for(d=sh, i=0; i < len; i++, d++)
+	r *= *d;
+
+    return r;
+}
+
+static NPY_INLINE void get_basic_array_data(
+    PyArrayObject* x,
+    int *x_rank,
+    npy_intp **x_shape,
+    npy_intp **x_strides,
+    npy_intp *x_itemsize,
+    npy_intp *x_size)
+{
+    npy_intp asize = 0;
+    assert(x != NULL);
+
+    *x_rank = PyArray_NDIM(x);
+    *x_shape = PyArray_SHAPE(x);
+    *x_strides = PyArray_STRIDES(x);
+    *x_itemsize = PyArray_ITEMSIZE(x);
+    asize = ar_size(*x_shape, *x_rank);
+    *x_size = asize;
+}
+
+/* ============================================================================= *
+                  Routines for working with the cached FFT descriptor
+ * ============================================================================= */
+
+typedef struct DftiCache {
+    DFTI_DESCRIPTOR_HANDLE hand;
+    int initialized;
+} DftiCache;
+
+
+/* make sure to initialize these */
+static struct DftiCache dftiCache = {NULL, NO};
+
+
+static void freeCache(void)
+{
+    if(dftiCache.initialized && dftiCache.hand) {
+	MKL_LONG status = DftiFreeDescriptor(&dftiCache.hand);
+
+	_debug_print("Descriptor freed: %ld\n", status);
+
+	assert(status == 0);
+    }
+}
+
+/**begin repeat
+* #prec=DFTI_SINGLE*2,DFTI_DOUBLE*2#
+* #domain=(DFTI_COMPLEX,DFTI_REAL)*2#
+* #sc_t=float*2,double*2#
+*/
+static MKL_LONG
+__create_descriptor_1d_@prec@_@domain@(MKL_LONG len, @sc_t@ fsc, @sc_t@ bsc)
+{
+    MKL_LONG status = 0;
+
+    if (dftiCache.initialized && dftiCache.hand) {
+	enum DFTI_CONFIG_VALUE cached_prec, cached_dom;
+	MKL_LONG cached_rank, cached_len;
+	@sc_t@ cached_sc;
+
+	status = DftiGetValue(dftiCache.hand, DFTI_DIMENSION, &cached_rank);
+	if (0 != status || cached_rank != 1) goto reallocate;
+
+	status = DftiGetValue(dftiCache.hand, DFTI_PRECISION, &cached_prec);
+	if (0 != status || cached_prec != @prec@) goto reallocate;
+
+	status = DftiGetValue(dftiCache.hand, DFTI_FORWARD_DOMAIN, &cached_dom);
+	if (0 != status || cached_dom != @domain@) goto reallocate;
+
+	status = DftiGetValue(dftiCache.hand, DFTI_LENGTHS, &cached_len);
+	if (0 != status || cached_len != len) goto reallocate;
+
+	status = DftiGetValue(dftiCache.hand, DFTI_FORWARD_SCALE, &cached_sc);
+	if (0 != status || cached_sc != fsc) goto set_scales;
+
+	status = DftiGetValue(dftiCache.hand, DFTI_BACKWARD_SCALE, &cached_sc);
+	if (0 != status || cached_sc != bsc) goto set_scales;
+
+	return status;
+    }
+
+  allocate_new:
+    status =
+	DftiCreateDescriptor(
+	    &dftiCache.hand,
+	    @prec@,
+	    @domain@,
+	    1,
+	    len
+	);
+    if (!dftiCache.initialized) {
+	atexit(freeCache);
+    }
+    dftiCache.initialized = (status == 0) ? 1 : 0;
+
+  set_scales:
+    status = DftiSetValue(dftiCache.hand, DFTI_FORWARD_SCALE, fsc);
+    if (0 != status) return status;
+
+    status = DftiSetValue(dftiCache.hand, DFTI_BACKWARD_SCALE, bsc);
+
+    return status;
+
+  reallocate:
+    if(dftiCache.hand) {
+	status = DftiFreeDescriptor(&dftiCache.hand);
+	assert(status == 0);
+    }
+
+    status = 0;
+    goto allocate_new;
+
+}
+/**end repeat**/
+
+static NPY_INLINE int
+__longp_equal_1d(MKL_LONG* a, MKL_LONG* b)
+{
+    return a != NULL && b != NULL &&
+           0 == memcmp((const void *)a, (const void *)b, 2*sizeof(MKL_LONG));
+}
+
+static MKL_LONG
+__set_descriptor_1d_value_longp(enum DFTI_CONFIG_PARAM par, MKL_LONG *val)
+{
+    MKL_LONG status = 0;
+    MKL_LONG cached_val[2] = {0,0};
+
+    assert(dftiCache.initialized && dftiCache.hand);
+
+    status = DftiGetValue(dftiCache.hand, par, cached_val);
+    if (0 == status && __longp_equal_1d(cached_val, val))
+	return status;
+
+    status = DftiSetValue(dftiCache.hand, par, val);
+
+    return status;
+}
+
+/**begin repeat
+* #TYPE_NAME=long,enum#
+* #type=MKL_LONG,enum DFTI_CONFIG_VALUE#
+*/
+static MKL_LONG
+__set_descriptor_1d_value_@TYPE_NAME@(enum DFTI_CONFIG_PARAM par, @type@ val)
+{
+    MKL_LONG status = 0;
+    @type@ cached_val;
+
+    assert(dftiCache.initialized && dftiCache.hand);
+
+    status = DftiGetValue(dftiCache.hand, par, &cached_val);
+    if (0 == status && cached_val == val)
+	return status;
+
+    status = DftiSetValue(dftiCache.hand, par, val);
+
+    return status;
+}
+/**end repeat**/
+
+static MKL_LONG
+__commit_descriptor_1d(void)
+{
+    MKL_LONG status = 0;
+    enum DFTI_CONFIG_VALUE cached_committed;
+
+    assert(dftiCache.initialized && dftiCache.hand);
+    status = DftiGetValue(dftiCache.hand, DFTI_COMMIT_STATUS, &cached_committed);
+
+    if(0 == status && cached_committed == DFTI_COMMITTED)
+	return status;
+
+    status = DftiCommitDescriptor(dftiCache.hand);
+
+    return status;
+}
+
+/**begin repeat
+* #MKL_TYPE=(MKL_Complex16,MKL_Complex8,double,float)*2#
+* #DftiCompute_MODE=(DftiComputeForward)*4,(DftiComputeBackward)*4#
+*/
+static NPY_INLINE MKL_LONG
+__cached_inplace_@DftiCompute_MODE@_@MKL_TYPE@(@MKL_TYPE@ *x)
+{
+    MKL_LONG status = 0;
+
+    assert(dftiCache.initialized && dftiCache.hand);
+    Py_BEGIN_ALLOW_THREADS
+    status = @DftiCompute_MODE@(dftiCache.hand, x);
+    Py_END_ALLOW_THREADS
+
+    return status;
+}
+/**end repeat**/
+
+/**begin repeat
+* #MKL_OUT_TYPE=(float,MKL_Complex8)*4,(double,MKL_Complex16)*4#
+* #MKL_IN_TYPE=float*4,MKL_Complex8*4,double*4,MKL_Complex16*4#
+* #DftiCompute_MODE=(DftiComputeBackward*2,DftiComputeForward*2)*4#
+*/
+static NPY_INLINE MKL_LONG
+__cached_notinplace_@DftiCompute_MODE@_@MKL_IN_TYPE@_@MKL_OUT_TYPE@(
+    @MKL_IN_TYPE@ *x_in, @MKL_OUT_TYPE@ *x_out)
+{
+    MKL_LONG status = 0;
+
+    assert(dftiCache.initialized && dftiCache.hand);
+    Py_BEGIN_ALLOW_THREADS
+    status = @DftiCompute_MODE@(dftiCache.hand, x_in, x_out);
+    Py_END_ALLOW_THREADS
+
+    return status;
+}
+/**end repeat**/
+
+static NPY_INLINE int
+compute_strides_and_distances(
+    PyArrayObject *x,
+    int x_rank, npy_intp *x_shape, npy_intp *x_strides,
+    npy_intp x_itemsize, npy_intp x_size, int axis,
+    MKL_LONG *num_fft_transfs,
+    MKL_LONG *vec_dist)
+{
+    int single_DftiCompute = NO;
+
+    /* compute strides and distances*/
+    switch(x_rank) {
+    case 1:
+        single_DftiCompute = YES;
+        *num_fft_transfs = 1;
+        break;
+    case 2:
+        single_DftiCompute = YES;
+        *num_fft_transfs = _to_mkl_long (x_size / x_shape[axis]);
+        *vec_dist = _to_mkl_long ( x_strides[1-axis] / x_itemsize );
+        break;
+    default:
+        /* we must have C- or F- contiguous layout */
+        /* TODO: enhance the test to acommodate equal size slices along all axis of a contiguous array,  *
+         *       for example x = contig_r3_arr[::4, ::4, ::4]                                            */
+        {
+            int any_contig = (PyArray_ISONESEGMENT(x)) ? 1 : 0;
+            single_DftiCompute =
+		(any_contig && (axis == 0 || axis == x_rank-1)) ? YES : NO;
+        }
+        if (single_DftiCompute) {
+	    npy_intp char_dist = 0;
+            *num_fft_transfs = _to_mkl_long (x_size / x_shape[axis]);
+            if (axis == 0) {
+                npy_intp s1 =  x_strides[1], s2 =  x_strides[x_rank-1];
+                char_dist = (s1 > s2) ? s2 : s1;
+            } else {
+                npy_intp s1 = x_strides[0], s2 = x_strides[x_rank-2];
+                char_dist = (s1 > s2) ? s2 : s1;
+            }
+
+	    *vec_dist = _to_mkl_long (char_dist / x_itemsize);
+        } else {
+            /* input vectors need not be equidistant, checking if they are  *
+             * may be expensive. Fall back on general iterations.           */
+
+            /* TODO: input vectors may be equidistant for a subarray that   *
+             * contains axis. For example any rank 2 subarray is, but maybe *
+             * it is true for higher ranks.                                 */
+            *num_fft_transfs = 1;
+        }
+    }
+
+    return single_DftiCompute;
+}
+
+/* x: input array, y: output array */
+static int
+compute_strides_and_distances_inout(
+    PyArrayObject *x,
+    int x_rank, npy_intp *x_shape, npy_intp *x_strides,
+    npy_intp x_itemsize, npy_intp x_size, int axis,
+    MKL_LONG *num_fft_transfs,
+    MKL_LONG *vec_dist_in,
+    npy_intp *y_shape, npy_intp *y_strides, npy_intp y_itemsize,
+    MKL_LONG *vec_dist_out
+)
+{
+    int single_DftiCompute = NO;
+
+    /* compute strides and distances*/
+    switch(x_rank) {
+    case 1:
+        single_DftiCompute = YES;
+        *num_fft_transfs = 1;
+        break;
+    case 2:
+        single_DftiCompute = YES;
+        *num_fft_transfs = _to_mkl_long (x_size / x_shape[axis]);
+        *vec_dist_in = _to_mkl_long (x_strides[1-axis] / x_itemsize);
+        *vec_dist_out = _to_mkl_long (y_strides[1-axis] / y_itemsize);
+        break;
+    default:
+	assert(x_rank > 2);
+        /* we must have C- or F- contiguous layout */
+        {
+            int any_contig = (PyArray_ISONESEGMENT(x)) ? 1 : 0;
+            single_DftiCompute =
+		(any_contig && (axis == 0 || axis == x_rank-1)) ? YES : NO;
+        }
+        if (single_DftiCompute) {
+	    npy_intp char_dist_in = 0, char_dist_out = 0;
+            *num_fft_transfs = _to_mkl_long (x_size / x_shape[axis]);
+            if (axis == 0) {
+                npy_intp s1 = x_strides[1], s2 = x_strides[x_rank-1];
+                char_dist_in = (s1 > s2) ? s2 : s1;
+
+		s1 = y_strides[1];  s2 = y_strides[x_rank-1];
+		char_dist_out = (s1 > s2) ? s2 : s1;
+            } else {
+                npy_intp s1 = x_strides[0], s2 = x_strides[x_rank-2];
+                char_dist_in = (s1 > s2) ? s2 : s1;
+
+		s1 = y_strides[0];  s2 = y_strides[x_rank-2];
+		char_dist_out = (s1 > s2) ? s2 : s1;
+            }
+	    *vec_dist_in = _to_mkl_long (char_dist_in / x_itemsize);
+	    *vec_dist_out = _to_mkl_long (char_dist_out / y_itemsize);
+        } else {
+            /* input vectors need not be equidistant, checking if they are  *
+             * may be expensive. Fall back on general iterations.           */
+
+            /* TODO: input vectors may be equidistant for a subarray that   *
+             * contains axis. For example any rank 2 subarray is, but may   *
+             * it is true for higher ranks.                                 */
+            *num_fft_transfs = 1;
+        }
+    }
+
+    return single_DftiCompute;
+}
+
+/* ========================================================================= *
+                    Routines for performing 1D fft
+ * ========================================================================= */
+
+/**begin repeat
+* #name=(cdouble,cfloat)*2#
+* #MKL_TYPE=(MKL_Complex16,MKL_Complex8)*2#
+* #DFTI_PRECISION=(DFTI_DOUBLE,DFTI_SINGLE)*2#
+* #mode=(fft1d)*2,(ifft1d)*2#
+* #DftiCompute_MODE=(DftiComputeForward)*2,(DftiComputeBackward)*2#
+*/
+int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis)
+{
+    MKL_LONG status = 0, input_distance = 0,
+	     input_number_of_transforms = 1;
+    @MKL_TYPE@ *x_data = 0;
+    /* For 1D transformes strides is a length-2 array */
+    MKL_LONG input_strides[2] = {0, 1};
+    npy_intp *x_shape = 0, *x_strides = 0;
+    int i, x_rank;
+    int single_DftiCompute = NO;
+    npy_intp x_size, x_itemsize;
+
+    get_basic_array_data(x_inout, &x_rank, &x_shape,
+			 &x_strides, &x_itemsize, &x_size);
+
+    assert( x_size > 0 ); /* assert that x is non-empty */
+    assert( 0 <= axis && axis < x_rank );
+    assert( x_itemsize == sizeof(@MKL_TYPE@) );
+    assert( 0 < n && n <= x_shape[axis] );
+
+    x_data = (@MKL_TYPE@*) PyArray_DATA(x_inout);
+    {
+        char *tmp = (char *) x_data;
+        input_strides[1] = ((@MKL_TYPE@*) (tmp + x_strides[axis])) - x_data;
+
+        for(i=0; i < x_rank; i++) {
+            assert( (x_strides[i] % x_itemsize) == 0 );
+        }
+	assert(input_strides[0] >= 0);
+    }
+
+    single_DftiCompute =
+    compute_strides_and_distances(
+	x_inout,
+	x_rank, x_shape, x_strides, x_itemsize, x_size, axis,
+	&input_number_of_transforms, &input_distance);
+
+    status = __create_descriptor_1d_@DFTI_PRECISION@_DFTI_COMPLEX(
+	_to_mkl_long(n), 1.0, 1.0/n);
+    if (status != 0) goto failed;
+
+    /* these must be always set, since previous cached element
+       may have had different values */
+    status = __set_descriptor_1d_value_enum(DFTI_PLACEMENT, DFTI_INPLACE);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_enum(
+	DFTI_COMPLEX_STORAGE, DFTI_COMPLEX_COMPLEX);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_longp(
+	DFTI_INPUT_STRIDES, input_strides);
+    if (status != 0) goto failed;
+
+
+    if (input_number_of_transforms > 1) {
+        status = __set_descriptor_1d_value_long(DFTI_NUMBER_OF_TRANSFORMS,
+						input_number_of_transforms);
+	if (status != 0) goto failed;
+
+	status = __set_descriptor_1d_value_long(
+	    DFTI_INPUT_DISTANCE, input_distance);
+	if (status != 0) goto failed;
+    }
+    else { /* it is important to set the number of transforms
+	      for cached descriptor */
+        status = __set_descriptor_1d_value_long(
+	    DFTI_NUMBER_OF_TRANSFORMS, input_number_of_transforms);
+	if (status != 0) goto failed;
+    }
+
+    status = __commit_descriptor_1d();
+    if (status != 0) goto failed;
+
+    if (single_DftiCompute){
+	status = __cached_inplace_@DftiCompute_MODE@_@MKL_TYPE@(x_data);
+	if (status != 0) goto failed;
+    } else {
+	multi_iter_masked_t *mit;
+	int *mask;
+	int i;
+
+	mask = (int *) mkl_malloc((x_rank-1)*sizeof(int), 64);
+
+	for(i = 0; i < axis; i++) mask[i] = i;
+	for(i = axis + 1; i < x_rank; i++) mask[i-1] = i;
+
+	mit = multi_iter_masked_new(x_shape, x_rank, mask, x_rank - 1);
+
+	while(!MultiIter_Done(mit)) {
+	    char *tmp;
+
+	    for(tmp = (char *) x_data, i = 0; i < x_rank; i++)
+		tmp += x_strides[i] * MultiIter_IndexElem(mit, i);
+
+	    status = __cached_inplace_@DftiCompute_MODE@_@MKL_TYPE@(
+		(@MKL_TYPE@*) tmp);
+	    if (status != 0) break;
+	    
+	    if (multi_iter_masked_next(mit))
+		break;
+	}
+
+
+	multi_iter_masked_free(mit);
+	mkl_free(mask);
+
+	if (status != 0) goto failed;
+    }
+
+
+    return OK;
+
+  failed:
+
+    return ERROR;
+}
+/**end repeat**/
+
+#define TRUE 1
+#define FALSE 0
+
+/* is there a nicer way to complex conjugate, perhaps in MKL headers ? */
+#define SET_CONJ(mkl_complex_p_dest, mkl_complex_p_src) \
+    { ((mkl_complex_p_dest)->real) = ((mkl_complex_p_src)->real); \
+       ((mkl_complex_p_dest)->imag) = -((mkl_complex_p_src)->imag); }
+
+/**begin repeat
+* #REALIN=(float,double)*2#
+* #COMPLEXOUT=(cfloat,cdouble)*2#
+* #MKL_OUT_TYPE=(MKL_Complex8,MKL_Complex16)*2#
+* #MKL_IN_TYPE=(float,double)*2#
+* #DFTI_PRECISION=(DFTI_SINGLE,DFTI_DOUBLE)*2#
+* #mode=(fft1d)*2,(ifft1d)*2#
+* #POST_CONJUGATE=(FALSE)*2,(TRUE)*2#
+* #vml_conj_func=(vmcConj,vmzConj)*2#
+*/
+int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
+    PyArrayObject *x_in, npy_intp n, int axis, PyArrayObject *x_out, int all_harmonics)
+{
+    MKL_LONG status = 0, input_distance = 0,
+	     output_distance = 0, input_number_of_transforms = 1;
+    @MKL_IN_TYPE@ *xin_data = 0;
+    @MKL_OUT_TYPE@ *xout_data = 0;
+    /* For 1D transformes strides is a length-2 array */
+    MKL_LONG input_strides[2] = {0, 1};
+    MKL_LONG output_strides[2] = {0, 1};
+    npy_intp *xin_shape = 0,
+	     *xin_strides = 0,
+	     *xout_shape = 0,
+             *xout_strides = 0;
+    int i, xin_rank, xout_rank;
+    int single_DftiCompute = NO;
+    npy_intp xin_size, xin_itemsize, xout_itemsize, xout_size;
+    @MKL_IN_TYPE@ forward_scale = 1.0, backward_scale = 1.0;
+
+    assert(x_in != NULL);
+    assert(x_out != NULL);
+
+    get_basic_array_data(x_in, &xin_rank, &xin_shape,
+			 &xin_strides, &xin_itemsize, &xin_size);
+    get_basic_array_data(x_out, &xout_rank, &xout_shape, &xout_strides,
+			 &xout_itemsize, &xout_size);
+
+    assert(xout_rank == xin_rank);
+
+    assert( xin_size > 0 ); /* assert that array is non-empty */
+    assert(0 <= axis && axis < xin_rank);
+    assert( 0 < n && n <= xin_shape[axis] );
+
+    assert(xout_itemsize == sizeof(@MKL_OUT_TYPE@));
+    assert(xin_itemsize == sizeof(@MKL_IN_TYPE@));
+    assert(xout_itemsize = 2 * xin_itemsize);
+
+    for(i=0; i < axis; i++)
+	assert(xin_shape[i] == xout_shape[i]);
+    assert( xout_shape[axis] == (all_harmonics) ? n : n/2 + 1);
+    for(i=axis+1; i < xin_rank; i++)
+	assert(xin_shape[i] == xout_shape[i]);
+
+    /* output buffer is created in Cython as C_CONTIGUOUS */
+    assert(PyArray_ISONESEGMENT(x_out));
+
+    xin_data = (@MKL_IN_TYPE@*) PyArray_DATA(x_in);
+    xout_data = (@MKL_OUT_TYPE@*) PyArray_DATA(x_out);
+    {
+        char *tmp = (char *) xin_data;
+        input_strides[1] =
+	    ((@MKL_IN_TYPE@*) (tmp + xin_strides[axis])) - xin_data;
+
+	assert(input_strides[0] >= 0);
+
+        for(i=0; i < xin_rank; i++) {
+            assert( (xin_strides[i] % xin_itemsize) == 0 );
+            assert( (xout_strides[i] % xout_itemsize) == 0 );
+	    assert( xout_strides[i] > 0 );
+        }
+
+	/* Compute output strides */
+	tmp = (char *) xout_data;
+	output_strides[1] =
+	    ((@MKL_OUT_TYPE@*) (tmp + xout_strides[axis])) - xout_data;
+    }
+
+    single_DftiCompute =
+	compute_strides_and_distances_inout(
+	    x_in,
+	    xin_rank, xin_shape, xin_strides,
+	    xin_itemsize, xin_size, axis,
+	    &input_number_of_transforms,
+	    &input_distance,
+	    xout_shape, xout_strides, xout_itemsize,
+	    &output_distance
+	);
+
+    if (@POST_CONJUGATE@) { /* we are doing IFFT using Forward computation, swap scales */
+	forward_scale = 1.0/n; 
+	backward_scale = 1.0;
+    } else {
+	forward_scale = 1.0;
+	backward_scale = 1.0/n;
+    }
+    status = __create_descriptor_1d_@DFTI_PRECISION@_DFTI_REAL(
+	_to_mkl_long(n), forward_scale, backward_scale);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_longp(DFTI_INPUT_STRIDES, input_strides);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_enum(
+	DFTI_CONJUGATE_EVEN_STORAGE, DFTI_COMPLEX_COMPLEX);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_enum(DFTI_PLACEMENT, DFTI_NOT_INPLACE);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_longp(DFTI_OUTPUT_STRIDES, output_strides);
+    if (status != 0) goto failed;
+
+    if (input_number_of_transforms > 1) {
+        status = __set_descriptor_1d_value_long(
+	    DFTI_NUMBER_OF_TRANSFORMS, input_number_of_transforms);
+        if (status != 0) goto failed;
+
+	status = __set_descriptor_1d_value_long(DFTI_INPUT_DISTANCE, input_distance);
+        if (status != 0) goto failed;
+
+	status = __set_descriptor_1d_value_long(
+	    DFTI_OUTPUT_DISTANCE, output_distance);
+        if (status != 0) goto failed;
+    }
+    else {
+        status = __set_descriptor_1d_value_long(
+	    DFTI_NUMBER_OF_TRANSFORMS, input_number_of_transforms);
+        if (status != 0) goto failed;
+    }
+
+    status = __commit_descriptor_1d();
+    if (status != 0) goto failed;
+
+    if (single_DftiCompute){
+	status = __cached_notinplace_DftiComputeForward_@MKL_IN_TYPE@_@MKL_OUT_TYPE@(
+	    xin_data, xout_data);
+	if (status != 0) goto failed;
+    } else {
+	multi_iter_masked_t *mit;
+	int *mask;
+	int i;
+
+	mask = (int *) mkl_malloc((xin_rank-1)*sizeof(int), 64);
+
+	for(i = 0; i < axis; i++) mask[i] = i;
+	for(i = axis + 1; i < xin_rank; i++) mask[i-1] = i;
+
+	mit = multi_iter_masked_new(xin_shape, xin_rank, mask, xin_rank - 1);
+
+	while(!MultiIter_Done(mit)) {
+	    char *tmp1, *tmp2;
+
+	    for(tmp1 = (char *) xin_data,
+		tmp2 = (char *) xout_data,
+		i = 0; i < xin_rank; i++) {
+		tmp1 += xin_strides[i] * MultiIter_IndexElem(mit, i);
+		tmp2 += xout_strides[i] * MultiIter_IndexElem(mit, i);
+	    }
+
+	    status = __cached_notinplace_DftiComputeForward_@MKL_IN_TYPE@_@MKL_OUT_TYPE@( 
+		(@MKL_IN_TYPE@*) tmp1, (@MKL_OUT_TYPE@*) tmp2 );
+	    if (status != 0) break;
+
+	    if (multi_iter_masked_next(mit))
+		break;
+	}
+
+
+	multi_iter_masked_free(mit);
+	mkl_free(mask);
+
+	if (status != 0) goto failed;
+    }
+
+
+    /* fill the rest of the output array */
+    /* TODO: optimize for 1D and 2D */
+    if (all_harmonics) {
+	npy_intp n_last = xout_shape[axis];
+	npy_intp nh_last = (n_last/2) + 1;
+
+        if (xout_rank == 1) {
+            npy_intp it, it_max = (n_last > 2) ? n_last: nh_last;
+	    npy_intp s = xout_strides[0] / xout_itemsize;
+
+            /* TODO: parallelize with openmp ? */
+	    for(it = nh_last; it < it_max; it++) {
+                @MKL_OUT_TYPE@
+		    *src = xout_data + (n_last - it)*s,
+		    *dest = xout_data + it*s;
+
+                SET_CONJ(dest, src);
+	    }
+/*
+	} else if(single_DftiCompute) {
+*/
+	} else {
+	    multi_iter_t *mit;
+	    npy_intp *half_shape;
+
+	    half_shape = (npy_intp *) mkl_malloc(xout_rank * sizeof(npy_intp), 64);
+
+	    memcpy(half_shape, xout_shape, xout_rank * sizeof(npy_intp));
+	    half_shape[axis] = (n_last > 2) ? n_last - nh_last: 0;
+
+	    mit = multi_iter_new(half_shape, xout_rank);
+
+	    while(!MultiIter_Done(mit)) {
+	        char *tmp1, *tmp2;
+		int i;
+	        @MKL_OUT_TYPE@ *dest, *src;
+	        /* npy_intp k_last = MultiIter_IndexElem(mit, axis); */
+
+	        for(tmp1 = (char *) xout_data, tmp2 = (char *) xout_data,
+		    i = 0; i < xout_rank; i++) {
+		    npy_intp si = xout_strides[i],
+		             ni = xout_shape[i],
+		             src_ki = MultiIter_IndexElem(mit, i),
+		             dest_ki;
+
+		    dest_ki = src_ki;
+		    if (i == axis) {
+		        dest_ki += nh_last;
+		        assert(dest_ki > 0);
+		        assert(dest_ki < ni);
+		        src_ki = ni - dest_ki;
+                    }
+
+		    tmp1 += si * dest_ki;
+		    tmp2 += si * src_ki;
+	        }
+	        dest = (@MKL_OUT_TYPE@*) tmp1;
+	        src  = (@MKL_OUT_TYPE@*) tmp2;
+
+                SET_CONJ(dest, src);
+
+	        if (multi_iter_next(mit))
+		    break;
+	    }
+
+
+	    multi_iter_free(mit);
+	    mkl_free(half_shape);
+	}
+    }
+
+    if (@POST_CONJUGATE@) {
+       @vml_conj_func@(xout_size, xout_data, xout_data, VML_HA);
+    }
+
+    status = OK;
+
+  cleanup:
+
+    return status;
+
+  failed:
+
+    status = ERROR;
+    goto cleanup;
+}
+/**end repeat**/
+
+/**begin repeat
+* #COMPLEXIN=(cfloat,cdouble)*2#
+* #COMPLEXOUT=(cfloat,cdouble)*2#
+* #DFTI_PRECISION=(DFTI_SINGLE,DFTI_DOUBLE)*2#
+* #MKL_TYPE=(MKL_Complex8,MKL_Complex16)*2#
+* #mode=(fft1d)*2,(ifft1d)*2#
+* #DftiCompute_MODE=(DftiComputeForward)*2,(DftiComputeBackward)*2#
+*/
+int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
+    PyArrayObject *x_in, npy_intp n, int axis, PyArrayObject *x_out)
+{
+    MKL_LONG status = 0, input_distance = 0, output_distance = 0,
+	     input_number_of_transforms = 1;
+    @MKL_TYPE@ *xin_data = 0;
+    @MKL_TYPE@ *xout_data = 0;
+    /* For 1D transformes strides is a length-2 array */
+    MKL_LONG input_strides[2] = {0, 1};
+    MKL_LONG output_strides[2] = {0, 1};
+    npy_intp *xin_shape = 0, *xin_strides = 0,
+	     *xout_shape = 0, *xout_strides = 0;
+    int i, xin_rank = 0, xout_rank = 0;
+    int single_DftiCompute = NO;
+    npy_intp xin_size = 0, xin_itemsize = 0, xout_itemsize = 0, xout_size = 0;
+
+
+    get_basic_array_data(x_in, &xin_rank, &xin_shape,
+			 &xin_strides, &xin_itemsize, &xin_size);
+    get_basic_array_data(x_out, &xout_rank, &xout_shape,
+			 &xout_strides, &xout_itemsize, &xout_size);
+
+    assert(xout_rank == xin_rank);
+
+    assert( xin_size > 0 ); /* assert that array is non-empty */
+    assert(0 <= axis && axis < xin_rank);
+    assert( 0 < n && n <= xin_shape[axis] );
+
+    assert(xout_itemsize == sizeof(@MKL_TYPE@));
+    assert(xin_itemsize == sizeof(@MKL_TYPE@));
+
+    for(i=0; i < xin_rank; i++)
+	assert( xin_shape[i] >= xout_shape[i]);
+
+    /* output buffer is created in Cython as C_CONTIGUOUS */
+    assert(PyArray_ISONESEGMENT(x_out));
+
+    xin_data = (@MKL_TYPE@*) PyArray_DATA(x_in);
+    xout_data = (@MKL_TYPE@*) PyArray_DATA(x_out);
+    {
+        char *tmp = (char *) xin_data;
+        input_strides[1] =
+	    ((@MKL_TYPE@*) (tmp + xin_strides[axis])) - xin_data;
+
+	assert(input_strides[0] >= 0);
+
+        for(i=0; i < xin_rank; i++) {
+            assert( (xin_strides[i] % xin_itemsize) == 0 );
+            assert( (xout_strides[i] % xout_itemsize) == 0 );
+	    assert( xout_strides[i] > 0 );
+        }
+
+	/* Compute output strides */
+	tmp = (char *) xout_data;
+	output_strides[1] =
+	    ((@MKL_TYPE@*) (tmp + xout_strides[axis])) - xout_data;
+    }
+
+    single_DftiCompute =
+	compute_strides_and_distances_inout(
+	    x_in,
+	    xin_rank, xin_shape, xin_strides,
+	    xin_itemsize, xin_size, axis,
+	    &input_number_of_transforms,
+	    &input_distance,
+	    xout_shape, xout_strides, xout_itemsize,
+	    &output_distance
+	);
+
+    status = __create_descriptor_1d_@DFTI_PRECISION@_DFTI_COMPLEX(
+	_to_mkl_long(n), 1.0, 1.0/n);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_enum(
+	DFTI_COMPLEX_STORAGE, DFTI_COMPLEX_COMPLEX);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_longp(
+	DFTI_INPUT_STRIDES, input_strides);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_enum(
+	DFTI_PLACEMENT, DFTI_NOT_INPLACE);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_longp(
+	DFTI_OUTPUT_STRIDES, output_strides);
+    if (status != 0) goto failed;
+
+    if (input_number_of_transforms > 1) {
+	status = __set_descriptor_1d_value_long(
+	    DFTI_NUMBER_OF_TRANSFORMS, input_number_of_transforms);
+        if (status != 0) goto failed;
+
+	status = __set_descriptor_1d_value_long(
+	    DFTI_INPUT_DISTANCE, input_distance);
+        if (status != 0) goto failed;
+
+	status = __set_descriptor_1d_value_long(
+	    DFTI_OUTPUT_DISTANCE, output_distance);
+        if (status != 0) goto failed;
+    }
+    else {
+	assert(input_number_of_transforms == 1);
+
+	status = __set_descriptor_1d_value_long(
+	    DFTI_NUMBER_OF_TRANSFORMS, input_number_of_transforms);
+	if (status != 0) goto failed;
+    }
+
+    status = __commit_descriptor_1d();
+    if (status != 0) goto failed;
+
+    if (single_DftiCompute){
+	status = __cached_notinplace_@DftiCompute_MODE@_@MKL_TYPE@_@MKL_TYPE@(
+	    xin_data, xout_data);
+	if (status != 0) goto failed;
+    } else {
+	multi_iter_masked_t *mit;
+	int *mask;
+	int i;
+
+	mask = (int *) mkl_malloc((xin_rank-1)*sizeof(int), 64);
+
+	for(i = 0; i < axis; i++) mask[i] = i;
+	for(i = axis + 1; i < xin_rank; i++) mask[i-1] = i;
+
+	mit = multi_iter_masked_new(xin_shape, xin_rank, mask, xin_rank - 1);
+
+	while(!MultiIter_Done(mit)) {
+	    char *tmp1, *tmp2;
+
+	    for(tmp1 = (char *) xin_data,
+		tmp2 = (char *) xout_data,
+		i = 0; i < xin_rank; i++) {
+		tmp1 += xin_strides[i] * MultiIter_IndexElem(mit, i);
+		tmp2 += xout_strides[i] * MultiIter_IndexElem(mit, i);
+	    }
+
+	    status = __cached_notinplace_@DftiCompute_MODE@_@MKL_TYPE@_@MKL_TYPE@(
+		(@MKL_TYPE@*) tmp1, (@MKL_TYPE@*) tmp2);
+	    if (status != 0) break;
+
+	    if (multi_iter_masked_next(mit))
+		break;
+	}
+
+
+	multi_iter_masked_free(mit);
+	mkl_free(mask);
+
+	if (status != 0) goto failed;
+    }
+
+    status = OK;
+
+  cleanup:
+
+    return status;
+
+  failed:
+
+    status = ERROR;
+    goto cleanup;
+}
+/**end repeat**/
+
+/* ====================  Real FFT ===================== *
+     This is 1D FFT of real vector the produces a real
+     vector with packed storage of conjugate even
+     harmonics.
+ * ==================================================== */
+
+/**begin repeat
+* #name=(double,float)*2#
+* #MKL_TYPE=(double,float)*2#
+* #DFTI_PRECISION=(DFTI_DOUBLE,DFTI_SINGLE)*2#
+* #mode=(rfft)*2,(irfft)*2#
+* #DftiCompute_MODE=(DftiComputeForward)*2,(DftiComputeBackward)*2#
+*/
+int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis)
+{
+    MKL_LONG status = 0, input_distance = 0,
+	     input_number_of_transforms = 1;
+    @MKL_TYPE@ *x_data = 0;
+    /* For 1D transformes strides is a length-2 array */
+    MKL_LONG input_strides[2] = {0, 1};
+    npy_intp *x_shape = 0, *x_strides = 0;
+    int i, x_rank;
+    int single_DftiCompute = NO;
+    npy_intp x_size, x_itemsize;
+
+    get_basic_array_data(x_inout, &x_rank, &x_shape,
+			 &x_strides, &x_itemsize, &x_size);
+
+    assert( x_size > 0 ); /* assert that  */
+    assert(0 <= axis && axis < x_rank);
+    assert(x_itemsize == sizeof(@MKL_TYPE@));
+    assert( 0 < n && n <= x_shape[axis] );
+
+    x_data = (@MKL_TYPE@*) PyArray_DATA(x_inout);
+    {
+        char *tmp = (char *) x_data;
+        input_strides[1] = ((@MKL_TYPE@*) (tmp + x_strides[axis])) - x_data;
+
+        for(i=0; i < x_rank; i++) {
+            assert( (x_strides[i] % x_itemsize) == 0 );
+        }
+	assert(input_strides[0] >= 0);
+    }
+
+    single_DftiCompute =
+    compute_strides_and_distances(
+	x_inout,
+	x_rank, x_shape, x_strides, x_itemsize, x_size, axis,
+	&input_number_of_transforms, &input_distance);
+
+    status = __create_descriptor_1d_@DFTI_PRECISION@_DFTI_REAL(_to_mkl_long(n), 1.0, 1.0/n);
+    if (status != 0) goto failed;
+
+    /* these must be always set, since previous cached element
+       may have had different values */
+    status = __set_descriptor_1d_value_enum(DFTI_PLACEMENT, DFTI_INPLACE);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_enum(
+	DFTI_CONJUGATE_EVEN_STORAGE, DFTI_COMPLEX_REAL);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_enum(DFTI_PACKED_FORMAT, DFTI_PACK_FORMAT);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_longp(DFTI_INPUT_STRIDES, input_strides);
+    if (status != 0) goto failed;
+
+
+    if (input_number_of_transforms > 1) {
+        status = __set_descriptor_1d_value_long(
+	    DFTI_NUMBER_OF_TRANSFORMS, input_number_of_transforms);
+	if (status != 0) goto failed;
+
+	status = __set_descriptor_1d_value_long(DFTI_INPUT_DISTANCE, input_distance);
+	if (status != 0) goto failed;
+    }
+    else { /* it is important to set the number of transforms for cached descriptor */
+        status = __set_descriptor_1d_value_long(DFTI_NUMBER_OF_TRANSFORMS,
+						input_number_of_transforms);
+	if (status != 0) goto failed;
+    }
+
+    status = __commit_descriptor_1d();
+    if (status != 0) goto failed;
+
+    if (single_DftiCompute){
+	status = __cached_inplace_@DftiCompute_MODE@_@MKL_TYPE@(x_data);
+	if (status != 0) goto failed;
+    } else {
+	multi_iter_masked_t *mit;
+	int *mask;
+	int i;
+
+	mask = (int *) mkl_malloc((x_rank-1)*sizeof(int), 64);
+
+	for(i = 0; i < axis; i++) mask[i] = i;
+	for(i = axis + 1; i < x_rank; i++) mask[i-1] = i;
+
+	mit = multi_iter_masked_new(x_shape, x_rank, mask, x_rank - 1);
+
+	while(!MultiIter_Done(mit)) {
+	    char *tmp;
+
+	    for(tmp = (char *) x_data, i = 0; i < x_rank; i++)
+		tmp += x_strides[i] * MultiIter_IndexElem(mit, i);
+
+	    status = __cached_inplace_@DftiCompute_MODE@_@MKL_TYPE@((@MKL_TYPE@*) tmp);
+	    if (status != 0) break;
+
+	    if (multi_iter_masked_next(mit))
+		break;
+	}
+
+	multi_iter_masked_free(mit);
+	mkl_free(mask);
+
+	if (status != 0) goto failed;
+    }
+
+    return OK;
+
+  failed:
+
+    return ERROR;
+}
+/**end repeat**/
+
+/**begin repeat
+* #namein=cfloat,cdouble#
+* #nameout=float,double#
+* #MKL_IN_TYPE=MKL_Complex8,MKL_Complex16#
+* #MKL_OUT_TYPE=float,double#
+* #DFTI_PRECISION=DFTI_SINGLE,DFTI_DOUBLE#
+*/
+/* n here is the length of the output along the axis */
+int
+@namein@_@nameout@_mkl_irfft_out(
+    PyArrayObject* x_in, npy_intp n, int axis, PyArrayObject* x_out)
+{
+    MKL_LONG status = 0, input_distance = 0, output_distance = 0,
+	     input_number_of_transforms = 1;
+    @MKL_IN_TYPE@ *xin_data = 0;
+    @MKL_OUT_TYPE@ *xout_data = 0;
+    /* For 1D transformes strides is a length-2 array */
+    MKL_LONG input_strides[2] = {0, 1};
+    MKL_LONG output_strides[2] = {0, 1};
+    npy_intp *xin_shape = 0, *xin_strides = 0,
+	     *xout_shape = 0, *xout_strides = 0;
+    int i, xin_rank = 0, xout_rank = 0;
+    int single_DftiCompute = NO;
+    npy_intp xin_size = 0, xin_itemsize = 0, xout_itemsize = 0, xout_size = 0;
+
+
+    get_basic_array_data(x_in, &xin_rank, &xin_shape,
+			 &xin_strides, &xin_itemsize, &xin_size);
+    get_basic_array_data(x_out, &xout_rank, &xout_shape,
+			 &xout_strides, &xout_itemsize, &xout_size);
+
+    assert(xout_rank == xin_rank);
+
+    assert( xin_size > 0 ); /* assert that array is non-empty */
+    assert(0 <= axis && axis < xin_rank);
+    assert( 0 < n && n <= xout_shape[axis] );
+
+    assert(xout_itemsize == sizeof(@MKL_OUT_TYPE@));
+    assert(xin_itemsize == sizeof(@MKL_IN_TYPE@));
+
+    /* output buffer is created in Cython as C_CONTIGUOUS */
+    assert(PyArray_ISONESEGMENT(x_out));
+
+    xin_data = (@MKL_IN_TYPE@*) PyArray_DATA(x_in);
+    xout_data = (@MKL_OUT_TYPE@*) PyArray_DATA(x_out);
+    {
+        char *tmp = (char *) xin_data;
+        input_strides[1] =
+	    ((@MKL_IN_TYPE@*) (tmp + xin_strides[axis])) - xin_data;
+
+	assert(input_strides[0] >= 0);
+
+        for(i=0; i < xin_rank; i++) {
+            assert( (xin_strides[i] % xin_itemsize) == 0 );
+            assert( (xout_strides[i] % xout_itemsize) == 0 );
+	    assert( xout_strides[i] > 0 );
+        }
+
+	/* Compute output strides */
+	tmp = (char *) xout_data;
+	output_strides[1] =
+	    ((@MKL_OUT_TYPE@*) (tmp + xout_strides[axis])) - xout_data;
+    }
+
+    single_DftiCompute =
+	compute_strides_and_distances_inout(
+	    x_in,
+	    xin_rank, xin_shape, xin_strides,
+	    xin_itemsize, xin_size, axis,
+	    &input_number_of_transforms,
+	    &input_distance,
+	    xout_shape, xout_strides, xout_itemsize,
+	    &output_distance
+	);
+
+    status = __create_descriptor_1d_@DFTI_PRECISION@_DFTI_REAL(
+	_to_mkl_long(n), 1.0, 1.0/n);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_enum(
+	DFTI_CONJUGATE_EVEN_STORAGE, DFTI_COMPLEX_COMPLEX);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_longp(
+	DFTI_INPUT_STRIDES, input_strides);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_enum(
+	DFTI_PLACEMENT, DFTI_NOT_INPLACE);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_longp(
+	DFTI_OUTPUT_STRIDES, output_strides);
+    if (status != 0) goto failed;
+
+    if (input_number_of_transforms > 1) {
+	status = __set_descriptor_1d_value_long(
+	    DFTI_NUMBER_OF_TRANSFORMS, input_number_of_transforms);
+        if (status != 0) goto failed;
+
+	status = __set_descriptor_1d_value_long(
+	    DFTI_INPUT_DISTANCE, input_distance);
+        if (status != 0) goto failed;
+
+	status = __set_descriptor_1d_value_long(
+	    DFTI_OUTPUT_DISTANCE, output_distance);
+        if (status != 0) goto failed;
+    }
+    else {
+	assert(input_number_of_transforms == 1);
+
+	status = __set_descriptor_1d_value_long(
+	    DFTI_NUMBER_OF_TRANSFORMS, input_number_of_transforms);
+	if (status != 0) goto failed;
+    }
+
+    status = __commit_descriptor_1d();
+    if (status != 0) goto failed;
+
+    if (single_DftiCompute){
+	status = __cached_notinplace_DftiComputeBackward_@MKL_IN_TYPE@_@MKL_OUT_TYPE@(
+	    xin_data, xout_data);
+	if (status != 0) goto failed;
+    } else {
+	multi_iter_masked_t *mit;
+	int *mask;
+	int i;
+
+	mask = (int *) mkl_malloc((xin_rank-1)*sizeof(int), 64);
+
+	for(i = 0; i < axis; i++) mask[i] = i;
+	for(i = axis + 1; i < xin_rank; i++) mask[i-1] = i;
+
+	mit = multi_iter_masked_new(xin_shape, xin_rank, mask, xin_rank - 1);
+
+	while(!MultiIter_Done(mit)) {
+	    char *tmp1, *tmp2;
+
+	    for(tmp1 = (char *) xin_data,
+		tmp2 = (char *) xout_data,
+		i = 0; i < xin_rank; i++) {
+		tmp1 += xin_strides[i] * MultiIter_IndexElem(mit, i);
+		tmp2 += xout_strides[i] * MultiIter_IndexElem(mit, i);
+	    }
+
+	    status = __cached_notinplace_DftiComputeBackward_@MKL_IN_TYPE@_@MKL_OUT_TYPE@(
+		(@MKL_IN_TYPE@*) tmp1, (@MKL_OUT_TYPE@*) tmp2);
+	    if (status != 0) break;
+
+	    if (multi_iter_masked_next(mit))
+		break;
+	}
+
+
+	multi_iter_masked_free(mit);
+	mkl_free(mask);
+
+	if (status != 0) goto failed;
+    }
+
+    status = OK;
+
+  cleanup:
+
+    return status;
+
+  failed:
+
+    status = ERROR;
+    goto cleanup;
+}
+/**end repeat**/
+
+
+/**begin repeat
+* #name=(double,float)*2#
+* #MKL_TYPE=(double,float)*2#
+* #DFTI_PRECISION=(DFTI_DOUBLE,DFTI_SINGLE)*2#
+* #mode=(rfft)*2,(irfft)*2#
+* #DftiCompute_MODE=(DftiComputeForward)*2,(DftiComputeBackward)*2#
+*/
+int @name@_@name@_mkl_@mode@_out(
+    PyArrayObject* x_in, npy_intp n, int axis, PyArrayObject *x_out)
+{
+    MKL_LONG status = 0, input_distance = 0, output_distance = 0,
+	     input_number_of_transforms = 1;
+    @MKL_TYPE@ *xin_data = 0;
+    @MKL_TYPE@ *xout_data = 0;
+    /* For 1D transformes strides is a length-2 array */
+    MKL_LONG input_strides[2] = {0, 1};
+    MKL_LONG output_strides[2] = {0, 1};
+    npy_intp *xin_shape = 0, *xin_strides = 0,
+	     *xout_shape = 0, *xout_strides = 0;
+    int i, xin_rank = 0, xout_rank = 0;
+    int single_DftiCompute = NO;
+    npy_intp xin_size = 0, xin_itemsize = 0, xout_itemsize = 0, xout_size = 0;
+
+
+    get_basic_array_data(x_in, &xin_rank, &xin_shape,
+			 &xin_strides, &xin_itemsize, &xin_size);
+    get_basic_array_data(x_out, &xout_rank, &xout_shape,
+			 &xout_strides, &xout_itemsize, &xout_size);
+
+    assert(xout_rank == xin_rank);
+
+    assert( xin_size > 0 ); /* assert that array is non-empty */
+    assert(0 <= axis && axis < xin_rank);
+    assert( 0 < n && n <= xin_shape[axis] );
+
+    assert(xout_itemsize == sizeof(@MKL_TYPE@));
+    assert(xin_itemsize == sizeof(@MKL_TYPE@));
+
+    assert(xout_size <= xin_size);
+    for(i=0; i < xin_rank; i++)
+	assert( xin_shape[i] >= xout_shape[i]);
+
+    /* output buffer is created in Cython as C_CONTIGUOUS */
+    assert(PyArray_ISONESEGMENT(x_out));
+
+    xin_data = (@MKL_TYPE@*) PyArray_DATA(x_in);
+    xout_data = (@MKL_TYPE@*) PyArray_DATA(x_out);
+    {
+        char *tmp = (char *) xin_data;
+        input_strides[1] =
+	    ((@MKL_TYPE@*) (tmp + xin_strides[axis])) - xin_data;
+
+	assert(input_strides[0] >= 0);
+
+        for(i=0; i < xin_rank; i++) {
+            assert( (xin_strides[i] % xin_itemsize) == 0 );
+            assert( (xout_strides[i] % xout_itemsize) == 0 );
+	    assert( xout_strides[i] > 0 );
+        }
+
+	/* Compute output strides */
+	tmp = (char *) xout_data;
+	output_strides[1] =
+	    ((@MKL_TYPE@*) (tmp + xout_strides[axis])) - xout_data;
+    }
+
+    single_DftiCompute =
+	compute_strides_and_distances_inout(
+	    x_in,
+	    xin_rank, xin_shape, xin_strides,
+	    xin_itemsize, xin_size, axis,
+	    &input_number_of_transforms,
+	    &input_distance,
+	    xout_shape, xout_strides, xout_itemsize,
+	    &output_distance
+	);
+
+    status = __create_descriptor_1d_@DFTI_PRECISION@_DFTI_REAL(
+	_to_mkl_long(n), 1.0, 1.0/n);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_enum(
+	DFTI_CONJUGATE_EVEN_STORAGE, DFTI_COMPLEX_REAL);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_enum(DFTI_PACKED_FORMAT, DFTI_PACK_FORMAT);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_longp(
+	DFTI_INPUT_STRIDES, input_strides);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_enum(
+	DFTI_PLACEMENT, DFTI_NOT_INPLACE);
+    if (status != 0) goto failed;
+
+    status = __set_descriptor_1d_value_longp(
+	DFTI_OUTPUT_STRIDES, output_strides);
+    if (status != 0) goto failed;
+
+    if (input_number_of_transforms > 1) {
+	status = __set_descriptor_1d_value_long(
+	    DFTI_NUMBER_OF_TRANSFORMS, input_number_of_transforms);
+        if (status != 0) goto failed;
+
+	status = __set_descriptor_1d_value_long(
+	    DFTI_INPUT_DISTANCE, input_distance);
+        if (status != 0) goto failed;
+
+	status = __set_descriptor_1d_value_long(
+	    DFTI_OUTPUT_DISTANCE, output_distance);
+        if (status != 0) goto failed;
+    }
+    else {
+	assert(input_number_of_transforms == 1);
+
+	status = __set_descriptor_1d_value_long(
+	    DFTI_NUMBER_OF_TRANSFORMS, input_number_of_transforms);
+	if (status != 0) goto failed;
+    }
+
+    status = __commit_descriptor_1d();
+    if (status != 0) goto failed;
+
+    if (single_DftiCompute){
+	status = __cached_notinplace_@DftiCompute_MODE@_@MKL_TYPE@_@MKL_TYPE@(
+	    xin_data, xout_data);
+	if (status != 0) goto failed;
+    } else {
+	multi_iter_masked_t *mit;
+	int *mask;
+	int i;
+
+	mask = (int *) mkl_malloc((xin_rank-1)*sizeof(int), 64);
+
+	for(i = 0; i < axis; i++) mask[i] = i;
+	for(i = axis + 1; i < xin_rank; i++) mask[i-1] = i;
+
+	mit = multi_iter_masked_new(xin_shape, xin_rank, mask, xin_rank - 1);
+
+	while(!MultiIter_Done(mit)) {
+	    char *tmp1, *tmp2;
+
+	    for(tmp1 = (char *) xin_data,
+		tmp2 = (char *) xout_data,
+		i = 0; i < xin_rank; i++) {
+		tmp1 += xin_strides[i] * MultiIter_IndexElem(mit, i);
+		tmp2 += xout_strides[i] * MultiIter_IndexElem(mit, i);
+	    }
+
+	    status = __cached_notinplace_@DftiCompute_MODE@_@MKL_TYPE@_@MKL_TYPE@(
+		(@MKL_TYPE@*) tmp1, (@MKL_TYPE@*) tmp2);
+	    if (status != 0) break;
+
+	    if (multi_iter_masked_next(mit))
+		break;
+	}
+
+
+	multi_iter_masked_free(mit);
+	mkl_free(mask);
+
+	if (status != 0) goto failed;
+    }
+
+    status = OK;
+
+  cleanup:
+
+    return status;
+
+  failed:
+
+    status = ERROR;
+    goto cleanup;
+}
+/**end repeat**/
+
+/**begin repeat
+* #inp_type_name=(cfloat,cdouble)*2#
+* #out_type_name=(cfloat,cdouble)*2#
+* #MKL_IN_TYPE=(MKL_Complex8,MKL_Complex16)*2#
+* #MKL_OUT_TYPE=(MKL_Complex8,MKL_Complex16)*2#
+* #dfti_dom=(DFTI_SINGLE,DFTI_DOUBLE)*2#
+* #op_name=fftnd*2,ifftnd*2#
+* #DftiCompute_MODE=DftiComputeForward*2,DftiComputeBackward*2#
+*/
+int
+@inp_type_name@_@out_type_name@_mkl_@op_name@_in(PyArrayObject *x_inout)
+{
+    DFTI_DESCRIPTOR_HANDLE hand = 0;
+    MKL_LONG status = 0;
+    @MKL_IN_TYPE@ *x_data = 0;
+    MKL_LONG *input_strides = 0;
+    npy_intp *x_shape = 0, *x_strides = 0;
+    MKL_LONG *x_shape_mkl = 0;
+    int i, x_rank;
+    npy_intp x_size, x_itemsize;
+
+    get_basic_array_data(x_inout, &x_rank, &x_shape,
+			 &x_strides, &x_itemsize, &x_size);
+
+
+    assert(x_size > 0);
+    assert(x_itemsize == sizeof(@MKL_IN_TYPE@));
+
+    if (x_rank == 1) {
+	status =
+	    DftiCreateDescriptor(
+		&hand,
+		@dfti_dom@,
+		DFTI_COMPLEX,
+		x_rank,
+		_to_mkl_long(x_shape[0])
+		);
+    } else {
+	if(NPY_LIKELY(sizeof(MKL_LONG) == sizeof(npy_intp))) {
+	    x_shape_mkl = (MKL_LONG*)x_shape;
+	} else {
+	    // TODO: should rather use alloca or something optimized for small allocations
+	    x_shape_mkl = (MKL_LONG *) mkl_malloc(x_rank*sizeof(MKL_LONG), 64);
+	    if (!x_shape_mkl) goto cleanup;
+	    for(i = 0; i < x_rank; i++)
+		x_shape_mkl[i] = _to_mkl_long(x_shape[i]);
+	}
+
+	status =
+	    DftiCreateDescriptor(
+		&hand,
+		@dfti_dom@,
+		DFTI_COMPLEX,
+		x_rank,
+		x_shape_mkl
+		);
+    }
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_FORWARD_SCALE, 1.0);
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_BACKWARD_SCALE, 1.0 / x_size);
+    if (0 != status) goto cleanup;
+
+    input_strides = (MKL_LONG *) mkl_malloc((x_rank + 1) * sizeof(MKL_LONG), 64);
+    if (!input_strides) goto cleanup;
+
+    input_strides[0] = 0;
+    for(i = 0; i < x_rank; i++) {
+	assert( x_strides[i] % x_itemsize == 0 );
+	input_strides[i + 1] = _to_mkl_long (x_strides[i] / x_itemsize);
+    }
+
+    status = DftiSetValue(hand, DFTI_PLACEMENT, DFTI_INPLACE);
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_INPUT_STRIDES, input_strides);
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_COMPLEX_STORAGE, DFTI_COMPLEX_COMPLEX);
+    if (0 != status) goto cleanup;
+
+    x_data = (@MKL_IN_TYPE@*) PyArray_DATA(x_inout);
+
+    Py_BEGIN_ALLOW_THREADS
+    status = DftiCommitDescriptor(hand);
+    if (0 == status) {
+	status = @DftiCompute_MODE@(hand, x_data);
+    }
+    Py_END_ALLOW_THREADS
+    if (0 != status) goto cleanup;
+
+  cleanup:
+    if(hand) DftiFreeDescriptor(&hand);
+    if(input_strides) mkl_free(input_strides);
+    if(x_shape_mkl != (MKL_LONG*) x_shape) mkl_free(x_shape_mkl);
+
+    return status;
+
+}
+/**end repeat**/
+
+/**begin repeat
+* #inp_type_name=(cfloat,cdouble)*2#
+* #out_type_name=(cfloat,cdouble)*2#
+* #MKL_IN_TYPE=(MKL_Complex8,MKL_Complex16)*2#
+* #MKL_OUT_TYPE=(MKL_Complex8,MKL_Complex16)*2#
+* #dfti_dom=(DFTI_SINGLE,DFTI_DOUBLE)*2#
+* #op_name=fftnd*2,ifftnd*2#
+* #DftiCompute_MODE=DftiComputeForward*2,DftiComputeBackward*2#
+*/
+int
+@inp_type_name@_@out_type_name@_mkl_@op_name@_out(
+    PyArrayObject *x_in, PyArrayObject *x_out)
+{
+    DFTI_DESCRIPTOR_HANDLE hand = 0;
+    MKL_LONG status = 0;
+    @MKL_IN_TYPE@ *xin_data = 0;
+    @MKL_OUT_TYPE@ *xout_data = 0;
+    MKL_LONG *input_strides = 0, *output_strides = 0;
+    npy_intp *xin_shape = 0, *xin_strides = 0, *xout_shape = 0, *xout_strides = 0;
+    MKL_LONG *xin_shape_mkl = 0;
+    int i, xin_rank, xout_rank;
+    npy_intp xin_size, xout_size, xin_itemsize, xout_itemsize;
+
+    get_basic_array_data(x_in, &xin_rank, &xin_shape,
+			 &xin_strides, &xin_itemsize, &xin_size);
+    get_basic_array_data(x_out, &xout_rank, &xout_shape,
+			 &xout_strides, &xout_itemsize, &xout_size);
+
+
+    assert(xin_size > 0);
+    assert(xin_itemsize == sizeof(@MKL_IN_TYPE@));
+    assert(xin_size == xout_size);
+    assert(xout_itemsize == sizeof(@MKL_OUT_TYPE@));
+    assert(xin_rank == xout_rank);
+
+    if (xin_rank == 1) {
+	status =
+	    DftiCreateDescriptor(
+		&hand,
+		@dfti_dom@,
+		DFTI_COMPLEX,
+		1,
+		_to_mkl_long(xin_shape[0])
+		);
+    } else {
+	if(NPY_LIKELY(sizeof(MKL_LONG) == sizeof(npy_intp))) {
+	    xin_shape_mkl = (MKL_LONG*) xin_shape;
+	} else {
+	    // TODO: should rather use alloca or something optimized for small allocations
+	    xin_shape_mkl = (MKL_LONG *) mkl_malloc(xin_rank * sizeof(MKL_LONG), 64);
+	    if (!xin_shape_mkl) goto cleanup;
+	    for(i = 0; i < xin_rank; i++)
+		xin_shape_mkl[i] = _to_mkl_long(xin_shape[i]);
+	}
+
+	status =
+	    DftiCreateDescriptor(
+		&hand,
+		@dfti_dom@,
+		DFTI_COMPLEX,
+		xin_rank,
+		xin_shape_mkl
+		);
+    }
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_FORWARD_SCALE, 1.0);
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_BACKWARD_SCALE, 1.0 / xin_size);
+    if (0 != status) goto cleanup;
+
+    input_strides = (MKL_LONG *) mkl_malloc((xin_rank + 1) * sizeof(MKL_LONG), 64);
+    if (!input_strides) goto cleanup;
+
+    output_strides = (MKL_LONG *) mkl_malloc((xout_rank + 1) * sizeof(MKL_LONG), 64);
+    if (!output_strides) goto cleanup;
+
+    input_strides[0] = 0;
+    output_strides[0] = 0;
+    for(i = 0; i < xin_rank; i++) {
+	assert( xin_strides[i] % xin_itemsize == 0 );
+	assert( xout_strides[i] % xout_itemsize == 0 );
+
+	input_strides[i + 1] = _to_mkl_long (xin_strides[i] / xin_itemsize);
+	output_strides[i + 1] = _to_mkl_long (xout_strides[i] / xout_itemsize);
+    }
+
+    status = DftiSetValue(hand, DFTI_PLACEMENT, DFTI_NOT_INPLACE);
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_INPUT_STRIDES, input_strides);
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_OUTPUT_STRIDES, output_strides);
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_COMPLEX_STORAGE, DFTI_COMPLEX_COMPLEX);
+    if (0 != status) goto cleanup;
+
+    xin_data = (@MKL_IN_TYPE@*) PyArray_DATA(x_in);
+    xout_data = (@MKL_OUT_TYPE@*) PyArray_DATA(x_out);
+
+    Py_BEGIN_ALLOW_THREADS
+    status = DftiCommitDescriptor(hand);
+    if (0 == status) {
+        status = @DftiCompute_MODE@(hand, xin_data, xout_data);
+    }
+    Py_END_ALLOW_THREADS
+    if (0 != status) goto cleanup;
+
+  cleanup:
+    if(hand) DftiFreeDescriptor(&hand);
+    if(input_strides) mkl_free(input_strides);
+    if(output_strides) mkl_free(output_strides);
+    if(xin_shape_mkl != (MKL_LONG *)xin_shape) mkl_free(xin_shape_mkl);
+
+
+    return status;
+
+}
+/**end repeat**/
+
+/* -======================================- */
+/*  multivariate forward FFT on real input  */
+/* -======================================- */
+
+/**begin repeat
+* #inp_type_name=(float,double)*2#
+* #out_type_name=(cfloat,cdouble)*2#
+* #MKL_IN_TYPE=(float,double)*2#
+* #MKL_OUT_TYPE=(MKL_Complex8,MKL_Complex16)*2#
+* #dfti_dom=(DFTI_SINGLE,DFTI_DOUBLE)*2#
+* #op_name=fftnd*2,ifftnd*2#
+* #DftiCompute_MODE=DftiComputeForward*4#
+* #POST_CONJUGATE=FALSE*2,TRUE*2#
+* #vml_conj_func=(vmcConj,vmzConj)*2#
+*/
+int
+@inp_type_name@_@out_type_name@_mkl_@op_name@_out(
+    PyArrayObject *x_in, PyArrayObject *x_out)
+{
+    DFTI_DESCRIPTOR_HANDLE hand = 0;
+    MKL_LONG status = 0;
+    @MKL_IN_TYPE@ *xin_data = 0;
+    @MKL_OUT_TYPE@ *xout_data = 0;
+    MKL_LONG *input_strides = 0, *output_strides = 0;
+    npy_intp *xin_shape = 0, *xin_strides = 0, *xout_shape = 0, *xout_strides = 0;
+    MKL_LONG *xin_shape_mkl = 0;
+    int i, xin_rank, xout_rank;
+    npy_intp xin_size, xout_size, xin_itemsize, xout_itemsize;
+
+    get_basic_array_data(x_in, &xin_rank, &xin_shape,
+			 &xin_strides, &xin_itemsize, &xin_size);
+    get_basic_array_data(x_out, &xout_rank, &xout_shape,
+			 &xout_strides, &xout_itemsize, &xout_size);
+
+
+    assert(xin_size > 0);
+    assert(xin_itemsize == sizeof(@MKL_IN_TYPE@));
+    assert(xin_size == xout_size);
+    assert(xout_itemsize == sizeof(@MKL_OUT_TYPE@));
+    assert(xin_rank == xout_rank);
+
+    if (xin_rank == 1) {
+	status =
+	    DftiCreateDescriptor(
+		&hand,
+		@dfti_dom@,
+		DFTI_REAL,
+		1,
+		_to_mkl_long(xin_shape[0])
+		);
+    } else {
+	if(NPY_LIKELY(sizeof(MKL_LONG) == sizeof(npy_intp))) {
+	    xin_shape_mkl = (MKL_LONG*) xin_shape;
+	} else {
+	    /* TODO: should rather use alloca or something optimized for small allocations */
+	    xin_shape_mkl = (MKL_LONG *) mkl_malloc(xin_rank * sizeof(MKL_LONG), 64);
+	    if (!xin_shape_mkl) goto cleanup;
+	    for(i = 0; i < xin_rank; i++)
+		xin_shape_mkl[i] = _to_mkl_long(xin_shape[i]);
+	}
+
+	status =
+	    DftiCreateDescriptor(
+		&hand,
+		@dfti_dom@,
+		DFTI_REAL,
+		xin_rank,
+		xin_shape_mkl
+		);
+    }
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_FORWARD_SCALE, (@POST_CONJUGATE@) ? 1.0/xin_size :  1.0);
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_BACKWARD_SCALE, (@POST_CONJUGATE@) ? 1.0 : 1.0 / xin_size);
+    if (0 != status) goto cleanup;
+
+    input_strides = (MKL_LONG *) mkl_malloc((xin_rank + 1) * sizeof(MKL_LONG), 64);
+    if (!input_strides) goto cleanup;
+
+    output_strides = (MKL_LONG *) mkl_malloc((xout_rank + 1) * sizeof(MKL_LONG), 64);
+    if (!output_strides) goto cleanup;
+
+    input_strides[0] = 0;
+    output_strides[0] = 0;
+    for(i = 0; i < xin_rank; i++) {
+	assert( xin_strides[i] % xin_itemsize == 0 );
+	assert( xout_strides[i] % xout_itemsize == 0 );
+
+	input_strides[i + 1] = _to_mkl_long (xin_strides[i] / xin_itemsize);
+	output_strides[i + 1] = _to_mkl_long (xout_strides[i] / xout_itemsize);
+    }
+
+    status = DftiSetValue(hand, DFTI_PLACEMENT, DFTI_NOT_INPLACE);
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_INPUT_STRIDES, input_strides);
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_OUTPUT_STRIDES, output_strides);
+    if (0 != status) goto cleanup;
+
+    status = DftiSetValue(hand, DFTI_CONJUGATE_EVEN_STORAGE, DFTI_COMPLEX_COMPLEX);
+    if (0 != status) goto cleanup;
+
+    xin_data = (@MKL_IN_TYPE@*) PyArray_DATA(x_in);
+    xout_data = (@MKL_OUT_TYPE@*) PyArray_DATA(x_out);
+
+    Py_BEGIN_ALLOW_THREADS
+    status = DftiCommitDescriptor(hand);
+    if (0 == status) {
+        status = @DftiCompute_MODE@(hand, xin_data, xout_data);
+    }
+    Py_END_ALLOW_THREADS
+    if (0 != status) goto cleanup;
+
+    /* copy conjugate even harmonics */
+    {
+	multi_iter_t *mit;
+	npy_intp *half_shape;
+	npy_intp n_last, nh_last;
+	int i, last_idx = xout_rank - 1;
+
+	half_shape = (npy_intp *) mkl_malloc(xout_rank * sizeof(npy_intp), 64);
+
+	memcpy(half_shape, xout_shape, xout_rank * sizeof(npy_intp));
+	n_last = xout_shape[last_idx];
+	nh_last = (n_last/2) + 1;
+	half_shape[last_idx] = (n_last > 2) ? n_last - nh_last: 0;
+
+	mit = multi_iter_new(half_shape, xout_rank);
+
+	while(!MultiIter_Done(mit)) {
+	    char *tmp1, *tmp2;
+	    @MKL_OUT_TYPE@ *dest, *src;
+
+	    for(tmp1 = (char *) xout_data, tmp2 = (char *) xout_data,
+		i = 0; i < xout_rank; i++) {
+		npy_intp si = xout_strides[i],
+		         ni = xout_shape[i],
+		         src_ki = MultiIter_IndexElem(mit, i),
+		         dest_ki;
+
+		dest_ki = src_ki;
+		if (i == last_idx) {
+		    dest_ki += nh_last;
+                }
+		assert(dest_ki >= 0);
+		assert(dest_ki < ni);
+		src_ki = (dest_ki) ? ni - dest_ki : dest_ki;
+
+		tmp1 += si * dest_ki;
+		tmp2 += si * src_ki;
+	    }
+	    dest = (@MKL_OUT_TYPE@*) tmp1;
+	    src  = (@MKL_OUT_TYPE@*) tmp2;
+
+	    /* is there a nicer way to complex conjugate ? */
+            dest->real = src->real;
+            dest->imag = -src->imag;
+
+	    if (multi_iter_next(mit))
+		break;
+	}
+    }
+
+    if (@POST_CONJUGATE@) {
+       Py_BEGIN_ALLOW_THREADS
+       @vml_conj_func@(xout_size, xout_data, xout_data, VML_HA);
+       Py_END_ALLOW_THREADS
+    }
+
+  cleanup:
+    if(hand) DftiFreeDescriptor(&hand);
+    if(input_strides) mkl_free(input_strides);
+    if(output_strides) mkl_free(output_strides);
+    if(xin_shape_mkl != (MKL_LONG *)xin_shape) mkl_free(xin_shape_mkl);
+
+
+    return status;
+
+}
+/**end repeat**/
