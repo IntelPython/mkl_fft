@@ -77,8 +77,8 @@ def setup_package():
         name = 'mkl_fft',
         maintainer = "Intel Corp.",
         maintainer_email = "scripting@intel.com",
-        description = "",
-        long_description = """""",
+        description = "MKL-based FFT transforms for NumPy arrays",
+        long_description = """NumPy-based implementation of Fast Fourier Transform using Intel (R) Math Kernel Library. 1D and ND, complex and real transforms, in-place and not-in-place on single and double precision arrays""",
         url = "http://github.com/IntelPython/mkl_fft",
         author = "Oleksandr Pavlyk",
         download_url = "http://github.com/IntelPython/mkl_fft",
@@ -87,6 +87,7 @@ def setup_package():
         platforms = ["Windows", "Linux", "Mac OS-X"],
         test_suite = 'nose.collector',
         python_requires = '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
+        install_requires = ['numpy', 'cython'],
         configuration = configuration
     )
     setup(**metadata)

@@ -1,5 +1,5 @@
 {% set version = "1.0.0" %}
-{% set buildnumber = 14 %}
+{% set buildnumber = 0 %}
 
 ### If you change the iccver here, you must also set the path correctly in build.sh / bld.bat!!!
 {% set iccver = "16.0.3" %}    [unix or py3k]
@@ -25,8 +25,15 @@ build:
       - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_scipy_fft.py
       - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/setup.py
       - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/tests/test_fft1d.py
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/__pycache__/*
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/tests/__pycache__/*
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/__init__.pyc         [py27]
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_float16_utils.pyc   [py27]
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_numpy_fft.pyc       [py27]
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_scipy_fft.pyc       [py27]
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/setup.pyc            [py27]
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/tests/test_fft1d.pyc [py27]
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/__pycache__/*        [py3k]
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/tests/__pycache__/*  [py3k]
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/
 
 requirements:
     build:

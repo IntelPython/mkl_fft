@@ -52,3 +52,10 @@ It implements the following functions:
 
 
 The package also provides `mkl_fft._numpy_fft` and `mkl_fft._scipy_fft` interfaces which provide drop-in replacements for equivalent functions in NumPy and SciPy respectively.
+
+--- 
+
+To build ``mkl_fft`` from sources on Linux:
+  - install a recent version of MKL, if necessary;
+  - execute ``source /path/to/mklroot/bin/mklvars.sh intel64`` ; 
+  - execute ``pip install .``
