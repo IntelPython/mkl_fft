@@ -818,7 +818,7 @@ def rfftn_numpy(x, s=None, axes=None):
             ss = list(s)
             ss[-1] = a.shape[la]
             a = _fix_dimensions(a, tuple(ss), axes)
-        if len(set(axes)) == len(axes) and len(axes) == a.ndim:
+        if len(set(axes)) == len(axes) and len(axes) == a.ndim and len(axes) > 2:
             ss, aa = _remove_axis(s, axes, la)
             ind = [slice(None,None,1),] * len(s)
             for ii in range(a.shape[la]):
@@ -842,7 +842,7 @@ def irfftn_numpy(x, s=None, axes=None):
         if not no_trim:
             a = _fix_dimensions(a, s, axes)
         ovr_x = True if _datacopied(<cnp.ndarray> a, x) else False
-        if len(set(axes)) == len(axes) and len(axes) == a.ndim:
+        if len(set(axes)) == len(axes) and len(axes) == a.ndim and len(axes) > 2:
             ss, aa = _remove_axis(s, axes, la)
             ind = [slice(None,None,1),] * len(s)
             for ii in range(a.shape[la]):
