@@ -709,7 +709,7 @@ def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1):
         raise ValueError("Direction of FFT should +1 or -1")
 
     # _direct_fftnd requires complex type, and full-dimensional transform
-    if isinstance(x, np.ndarray) and x.size != 0:
+    if isinstance(x, np.ndarray) and x.size != 0 and x.ndim > 1:
         _direct = shape is None and axes is None
         if _direct:
             _direct = x.ndim <= 7 # Intel MKL only supports FFT up to 7D
@@ -841,6 +841,7 @@ def irfftn_numpy(x, s=None, axes=None):
     if len(s) > 1:
         if not no_trim:
             a = _fix_dimensions(a, s, axes)
+        ovr_x = True if _datacopied(<cnp.ndarray> a, x) else False
         if len(set(axes)) == len(axes) and len(axes) == a.ndim:
             ss, aa = _remove_axis(s, axes, la)
             ind = [slice(None,None,1),] * len(s)
@@ -849,9 +850,11 @@ def irfftn_numpy(x, s=None, axes=None):
                 tind = tuple(ind)
                 a[tind] = _fftnd_impl(
                     a[tind], shape=ss, axes=aa,
-                    overwrite_x=True, direction=-1)
+                    overwrite_x=ovr_x, direction=-1)
+                ovr_x = True
         else:
             for ii in range(len(axes)-1):
-                a = ifft(a, s[ii], axes[ii], overwrite_x=True)
+                a = ifft(a, s[ii], axes[ii], overwrite_x=ovr_x)
+                ovr_x = True
     a = irfft_numpy(a, n = s[-1], axis=la)
     return a
