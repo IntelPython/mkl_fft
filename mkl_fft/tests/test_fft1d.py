@@ -55,10 +55,7 @@ class Test_mklfft_vector(TestCase):
         rnd.seed(1234567)
         self.xd1 = rnd.standard_normal(128)
         self.xf1 = self.xd1.astype(np.float32)
-        self.xz1 = np.dot(
-              rnd.standard_normal((128,2)),
-              np.array([1.0 + 0.0j, 0.0 + 1.0j], dtype=np.complex128)
-        )
+        self.xz1 = rnd.standard_normal((128,2)).view(dtype=np.complex128)
         self.xc1 = self.xz1.astype(np.complex64)
 
     def test_vector1(self):
@@ -69,7 +66,7 @@ class Test_mklfft_vector(TestCase):
 
         f1 = mkl_fft.fft(self.xc1)
         f2 = np_fft.fft(self.xc1)
-        assert_allclose(f1,f2, rtol=1e-6, atol=2e-6)
+        assert_allclose(f1,f2, rtol=2e-6, atol=2e-6)
 
     def test_vector2(self):
         "ifft(fft(x)) is identity"
