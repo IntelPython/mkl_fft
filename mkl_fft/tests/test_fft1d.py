@@ -55,7 +55,7 @@ class Test_mklfft_vector(TestCase):
         rnd.seed(1234567)
         self.xd1 = rnd.standard_normal(128)
         self.xf1 = self.xd1.astype(np.float32)
-        self.xz1 = rnd.standard_normal((128,2)).view(dtype=np.complex128)
+        self.xz1 = rnd.standard_normal((128,2)).view(dtype=np.complex128).squeeze()
         self.xc1 = self.xz1.astype(np.complex64)
 
     def test_vector1(self):
@@ -160,7 +160,7 @@ class Test_mklfft_vector(TestCase):
         assert_allclose(f1, f2)
 
     def test_vector10(self):
-        "check n"
+        "check n for real arrays"
         x = self.xd1[:8].copy()
         f1 = mkl_fft.fft(x, n = 7)
         f2 = mkl_fft.fft(self.xd1[:7])
@@ -173,7 +173,7 @@ class Test_mklfft_vector(TestCase):
         assert_allclose(f1, f2)
 
     def test_vector11(self):
-        "check n"
+        "check n for complex arrays"
         x = self.xz1[:8].copy()
         f1 = mkl_fft.fft(x, n = 7)
         f2 = mkl_fft.fft(self.xz1[:7])
