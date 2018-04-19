@@ -105,12 +105,12 @@ cdef int _datacopied(cnp.ndarray arr, object orig):
     Strict check for `arr` not sharing any data with `original`,
     under the assumption that arr = asarray(original)
     """
-    if arr is orig:
-        return 0
     if not cnp.PyArray_Check(orig) and PyObject_HasAttrString(orig, '__array__'):
         return 0
+    if isinstance(orig, np.ndarray) and (arr is (<cnp.ndarray> orig)):
+        return 0
     arr_obj = <object> arr
-    return 1 if arr_obj.base is None else 0
+    return 1 if (arr_obj.base is None) else 0
 
 
 def fft(x, n=None, axis=-1, overwrite_x=False):
@@ -812,7 +812,7 @@ def rfftn_numpy(x, s=None, axes=None):
     no_trim = (s is None) and (axes is None)
     s, axes = _cook_nd_args(a, s, axes)
     la = axes[-1]
-    # trim array, so that rfft_numpy avoid doing
+    # trim array, so that rfft_numpy avoids doing
     # unnecessary computations
     if not no_trim:
         a = _trim_array(a, s, axes)
@@ -847,6 +847,10 @@ def irfftn_numpy(x, s=None, axes=None):
             a = _fix_dimensions(a, s, axes)
         ovr_x = True if _datacopied(<cnp.ndarray> a, x) else False
         if len(set(axes)) == len(axes) and len(axes) == a.ndim and len(axes) > 2:
+            # due to need to write into a, we must copy
+            if not ovr_x:
+                a = a.copy()
+                ovr_x = True
             ss, aa = _remove_axis(s, axes, la)
             ind = [slice(None,None,1),] * len(s)
             for ii in range(a.shape[la]):
@@ -854,8 +858,7 @@ def irfftn_numpy(x, s=None, axes=None):
                 tind = tuple(ind)
                 a[tind] = _fftnd_impl(
                     a[tind], shape=ss, axes=aa,
-                    overwrite_x=ovr_x, direction=-1)
-                ovr_x = True
+                    overwrite_x=True, direction=-1)
         else:
             for ii in range(len(axes)-1):
                 a = ifft(a, s[ii], axes[ii], overwrite_x=ovr_x)
