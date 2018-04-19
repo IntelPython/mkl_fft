@@ -26,7 +26,11 @@
 
 import numpy as np
 cimport numpy as cnp
-from numpy.core.multiarray_tests import internal_overlap
+try:
+    from numpy.core.multiarray_tests import internal_overlap
+except ModuleNotFoundError:
+    # Module has been renamed in NumPy 1.15
+    from numpy.core._multiarray_tests import internal_overlap
 
 from libc.string cimport memcpy
 
