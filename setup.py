@@ -28,7 +28,7 @@ from __future__ import division, print_function, absolute_import
 
 MAJOR = 1
 MINOR = 0
-MICRO = 0
+MICRO = 2
 ISRELEASED = False
 
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
