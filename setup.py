@@ -80,7 +80,7 @@ def setup_package():
         description = "MKL-based FFT transforms for NumPy arrays",
         long_description = """NumPy-based implementation of Fast Fourier Transform using Intel (R) Math Kernel Library. 1D and ND, complex and real transforms, in-place and not-in-place on single and double precision arrays""",
         url = "http://github.com/IntelPython/mkl_fft",
-        author = "Oleksandr Pavlyk",
+        author = "Intel Corporation",
         download_url = "http://github.com/IntelPython/mkl_fft",
         license = 'BSD',
         classifiers = [_f for _f in CLASSIFIERS.split('\n') if _f],
