@@ -302,7 +302,7 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
             status = 1
 
         if status:
-            raise ValueError("Internal error")
+            raise ValueError("Internal error, status={}".format(status))
 
         n_max = <long> cnp.PyArray_DIM(x_arr, axis_)
         if (n_ < n_max):
@@ -349,7 +349,7 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
                         x_arr, n_, <int> axis_, f_arr)
 
         if (status):
-            raise ValueError("Internal error occurred")
+            raise ValueError("Internal error occurred, status={}".format(status))
 
         return f_arr
 
@@ -412,7 +412,7 @@ def _rrfft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
             status = 1
 
         if status:
-            raise ValueError("Internal error")
+            raise ValueError("Internal error, status={}".format(status))
 
         n_max = <long> cnp.PyArray_DIM(x_arr, axis_)
         if (n_ < n_max):
@@ -437,7 +437,7 @@ def _rrfft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
                status = float_float_mkl_rfft_out(x_arr, n_, <int> axis_, f_arr)
 
         if (status):
-            raise ValueError("Internal error occurred")
+            raise ValueError("Internal error occurred, status={}".format(status))
 
         return f_arr
 
@@ -491,7 +491,7 @@ def _rc_fft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
         status = double_cdouble_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS)
 
     if (status):
-        raise ValueError("Internal error occurred")
+        raise ValueError("Internal error occurred, with status={}".format(status))
 
     return f_arr
 
@@ -567,7 +567,7 @@ def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
             status = cdouble_double_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr)
 
         if (status):
-            raise ValueError("Internal error occurred")
+            raise ValueError("Internal error occurred, status={}".format(status))
 
         return f_arr
 
