@@ -31,7 +31,7 @@ from os import getcwd
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info
-    config = Configuration('mkl_fft', parent_package, top_path)
+    config = Configuration('', parent_package, top_path)
 
     pdir = dirname(__file__)
     wdir = join(pdir, 'src')
@@ -63,7 +63,7 @@ def configuration(parent_package='',top_path=None):
         libraries = libs,
         extra_compile_args = [
             '-DNDEBUG',
-            # '-g', '-O0', '-Wall', '-Wextra',
+            # '-g', '-O0', '-Wall', '-Wextra', '-DDEBUG',
         ]
     )
 
