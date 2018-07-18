@@ -124,7 +124,7 @@ def ifft(x, n=None, axis=-1, overwrite_x=False):
 cdef cnp.ndarray pad_array(cnp.ndarray x_arr, cnp.npy_intp n, int axis, int realQ):
     "Internal utility to zero-pad input array along given axis"
     cdef cnp.ndarray b_arr "b_arrayObject"
-    cdef int x_type, b_type, b_ndim
+    cdef int x_type, b_type, b_ndim, x_arr_is_fortran
     cdef cnp.npy_intp *b_shape
 
     x_type = cnp.PyArray_TYPE(x_arr)
@@ -140,8 +140,9 @@ cdef cnp.ndarray pad_array(cnp.ndarray x_arr, cnp.npy_intp n, int axis, int real
     b_shape[axis] = n
 
     # allocating temporary buffer
+    x_arr_is_fortran = cnp.PyArray_CHKFLAGS(x_arr, cnp.NPY_F_CONTIGUOUS)
     b_arr = <cnp.ndarray> cnp.PyArray_EMPTY(
-        b_ndim, b_shape, <cnp.NPY_TYPES> b_type, 0) # 0 for C-contiguous
+        b_ndim, b_shape, <cnp.NPY_TYPES> b_type, x_arr_is_fortran) # 0 for C-contiguous
     PyMem_Free(b_shape)
 
     ind = [slice(0, None, None), ] * b_ndim
@@ -227,6 +228,7 @@ cdef cnp.ndarray __allocate_result(cnp.ndarray x_arr, long n_, long axis_, int f
     """
     cdef cnp.npy_intp *f_shape
     cdef cnp.ndarray f_arr "ff_arrayObject"
+    cdef int x_arr_is_fortran
 
     f_ndim = cnp.PyArray_NDIM(x_arr)
 
@@ -237,8 +239,9 @@ cdef cnp.ndarray __allocate_result(cnp.ndarray x_arr, long n_, long axis_, int f
         f_shape[axis_] = n_
 
     # allocating output buffer
+    x_arr_is_fortran = cnp.PyArray_CHKFLAGS(x_arr, cnp.NPY_F_CONTIGUOUS)
     f_arr = <cnp.ndarray> cnp.PyArray_EMPTY(
-        f_ndim, f_shape, <cnp.NPY_TYPES> f_type, 0) # 0 for C-contiguous
+        f_ndim, f_shape, <cnp.NPY_TYPES> f_type, x_arr_is_fortran) # 0 for C-contiguous
     PyMem_Free(f_shape);
 
     return f_arr
