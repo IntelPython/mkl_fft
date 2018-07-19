@@ -31,7 +31,7 @@ from os import getcwd
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info
-    config = Configuration('', parent_package, top_path)
+    config = Configuration('mkl_fft', parent_package, top_path)
 
     pdir = dirname(__file__)
     wdir = join(pdir, 'src')
@@ -50,7 +50,8 @@ def configuration(parent_package='',top_path=None):
                              'Cython is required to build the initial .c file.')
 
     config.add_extension(
-        '_pydfti',
+        name = '_pydfti',
+#        module_name = 'mkl_fft._pydfti',
         sources = [
             join(wdir, 'mklfft.c.src'),
             join(wdir, 'multi_iter.c'),
