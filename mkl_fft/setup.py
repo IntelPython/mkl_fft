@@ -51,7 +51,6 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension(
         name = '_pydfti',
-#        module_name = 'mkl_fft._pydfti',
         sources = [
             join(wdir, 'mklfft.c.src'),
             join(wdir, 'multi_iter.c'),
