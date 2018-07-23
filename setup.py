@@ -87,7 +87,7 @@ def setup_package():
         platforms = ["Windows", "Linux", "Mac OS-X"],
         test_suite = 'nose.collector',
         python_requires = '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
-        install_requires = ['numpy', 'cython'],
+        install_requires = ['numpy'],
         configuration = configuration
     )
     setup(**metadata)
