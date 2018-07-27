@@ -29,7 +29,7 @@ import numpy as np
 cimport numpy as cnp
 try:
     from numpy.core.multiarray_tests import internal_overlap
-except ModuleNotFoundError:
+except ImportError:
     # Module has been renamed in NumPy 1.15
     from numpy.core._multiarray_tests import internal_overlap
 
