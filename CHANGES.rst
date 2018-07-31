@@ -2,6 +2,12 @@
 mkl_fft changelog
 =================
 
+1.0.5
+====
+
+Fixed issues #7, #17, #18.
+Consolidated version specification into a single file `mkl_fft/_version.py`.
+
 1.0.4
 =====
 
