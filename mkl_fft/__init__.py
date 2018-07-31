@@ -27,6 +27,7 @@
 from ._pydfti import (fft, ifft, fft2, ifft2, fftn, ifftn, rfft, irfft,
                       rfft_numpy, irfft_numpy, rfftn_numpy, irfftn_numpy)
 
-__version__ = '1.0.4'
+from .version import __version__
+
 __all__ = ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn', 'rfft', 'irfft',
            'rfft_numpy', 'irfft_numpy', 'rfftn_numpy', 'irfftn_numpy']
