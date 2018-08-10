@@ -153,9 +153,9 @@ cdef cnp.ndarray pad_array(cnp.ndarray x_arr, cnp.npy_intp n, int axis, int real
     ind[axis] = slice(0, cnp.PyArray_DIM(x_arr, axis), None)
     bo = <object> b_arr
     xo = <object> x_arr
-    bo[ind] = xo
+    bo[tuple(ind)] = xo
     ind[axis] = slice(cnp.PyArray_DIM(x_arr, axis), None, None)
-    bo[ind] = 0.0
+    bo[tuple(ind)] = 0.0
 
     return b_arr
 
@@ -843,9 +843,12 @@ def rfftn_numpy(x, s=None, axes=None):
             for ii in range(a.shape[la]):
                 ind[la] = ii
                 tind = tuple(ind)
-                a[tind] = _fftnd_impl(
-                    a[tind], shape=ss, axes=aa,
+                a_inp = a[tind]
+                a_res = _fftnd_impl(
+                    a_inp, shape=ss, axes=aa,
                     overwrite_x=True, direction=1)
+                if a_res is not a_inp:
+                    a[tind] = a_res # copy in place
         else:
             for ii in range(len(axes)-1):
                 a = fft(a, s[ii], axes[ii], overwrite_x=True)
@@ -871,9 +874,12 @@ def irfftn_numpy(x, s=None, axes=None):
             for ii in range(a.shape[la]):
                 ind[la] = ii
                 tind = tuple(ind)
-                a[tind] = _fftnd_impl(
-                    a[tind], shape=ss, axes=aa,
+                a_inp = a[tind]
+                a_res = _fftnd_impl(
+                    a_inp, shape=ss, axes=aa,
                     overwrite_x=True, direction=-1)
+                if a_res is not a_inp:
+                    a[tind] = a_res # copy in place
         else:
             for ii in range(len(axes)-1):
                 a = ifft(a, s[ii], axes[ii], overwrite_x=ovr_x)
