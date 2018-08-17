@@ -303,6 +303,28 @@ class Test_mklfft_rank3(TestCase):
             f2 = mkl_fft.fft(f1, axis = ax)
             assert_allclose(f2, x, atol=2e-15)
 
+
+    def test_array5(self):
+        """Inputs with zero strides are handled correctly"""
+        z = self.az3
+        z1 = z[np.newaxis]
+        f1 = mkl_fft.fft(z1, axis=-1)
+        f2 = mkl_fft.fft(z1.reshape(z1.shape), axis=-1)
+        assert_allclose(f1, f2, atol=2e-15)
+        z1 = z[:, np.newaxis]
+        f1 = mkl_fft.fft(z1, axis=-1)
+        f2 = mkl_fft.fft(z1.reshape(z1.shape), axis=-1)
+        assert_allclose(f1, f2, atol=2e-15)
+        z1 = z[:, :, np.newaxis]
+        f1 = mkl_fft.fft(z1, axis=-1)
+        f2 = mkl_fft.fft(z1.reshape(z1.shape), axis=-1)
+        assert_allclose(f1, f2, atol=2e-15)
+        z1 = z[:, :, :, np.newaxis]
+        f1 = mkl_fft.fft(z1, axis=-1)
+        f2 = mkl_fft.fft(z1.reshape(z1.shape), axis=-1)
+        assert_allclose(f1, f2, atol=2e-15)
+
+
 class Test_mklfft_rfft(TestCase):
     def setUp(self):
         rnd.seed(1234567)
