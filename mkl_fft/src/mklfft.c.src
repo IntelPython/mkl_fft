@@ -281,6 +281,37 @@ __cached_notinplace_@DftiCompute_MODE@_@MKL_IN_TYPE@_@MKL_OUT_TYPE@(
 }
 /**end repeat**/
 
+inline npy_intp
+compute_distance(npy_intp *x_strides, npy_intp *x_shape, npy_intp x_itemsize, int x_rank, int i1, int i2) {
+    npy_intp st1, st2;
+    npy_intp sh1 = x_shape[i1], sh2 = x_shape[i2];
+    npy_intp min_s;
+    if (sh1 > 1 && sh2 > 1) {
+        st1 = x_strides[i1];
+	st2 = x_strides[i2];
+	min_s = (st1 > st2) ? st2 : st1;
+
+        return min_s;
+    } else {
+        int i;
+	npy_intp max_s;
+        max_s = x_itemsize;
+        for(i=0; i < x_rank; i++) {
+	    if (x_shape[i] > 1) {
+		if (max_s < x_strides[i]) max_s = x_strides[i];
+	    }
+	}
+	min_s = max_s;
+	for(i=i1; i <= i2; i++) {
+	    if (x_shape[i] > 1) {
+		if (min_s > x_strides[i]) min_s = x_strides[i];
+	    }
+	}
+    }
+
+    return min_s;
+}
+
 static NPY_INLINE int
 compute_strides_and_distances(
     PyArrayObject *x,
@@ -315,11 +346,9 @@ compute_strides_and_distances(
 	    npy_intp char_dist = 0;
             *num_fft_transfs = _to_mkl_long (x_size / x_shape[axis]);
             if (axis == 0) {
-                npy_intp s1 =  x_strides[1], s2 =  x_strides[x_rank-1];
-                char_dist = (s1 > s2) ? s2 : s1;
+		char_dist = compute_distance(x_strides, x_shape, x_itemsize, x_rank, 1, x_rank-1);
             } else {
-                npy_intp s1 = x_strides[0], s2 = x_strides[x_rank-2];
-                char_dist = (s1 > s2) ? s2 : s1;
+                char_dist = compute_distance(x_strides, x_shape, x_itemsize, x_rank, 0, x_rank-2);
             }
 
 	    *vec_dist = _to_mkl_long (char_dist / x_itemsize);
@@ -375,17 +404,11 @@ compute_strides_and_distances_inout(
 	    npy_intp char_dist_in = 0, char_dist_out = 0;
             *num_fft_transfs = _to_mkl_long (x_size / x_shape[axis]);
             if (axis == 0) {
-                npy_intp s1 = x_strides[1], s2 = x_strides[x_rank-1];
-                char_dist_in = (s1 > s2) ? s2 : s1;
-
-		s1 = y_strides[1];  s2 = y_strides[x_rank-1];
-		char_dist_out = (s1 > s2) ? s2 : s1;
+                char_dist_in = compute_distance(x_strides, x_shape, x_itemsize, x_rank, 1, x_rank-1);
+		char_dist_out = compute_distance(y_strides, y_shape, y_itemsize, x_rank, 1, x_rank-1);
             } else {
-                npy_intp s1 = x_strides[0], s2 = x_strides[x_rank-2];
-                char_dist_in = (s1 > s2) ? s2 : s1;
-
-		s1 = y_strides[0];  s2 = y_strides[x_rank-2];
-		char_dist_out = (s1 > s2) ? s2 : s1;
+                char_dist_in = compute_distance(x_strides, x_shape, x_itemsize, x_rank, 0, x_rank-2);
+		char_dist_out = compute_distance(y_strides, y_shape, y_itemsize, x_rank, 0, x_rank-2);
             }
 	    *vec_dist_in = _to_mkl_long (char_dist_in / x_itemsize);
 	    *vec_dist_out = _to_mkl_long (char_dist_out / y_itemsize);
