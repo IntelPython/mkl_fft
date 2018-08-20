@@ -2,6 +2,11 @@
 mkl_fft changelog
 =================
 
+1.0.6
+====
+
+Fixed issues #21, and addressed NumPy 1.15 deprecation warnings from using lists instead of tuples to specify multiple slices.
+
 1.0.5
 ====
 
