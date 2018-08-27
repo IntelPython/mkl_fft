@@ -13,7 +13,7 @@ Since MKL FFT supports performing discrete Fourier transforms over non-contiguou
 used on any well-behaved floating point array with no internal overlaps for both in-place and not in-place transforms of 
 arrays in single and double floating point precision.
 
-This eliminates the need to copy input arrayy contiguously into an intermediate buffer.
+This eliminates the need to copy input array contiguously into an intermediate buffer.
 
 `mkl_fft` directly supports N-dimensional Fourier transforms.
 
