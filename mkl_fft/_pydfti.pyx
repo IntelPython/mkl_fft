@@ -594,6 +594,85 @@ def irfft_numpy(x, n=None, axis=-1):
 
 # ============================== ND ====================================== #
 
+# copied from scipy.fftpack.helper
+def _init_nd_shape_and_axes(x, shape, axes):
+    """Handle shape and axes arguments for n-dimensional transforms.
+    Returns the shape and axes in a standard form, taking into account negative
+    values and checking for various potential errors.
+    Parameters
+    ----------
+    x : array_like
+        The input array.
+    shape : int or array_like of ints or None
+        The shape of the result.  If both `shape` and `axes` (see below) are
+        None, `shape` is ``x.shape``; if `shape` is None but `axes` is
+        not None, then `shape` is ``scipy.take(x.shape, axes, axis=0)``.
+        If `shape` is -1, the size of the corresponding dimension of `x` is
+        used.
+    axes : int or array_like of ints or None
+        Axes along which the calculation is computed.
+        The default is over all axes.
+        Negative indices are automatically converted to their positive
+        counterpart.
+    Returns
+    -------
+    shape : array
+        The shape of the result. It is a 1D integer array.
+    axes : array
+        The shape of the result. It is a 1D integer array.
+    """
+    x = np.asarray(x)
+    noshape = shape is None
+    noaxes = axes is None
+
+    if noaxes:
+        axes = np.arange(x.ndim, dtype=np.intc)
+    else:
+        axes = np.atleast_1d(axes)
+
+    if axes.size == 0:
+        axes = axes.astype(np.intc)
+
+    if not axes.ndim == 1:
+        raise ValueError("when given, axes values must be a scalar or vector")
+    if not np.issubdtype(axes.dtype, np.integer):
+        raise ValueError("when given, axes values must be integers")
+
+    axes = np.where(axes < 0, axes + x.ndim, axes)
+
+    if axes.size != 0 and (axes.max() >= x.ndim or axes.min() < 0):
+        raise ValueError("axes exceeds dimensionality of input")
+    if axes.size != 0 and np.unique(axes).shape != axes.shape:
+        raise ValueError("all axes must be unique")
+
+    if not noshape:
+        shape = np.atleast_1d(shape)
+    elif np.isscalar(x):
+        shape = np.array([], dtype=np.intc)
+    elif noaxes:
+        shape = np.array(x.shape, dtype=np.intc)
+    else:
+        shape = np.take(x.shape, axes)
+
+    if shape.size == 0:
+        shape = shape.astype(np.intc)
+
+    if shape.ndim != 1:
+        raise ValueError("when given, shape values must be a scalar or vector")
+    if not np.issubdtype(shape.dtype, np.integer):
+        raise ValueError("when given, shape values must be integers")
+    if axes.shape != shape.shape:
+        raise ValueError("when given, axes and shape arguments"
+                         " have to be of the same length")
+
+    shape = np.where(shape == -1, np.array(x.shape)[axes], shape)
+
+    if shape.size != 0 and (shape < 1).any():
+        raise ValueError(
+            "invalid number of data points ({0}) specified".format(shape))
+
+    return shape, axes
+
 
 def _cook_nd_args(a, s=None, axes=None, invreal=0):
     if s is None:
@@ -621,7 +700,7 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
 
 def _iter_fftnd(a, s=None, axes=None, function=fft, overwrite_arg=False):
     a = np.asarray(a)
-    s, axes = _cook_nd_args(a, s, axes)
+    s, axes = _init_nd_shape_and_axes(a, s, axes)
     ovwr = overwrite_arg
     for ii in reversed(range(len(axes))):
         a = function(a, n = s[ii], axis = axes[ii], overwrite_x=ovwr)
