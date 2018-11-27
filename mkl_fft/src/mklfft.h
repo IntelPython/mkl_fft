@@ -76,3 +76,5 @@ extern int float_cfloat_mkl_fftnd_out(PyArrayObject*, PyArrayObject*);
 extern int float_cfloat_mkl_ifftnd_out(PyArrayObject*, PyArrayObject*);
 extern int double_cdouble_mkl_fftnd_out(PyArrayObject*, PyArrayObject*);
 extern int double_cdouble_mkl_ifftnd_out(PyArrayObject*, PyArrayObject*);
+
+extern char* mkl_dfti_error(int);
