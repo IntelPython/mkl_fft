@@ -99,6 +99,7 @@ cdef extern from "src/mklfft.h":
     int double_cdouble_mkl_fftnd_out(cnp.ndarray, cnp.ndarray)
     int float_cfloat_mkl_ifftnd_out(cnp.ndarray, cnp.ndarray)
     int double_cdouble_mkl_ifftnd_out(cnp.ndarray, cnp.ndarray)
+    char * mkl_dfti_error(int)
 
 # Initialize numpy
 cnp.import_array()
@@ -265,6 +266,8 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
     cdef long n_, axis_
     cdef int x_type, f_type, status = 0
     cdef int ALL_HARMONICS = 1
+    cdef char * c_error_msg = NULL
+    cdef bytes py_error_msg
 
     x_arr = __process_arguments(x, n, axis, overwrite_arg, direction,
                                 &axis_, &n_, &in_place, &xnd, &dir_, 0)
@@ -307,7 +310,9 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
                 status = 1
 
         if status:
-            raise ValueError("Internal error, status={}".format(status))
+            c_error_msg = mkl_dfti_error(status)
+            py_error_msg = c_error_msg
+            raise ValueError("Internal error occurred: {}".format(py_error_msg))
 
         n_max = <long> cnp.PyArray_DIM(x_arr, axis_)
         if (n_ < n_max):
@@ -355,7 +360,9 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
                             x_arr, n_, <int> axis_, f_arr)
 
         if (status):
-            raise ValueError("Internal error occurred, status={}".format(status))
+            c_error_msg = mkl_dfti_error(status)
+            py_error_msg = c_error_msg
+            raise ValueError("Internal error occurred: {}".format(py_error_msg))
 
         return f_arr
 
@@ -379,6 +386,8 @@ def _rrfft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
     cdef int xnd, err, n_max = 0, in_place, dir_
     cdef long n_, axis_
     cdef int x_type, status
+    cdef char * c_error_msg = NULL
+    cdef bytes py_error_msg
 
     x_arr = __process_arguments(x, n, axis, overwrite_arg, direction,
                                 &axis_, &n_, &in_place, &xnd, &dir_, 1)
@@ -419,7 +428,9 @@ def _rrfft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
                 status = 1
 
         if status:
-            raise ValueError("Internal error, status={}".format(status))
+            c_error_msg = mkl_dfti_error(status)
+            py_error_msg = c_error_msg
+            raise ValueError("Internal error occurred: {}".format(py_error_msg))
 
         n_max = <long> cnp.PyArray_DIM(x_arr, axis_)
         if (n_ < n_max):
@@ -445,7 +456,9 @@ def _rrfft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
                    status = float_float_mkl_rfft_out(x_arr, n_, <int> axis_, f_arr)
 
         if (status):
-            raise ValueError("Internal error occurred, status={}".format(status))
+            c_error_msg = mkl_dfti_error(status)
+            py_error_msg = c_error_msg
+            raise ValueError("Internal error occurred: {}".format(py_error_msg))
 
         return f_arr
 
@@ -463,7 +476,9 @@ def _rc_fft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
     cdef long n_, axis_
     cdef int x_type, f_type, status, requirement
     cdef int HALF_HARMONICS = 0 # give only positive index harmonics
-    direction = 1 # dummy, only used for the sake of arg-processing
+    cdef int direction = 1 # dummy, only used for the sake of arg-processing
+    cdef char * c_error_msg = NULL
+    cdef bytes py_error_msg
 
     x_arr = __process_arguments(x, n, axis, overwrite_arg, direction,
                                 &axis_, &n_, &in_place, &xnd, &dir_, 1)
@@ -501,7 +516,9 @@ def _rc_fft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
             status = double_cdouble_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS)
 
     if (status):
-        raise ValueError("Internal error occurred, with status={}".format(status))
+        c_error_msg = mkl_dfti_error(status)
+        py_error_msg = c_error_msg
+        raise ValueError("Internal error occurred: {}".format(str(py_error_msg)))
 
     return f_arr
 
@@ -533,7 +550,9 @@ def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
     cdef int xnd, err, n_max = 0, in_place, dir_, int_n
     cdef long n_, axis_
     cdef int x_type, f_type, status
-    direction = 1 # dummy, only used for the sake of arg-processing
+    cdef int direction = 1 # dummy, only used for the sake of arg-processing
+    cdef char * c_error_msg = NULL
+    cdef bytes py_error_msg
 
     int_n = _is_integral(n)
     # nn gives the number elements along axis of the input that we use
@@ -579,7 +598,9 @@ def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
                 status = cdouble_double_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr)
 
         if (status):
-            raise ValueError("Internal error occurred, status={}".format(status))
+            c_error_msg = mkl_dfti_error(status)
+            py_error_msg = c_error_msg
+            raise ValueError("Internal error occurred: {}".format(str(py_error_msg)))
 
         return f_arr
 

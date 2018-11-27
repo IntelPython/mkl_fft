@@ -54,6 +54,11 @@ static NPY_INLINE MKL_LONG _to_mkl_long(npy_intp x)
     return lr;
 }
 
+NPY_INLINE char * mkl_dfti_error(MKL_LONG status)
+{
+    return DftiErrorMessage(status);
+}
+
 static npy_intp ar_size(npy_intp *sh, int len)
 {
     npy_intp r = (len > 0) ? 1 : 0;
@@ -567,11 +572,11 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis)
     }
 
 
-    return OK;
+    return status;
 
   failed:
 
-    return ERROR;
+    return status;
 }
 /**end repeat**/
 
@@ -841,7 +846,6 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
 
   failed:
 
-    status = ERROR;
     goto cleanup;
 }
 /**end repeat**/
@@ -1016,7 +1020,6 @@ int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
 
   failed:
 
-    status = ERROR;
     goto cleanup;
 }
 /**end repeat**/
@@ -1145,7 +1148,7 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis)
 
   failed:
 
-    return ERROR;
+    return status;
 }
 /**end repeat**/
 
@@ -1317,7 +1320,6 @@ int
 
   failed:
 
-    status = ERROR;
     goto cleanup;
 }
 /**end repeat**/
@@ -1496,7 +1498,6 @@ int @name@_@name@_mkl_@mode@_out(
 
   failed:
 
-    status = ERROR;
     goto cleanup;
 }
 /**end repeat**/
