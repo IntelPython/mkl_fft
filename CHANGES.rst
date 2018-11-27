@@ -2,6 +2,13 @@
 mkl_fft changelog
 =================
 
+1.0.7
+====
+Improved exception message raised if MKL is signalling an error. The message now includes MKL's own description of the exception.
+This partially improves #24. 
+
+Improved argument validation for ND transforms aligning with scipy 1.2.0
+
 1.0.6
 ====
 
