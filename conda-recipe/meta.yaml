@@ -1,17 +1,13 @@
-{% set version = "1.0.0" %}
+{% set version = "1.0dev" %}
 {% set buildnumber = 0 %}
 
-### If you change the iccver here, you must also set the path correctly in build.sh / bld.bat!!!
-{% set iccver = "16.0.3" %}    [unix or py3k]
-{% set iccver = "13.1.5" %}    [win and py27]
 
 package:
     name: mkl_fft
     version: {{ version }}
 
 source:
-    git_url: http://github.com/IntelPython/mkl_fft
-    git_tag: v{{version}}
+    path: ../
 
 build:
     number: {{buildnumber}}
@@ -41,13 +37,11 @@ requirements:
       - setuptools
       - intelpython
       - mkl-devel               [not nomkl]
-      - icc_rt
       - cython
       - numpy x.x
     run:
       - python
       - mkl                     [not nomkl]
-      - icc_rt >={{iccver}}
       - intelpython
       - numpy x.x
 

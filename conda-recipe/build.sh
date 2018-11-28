@@ -3,7 +3,7 @@
 # make sure that compiler has been sourced, if necessary
 
 if [ `uname` == Darwin ]; then
-    export MACOSX_DEPLOYMENT_TARGET=10.10
+    export MACOSX_DEPLOYMENT_TARGET=10.9
 fi
 
-CFLAGS="-I$PREFIX/include $CFLAGS" $PYTHON setup.py build --force --compiler=intelem install --old-and-unmanageable
+CFLAGS="-I$PREFIX/include $CFLAGS" $PYTHON setup.py build --force install --old-and-unmanageable
