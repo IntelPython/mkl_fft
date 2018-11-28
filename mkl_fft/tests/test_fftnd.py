@@ -115,6 +115,7 @@ class Test_Regressions(TestCase):
             r_tol, a_tol = _get_rtol_atol(ar)
             d_ccont = ar.copy()
             d_fcont = np.asfortranarray(d_ccont)
-            f1 = mkl_fft.fft(d_ccont)
-            f2 = mkl_fft.fft(d_fcont)
-            assert_allclose(f1, f2, rtol=r_tol, atol=a_tol)
+            for a in range(ar.ndim):
+                f1 = mkl_fft.fft(d_ccont, axis=a)
+                f2 = mkl_fft.fft(d_fcont, axis=a)
+                assert_allclose(f1, f2, rtol=r_tol, atol=a_tol)

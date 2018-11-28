@@ -324,6 +324,17 @@ class Test_mklfft_rank3(TestCase):
         f2 = mkl_fft.fft(z1.reshape(z1.shape), axis=-1)
         assert_allclose(f1, f2, atol=2e-15)
 
+    def test_array6(self):
+        """Inputs with Fortran layout are handled correctly, issue 29"""
+        z = self.az3
+        z = z.astype(z.dtype, order='F')
+        y1 = mkl_fft.fft(z, axis=0)
+        y2 = mkl_fft.fft(self.az3, axis=0)
+        assert_allclose(y1, y2, atol=2e-15)
+        y1 = mkl_fft.fft(z, axis=-1)
+        y2 = mkl_fft.fft(self.az3, axis=-1)
+        assert_allclose(y1, y2, atol=2e-15)
+
 
 class Test_mklfft_rfft(TestCase):
     def setUp(self):
