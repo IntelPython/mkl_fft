@@ -2,6 +2,11 @@
 mkl_fft changelog
 =================
 
+1.0.10
+====
+Fix for issue #29.
+
+
 1.0.7
 ====
 Improved exception message raised if MKL is signalling an error. The message now includes MKL's own description of the exception.
