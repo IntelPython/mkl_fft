@@ -287,7 +287,7 @@ __cached_notinplace_@DftiCompute_MODE@_@MKL_IN_TYPE@_@MKL_OUT_TYPE@(
 /**end repeat**/
 
 /*
- * For an array, iterating though indexes [i1, i2), fixing others to zero,
+ * For an array, iterating though indexes [i1, i2], fixing others to zero,
  * and _assuming_ these pointers form a regular lattice, compute distance
  * between adjacent pointers on that lattice.
  *
@@ -295,12 +295,19 @@ __cached_notinplace_@DftiCompute_MODE@_@MKL_IN_TYPE@_@MKL_OUT_TYPE@(
 static NPY_INLINE MKL_LONG
 compute_distance(npy_intp *x_strides, npy_intp *x_shape, npy_intp x_itemsize, int x_rank, int i1, int i2, int c_contig, int f_contig) {
 
+    /* i1 equals (axis == 0), hence if (i1) {...} is equivalent to if (axis == 0) {...} */
     if (c_contig) {
+	/* Assuming
+              x_strides == (x_itemsize * prod(x_shape[k], 0 <k <= x_rank-1), ..., x_itemsize * x_shape[x_rank-1], x_itemsize)
+        */
         return (i1) ? 1 : _to_mkl_long(x_shape[x_rank-1]);
     }
 
     if (f_contig) {
-        return (i1) ? _to_mkl_long(x_shape[x_rank-1]) : 1;
+	/* Assuming
+              x_strides == (x_itemsize, x_itemsize * x_shape[0], ..., x_itemsize * prod(x_shape[k], 0<=k < x_rank-1))
+        */
+        return (i1) ? _to_mkl_long(x_shape[0]) : 1;
     }
 
     /* Right now, this is dead branch of code, since compute_distance is only called if array is ONESEGMENT, 
