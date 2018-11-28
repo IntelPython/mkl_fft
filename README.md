@@ -1,4 +1,5 @@
 ## ``mkl_fft`` --  a NumPy-based Python interface to Intel (R) MKL FFT functionality
+[![Build Status](https://travis-ci.com/IntelPython/mkl_fft.svg?branch=master)](https://travis-ci.com/IntelPython/mkl_fft)
 
 `mkl_fft` started as a part of Intel (R) Distribution for Python* optimizations to NumPy, and is now being released 
 as a stand-alone package. It can be installed into conda environment using 
