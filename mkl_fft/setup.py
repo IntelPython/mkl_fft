@@ -53,7 +53,6 @@ def configuration(parent_package='',top_path=None):
         name = '_pydfti',
         sources = [
             join(wdir, 'mklfft.c.src'),
-#            join(wdir, 'multi_iter.c'),
         ] + sources,
         depends = [
             join(wdir, 'mklfft.h'),
