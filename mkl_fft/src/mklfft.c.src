@@ -546,7 +546,7 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis)
         status = __cached_inplace_@DftiCompute_MODE@_@MKL_TYPE@(x_data);
         if (status != 0) goto failed;
     } else {
-        multi_iter_masked_t *mit;
+        multi_iter_masked_t mit;
         int *mask;
         int i;
 
@@ -555,7 +555,7 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis)
         for(i = 0; i < axis; i++) mask[i] = i;
         for(i = axis + 1; i < x_rank; i++) mask[i-1] = i;
 
-        mit = multi_iter_masked_new(x_shape, x_rank, mask, x_rank - 1);
+        multi_iter_masked_new(&mit, x_shape, x_rank, mask, x_rank - 1);
 
         while(!MultiIter_Done(mit)) {
             char *tmp;
@@ -567,13 +567,13 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis)
                 (@MKL_TYPE@*) tmp);
             if (status != 0) break;
 
-            if (multi_iter_masked_next(mit))
+            if (multi_iter_masked_next(&mit))
                 break;
         }
 
 
-        multi_iter_masked_free(mit);
-        mkl_free(mask);
+	multi_iter_masked_free(&mit);
+	mkl_free(mask);
 
         if (status != 0) goto failed;
     }
@@ -733,7 +733,7 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
             xin_data, xout_data);
         if (status != 0) goto failed;
     } else {
-        multi_iter_masked_t *mit;
+        multi_iter_masked_t mit;
         int *mask;
         int i;
 
@@ -742,7 +742,7 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
         for(i = 0; i < axis; i++) mask[i] = i;
         for(i = axis + 1; i < xin_rank; i++) mask[i-1] = i;
 
-        mit = multi_iter_masked_new(xin_shape, xin_rank, mask, xin_rank - 1);
+        multi_iter_masked_new(&mit, xin_shape, xin_rank, mask, xin_rank - 1);
 
         while(!MultiIter_Done(mit)) {
             char *tmp1, *tmp2;
@@ -758,12 +758,12 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
                 (@MKL_IN_TYPE@*) tmp1, (@MKL_OUT_TYPE@*) tmp2 );
             if (status != 0) break;
 
-            if (multi_iter_masked_next(mit))
+            if (multi_iter_masked_next(&mit))
                 break;
         }
 
 
-        multi_iter_masked_free(mit);
+	multi_iter_masked_free(&mit);
         mkl_free(mask);
 
         if (status != 0) goto failed;
@@ -792,7 +792,7 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
         } else if(single_DftiCompute) {
 */
         } else {
-            multi_iter_t *mit;
+            multi_iter_t mit;
             npy_intp *half_shape;
 
             half_shape = (npy_intp *) mkl_malloc(xout_rank * sizeof(npy_intp), 64);
@@ -800,7 +800,7 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
             memcpy(half_shape, xout_shape, xout_rank * sizeof(npy_intp));
             half_shape[axis] = (n_last > 2) ? n_last - nh_last: 0;
 
-            mit = multi_iter_new(half_shape, xout_rank);
+            multi_iter_new(&mit, half_shape, xout_rank);
 
             while(!MultiIter_Done(mit)) {
                 char *tmp1, *tmp2;
@@ -831,12 +831,12 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
 
                 SET_CONJ(dest, src);
 
-                if (multi_iter_next(mit))
+                if (multi_iter_next(&mit))
                     break;
             }
 
 
-            multi_iter_free(mit);
+            multi_iter_free(&mit);
             mkl_free(half_shape);
         }
     }
@@ -983,7 +983,7 @@ int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
             xin_data, xout_data);
         if (status != 0) goto failed;
     } else {
-        multi_iter_masked_t *mit;
+        multi_iter_masked_t mit;
         int *mask;
         int i;
 
@@ -992,7 +992,7 @@ int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
         for(i = 0; i < axis; i++) mask[i] = i;
         for(i = axis + 1; i < xin_rank; i++) mask[i-1] = i;
 
-        mit = multi_iter_masked_new(xin_shape, xin_rank, mask, xin_rank - 1);
+        multi_iter_masked_new(&mit, xin_shape, xin_rank, mask, xin_rank - 1);
 
         while(!MultiIter_Done(mit)) {
             char *tmp1, *tmp2;
@@ -1008,12 +1008,12 @@ int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
                 (@MKL_TYPE@*) tmp1, (@MKL_TYPE@*) tmp2);
             if (status != 0) break;
 
-            if (multi_iter_masked_next(mit))
+            if (multi_iter_masked_next(&mit))
                 break;
         }
 
 
-        multi_iter_masked_free(mit);
+        multi_iter_masked_free(&mit);
         mkl_free(mask);
 
         if (status != 0) goto failed;
@@ -1121,7 +1121,7 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis)
         status = __cached_inplace_@DftiCompute_MODE@_@MKL_TYPE@(x_data);
         if (status != 0) goto failed;
     } else {
-        multi_iter_masked_t *mit;
+        multi_iter_masked_t mit;
         int *mask;
         int i;
 
@@ -1130,7 +1130,7 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis)
         for(i = 0; i < axis; i++) mask[i] = i;
         for(i = axis + 1; i < x_rank; i++) mask[i-1] = i;
 
-        mit = multi_iter_masked_new(x_shape, x_rank, mask, x_rank - 1);
+        multi_iter_masked_new(&mit, x_shape, x_rank, mask, x_rank - 1);
 
         while(!MultiIter_Done(mit)) {
             char *tmp;
@@ -1141,11 +1141,11 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis)
             status = __cached_inplace_@DftiCompute_MODE@_@MKL_TYPE@((@MKL_TYPE@*) tmp);
             if (status != 0) break;
 
-            if (multi_iter_masked_next(mit))
+            if (multi_iter_masked_next(&mit))
                 break;
         }
 
-        multi_iter_masked_free(mit);
+        multi_iter_masked_free(&mit);
         mkl_free(mask);
 
         if (status != 0) goto failed;
@@ -1283,7 +1283,7 @@ int
             xin_data, xout_data);
         if (status != 0) goto failed;
     } else {
-        multi_iter_masked_t *mit;
+        multi_iter_masked_t mit;
         int *mask;
         int i;
 
@@ -1292,7 +1292,7 @@ int
         for(i = 0; i < axis; i++) mask[i] = i;
         for(i = axis + 1; i < xin_rank; i++) mask[i-1] = i;
 
-        mit = multi_iter_masked_new(xin_shape, xin_rank, mask, xin_rank - 1);
+        multi_iter_masked_new(&mit, xin_shape, xin_rank, mask, xin_rank - 1);
 
         while(!MultiIter_Done(mit)) {
             char *tmp1, *tmp2;
@@ -1308,12 +1308,12 @@ int
                 (@MKL_IN_TYPE@*) tmp1, (@MKL_OUT_TYPE@*) tmp2);
             if (status != 0) break;
 
-            if (multi_iter_masked_next(mit))
+            if (multi_iter_masked_next(&mit))
                 break;
         }
 
 
-        multi_iter_masked_free(mit);
+        multi_iter_masked_free(&mit);
         mkl_free(mask);
 
         if (status != 0) goto failed;
@@ -1461,7 +1461,7 @@ int @name@_@name@_mkl_@mode@_out(
             xin_data, xout_data);
         if (status != 0) goto failed;
     } else {
-        multi_iter_masked_t *mit;
+        multi_iter_masked_t mit;
         int *mask;
         int i;
 
@@ -1470,7 +1470,7 @@ int @name@_@name@_mkl_@mode@_out(
         for(i = 0; i < axis; i++) mask[i] = i;
         for(i = axis + 1; i < xin_rank; i++) mask[i-1] = i;
 
-        mit = multi_iter_masked_new(xin_shape, xin_rank, mask, xin_rank - 1);
+        multi_iter_masked_new(&mit, xin_shape, xin_rank, mask, xin_rank - 1);
 
         while(!MultiIter_Done(mit)) {
             char *tmp1, *tmp2;
@@ -1486,12 +1486,12 @@ int @name@_@name@_mkl_@mode@_out(
                 (@MKL_TYPE@*) tmp1, (@MKL_TYPE@*) tmp2);
             if (status != 0) break;
 
-            if (multi_iter_masked_next(mit))
+            if (multi_iter_masked_next(&mit))
                 break;
         }
 
 
-        multi_iter_masked_free(mit);
+        multi_iter_masked_free(&mit);
         mkl_free(mask);
 
         if (status != 0) goto failed;
@@ -1854,7 +1854,7 @@ int
 
     /* copy conjugate even harmonics */
     {
-        multi_iter_t *mit;
+        multi_iter_t mit;
         npy_intp *half_shape;
         npy_intp n_last, nh_last;
         int i, last_idx = xout_rank - 1;
@@ -1866,7 +1866,7 @@ int
         nh_last = (n_last/2) + 1;
         half_shape[last_idx] = (n_last > 2) ? n_last - nh_last: 0;
 
-        mit = multi_iter_new(half_shape, xout_rank);
+        multi_iter_new(&mit, half_shape, xout_rank);
 
         while(!MultiIter_Done(mit)) {
             char *tmp1, *tmp2;
@@ -1897,11 +1897,14 @@ int
             dest->real = src->real;
             dest->imag = -src->imag;
 
-            if (multi_iter_next(mit))
+            if (multi_iter_next(&mit))
                 break;
         }
-    }
 
+        multi_iter_free(&mit);
+   }
+
+ 
     if (@POST_CONJUGATE@) {
        Py_BEGIN_ALLOW_THREADS
        @vml_conj_func@(xout_size, xout_data, xout_data, VML_HA);
