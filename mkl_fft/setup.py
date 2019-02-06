@@ -53,7 +53,7 @@ def configuration(parent_package='',top_path=None):
         name = '_pydfti',
         sources = [
             join(wdir, 'mklfft.c.src'),
-            join(wdir, 'multi_iter.c'),
+#            join(wdir, 'multi_iter.c'),
         ] + sources,
         depends = [
             join(wdir, 'mklfft.h'),
@@ -63,7 +63,7 @@ def configuration(parent_package='',top_path=None):
         libraries = libs,
         extra_compile_args = [
             '-DNDEBUG',
-            # '-g', '-O0', '-Wall', '-Wextra', '-DDEBUG',
+            # '-ggdb', '-O0', '-Wall', '-Wextra', '-DDEBUG',
         ]
     )
 
