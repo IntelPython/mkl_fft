@@ -61,6 +61,7 @@ typedef struct multi_iter_masked_t {
 #define MultiIter_ShapeElem(mit, i) ((mit).shape)[(i)]
 #define MultiIter_MaskElem(mit, i) ((mit).mask)[(i)]
 
+/*
 void multi_iter_new(multi_iter_t*, npy_intp*, int);
 void multi_iter_masked_new(multi_iter_masked_t*, npy_intp*, int, int*, int);
 
@@ -69,8 +70,9 @@ int multi_iter_next(multi_iter_t*);
 
 void multi_iter_masked_free(multi_iter_masked_t*);
 int multi_iter_masked_next(multi_iter_masked_t*);
+*/
 
-inline void
+NPY_INLINE void
 multi_iter_new(multi_iter_t* mi, npy_intp shape[], int rank) {
     int i;
     char d = 0;
@@ -92,7 +94,7 @@ multi_iter_new(multi_iter_t* mi, npy_intp shape[], int rank) {
     return;
 }
 
-inline void
+NPY_INLINE void
 multi_iter_masked_new(
     multi_iter_masked_t* mi, npy_intp shape[], int rank, int mask[], int mask_len) 
 {
@@ -122,7 +124,7 @@ multi_iter_masked_new(
 }
 
 
-inline void
+NPY_INLINE void
 multi_iter_masked_free(multi_iter_masked_t *mi) {
     if (mi) {
 	if(MultiIter_Index(*mi))
@@ -138,7 +140,7 @@ multi_iter_masked_free(multi_iter_masked_t *mi) {
     return;
 }
 
-inline void
+NPY_INLINE void
 multi_iter_free(multi_iter_t *mi) {
     if (mi) {
 	if(MultiIter_Index(*mi))
@@ -154,7 +156,7 @@ multi_iter_free(multi_iter_t *mi) {
 
 
 /* Modifies iterator in-place, returns 1 when iterator is empty, 0 otherwise */
-inline int
+NPY_INLINE int
 multi_iter_next(multi_iter_t *mi) {
     int j, k;
 
@@ -176,7 +178,7 @@ multi_iter_next(multi_iter_t *mi) {
 }
 
 /* Modifies iterator in-place, returns 1 when iterator is empty, 0 otherwise */
-inline int
+NPY_INLINE int
 multi_iter_masked_next(multi_iter_masked_t *mi) {
     int j, k;
 
