@@ -560,6 +560,9 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis)
         while(!MultiIter_Done(mit)) {
             char *tmp;
 
+#if defined(__ICC) || defined(__INTEL_COMPILER)
+            #pragma novector
+#endif
             for(tmp = (char *) x_data, i = 0; i < x_rank; i++)
                 tmp += x_strides[i] * MultiIter_IndexElem(mit, i);
 
@@ -747,6 +750,9 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
         while(!MultiIter_Done(mit)) {
             char *tmp1, *tmp2;
 
+#if defined(__ICC) || defined(__INTEL_COMPILER)
+            #pragma novector
+#endif
             for(tmp1 = (char *) xin_data,
                 tmp2 = (char *) xout_data,
                 i = 0; i < xin_rank; i++) {
@@ -808,6 +814,9 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
                 @MKL_OUT_TYPE@ *dest, *src;
                 /* npy_intp k_last = MultiIter_IndexElem(mit, axis); */
 
+#if defined(__ICC) || defined(__INTEL_COMPILER)
+                #pragma novector
+#endif
                 for(tmp1 = (char *) xout_data, tmp2 = (char *) xout_data,
                     i = 0; i < xout_rank; i++) {
                     npy_intp si = xout_strides[i],
@@ -997,6 +1006,9 @@ int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
         while(!MultiIter_Done(mit)) {
             char *tmp1, *tmp2;
 
+#if defined(__ICC) || defined(__INTEL_COMPILER)
+            #pragma novector
+#endif
             for(tmp1 = (char *) xin_data,
                 tmp2 = (char *) xout_data,
                 i = 0; i < xin_rank; i++) {
@@ -1135,6 +1147,9 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis)
         while(!MultiIter_Done(mit)) {
             char *tmp;
 
+#if defined(__ICC) || defined(__INTEL_COMPILER)
+            #pragma novector
+#endif
             for(tmp = (char *) x_data, i = 0; i < x_rank; i++)
                 tmp += x_strides[i] * MultiIter_IndexElem(mit, i);
 
@@ -1297,6 +1312,9 @@ int
         while(!MultiIter_Done(mit)) {
             char *tmp1, *tmp2;
 
+#if defined(__ICC) || defined(__INTEL_COMPILER)
+            #pragma novector
+#endif
             for(tmp1 = (char *) xin_data,
                 tmp2 = (char *) xout_data,
                 i = 0; i < xin_rank; i++) {
@@ -1475,6 +1493,9 @@ int @name@_@name@_mkl_@mode@_out(
         while(!MultiIter_Done(mit)) {
             char *tmp1, *tmp2;
 
+#if defined(__ICC) || defined(__INTEL_COMPILER)
+            #pragma novector
+#endif
             for(tmp1 = (char *) xin_data,
                 tmp2 = (char *) xout_data,
                 i = 0; i < xin_rank; i++) {
@@ -1872,6 +1893,9 @@ int
             char *tmp1, *tmp2;
             @MKL_OUT_TYPE@ *dest, *src;
 
+#if defined(__ICC) || defined(__INTEL_COMPILER)
+            #pragma novector
+#endif
             for(tmp1 = (char *) xout_data, tmp2 = (char *) xout_data,
                 i = 0; i < xout_rank; i++) {
                 npy_intp si = xout_strides[i],
@@ -1890,12 +1914,10 @@ int
                 tmp1 += si * dest_ki;
                 tmp2 += si * src_ki;
             }
+
             dest = (@MKL_OUT_TYPE@*) tmp1;
             src  = (@MKL_OUT_TYPE@*) tmp2;
-
-            /* is there a nicer way to complex conjugate ? */
-            dest->real = src->real;
-            dest->imag = -src->imag;
+            SET_CONJ(dest, src);
 
             if (multi_iter_next(&mit))
                 break;
