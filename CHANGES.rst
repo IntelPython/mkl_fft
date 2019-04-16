@@ -2,9 +2,17 @@
 mkl_fft changelog
 =================
 
+1.0.12
+======
+Issue #37 fixed.
+
+Inhibited vectorization of short loops computing pointer to memory referenced by a multi-iterator by Intel (R) C Compiler, improving
+performance of ND `fft` and `ifft` on real input arrays.
+
+
 1.0.11
 ======
-Improvement for performance of ND fft on real input arrays by inlining multi-iterators.
+Improvement for performance of ND `fft` on real input arrays by inlining multi-iterators.
 This particularly benefits performance of mkl_fft built with Intel (R) C Compiler.
 
 
