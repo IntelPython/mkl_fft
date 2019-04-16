@@ -878,7 +878,9 @@ def _remove_axis(s, axes, axis_to_remove):
     a2r = lens + axis_to_remove if axis_to_remove < 0 else axis_to_remove
 
     ss = s[:a2r] + s[a2r+1:]
-    aa = axes_normalized[:a2r] + tuple(ai - 1 for ai in axes_normalized[a2r+1:])
+    pivot = axes_normalized[a2r]
+    aa = tuple(ai if ai < pivot else ai - 1 for ai in axes_normalized[:a2r]) + \
+         tuple(ai if ai < pivot else ai - 1 for ai in axes_normalized[a2r+1:])
     return ss, aa
 
 
@@ -938,7 +940,7 @@ def rfftn_numpy(x, s=None, axes=None):
             ss[-1] = a.shape[la]
             a = _fix_dimensions(a, tuple(ss), axes)
         if len(set(axes)) == len(axes) and len(axes) == a.ndim and len(axes) > 2:
-            ss, aa = _remove_axis(s, axes, la)
+            ss, aa = _remove_axis(s, axes, -1)
             ind = [slice(None,None,1),] * len(s)
             for ii in range(a.shape[la]):
                 ind[la] = ii
