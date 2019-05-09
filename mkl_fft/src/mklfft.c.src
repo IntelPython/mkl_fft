@@ -807,6 +807,7 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
             half_shape[axis] = (n_last > 2) ? n_last - nh_last: 0;
 
             multi_iter_new(&mit, half_shape, xout_rank);
+	    mkl_free(half_shape);
 
             while(!MultiIter_Done(mit)) {
                 char *tmp1, *tmp2;
@@ -846,7 +847,6 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
 
 
             multi_iter_free(&mit);
-            mkl_free(half_shape);
         }
     }
 
@@ -1888,6 +1888,7 @@ int
         half_shape[last_idx] = (n_last > 2) ? n_last - nh_last: 0;
 
         multi_iter_new(&mit, half_shape, xout_rank);
+	mkl_free(half_shape);
 
         while(!MultiIter_Done(mit)) {
             char *tmp1, *tmp2;
