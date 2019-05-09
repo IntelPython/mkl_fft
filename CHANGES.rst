@@ -2,6 +2,12 @@
 mkl_fft changelog
 =================
 
+1.0.13
+======
+
+Issue #39 fixed (memory leak with complex FFT on real arrays)
+
+
 1.0.12
 ======
 Issue #37 fixed.
