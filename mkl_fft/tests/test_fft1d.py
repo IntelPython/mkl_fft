@@ -35,7 +35,12 @@ import sys
 import warnings
 
 import mkl_fft
-import numpy.fft.fftpack as np_fft
+
+from distutils.version import LooseVersion
+if LooseVersion(np.__version__) < LooseVersion('1.17.0'):
+    import numpy.fft.fftpack as np_fft
+else:
+    import numpy.fft.pocketfft as np_fft
 
 
 def _datacopied(arr, original):
