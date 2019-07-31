@@ -577,7 +577,7 @@ def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
                 x_arr, cnp.NPY_CDOUBLE, cnp.NPY_BEHAVED)
         except:
-            ValueError("First argument should be a real or a complex sequence of single or double precision")
+            raise ValueError("First argument should be a real or a complex sequence of single or double precision")
         x_type = cnp.PyArray_TYPE(x_arr)
         in_place = 1
 
