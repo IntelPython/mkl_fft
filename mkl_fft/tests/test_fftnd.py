@@ -35,7 +35,12 @@ import sys
 import warnings
 
 import mkl_fft
-import numpy.fft.fftpack as np_fft
+
+from distutils.version import LooseVersion
+if LooseVersion(np.__version__) < LooseVersion('1.17.0'):
+    import numpy.fft.fftpack as np_fft
+else:
+    import numpy.fft.pocketfft as np_fft
 
 reps_64 = (2**11)*np.finfo(np.float64).eps
 reps_32 = (2**11)*np.finfo(np.float32).eps
