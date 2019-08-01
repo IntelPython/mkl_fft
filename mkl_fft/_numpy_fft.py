@@ -61,6 +61,7 @@ from numpy.core import (array, asarray, shape, conjugate, take, sqrt, prod)
 
 import numpy
 from . import _pydfti as mkl_fft
+from . import _float_utils
 
 
 def _unitary(norm):
@@ -155,7 +156,8 @@ def fft(a, n=None, axis=-1, norm=None):
     the `numpy.fft` documentation.
 
     """
-    output = mkl_fft.fft(a, n, axis)
+    x = _float_utils.__downcast_float128_array(a)
+    output = mkl_fft.fft(x, n, axis)
     if _unitary(norm):
         output *= 1 / sqrt(output.shape[axis])
     return output
@@ -241,7 +243,8 @@ def ifft(a, n=None, axis=-1, norm=None):
 
     """
     unitary = _unitary(norm)
-    output = mkl_fft.ifft(a, n, axis)
+    x = _float_utils.__downcast_float128_array(a)
+    output = mkl_fft.ifft(x, n, axis)
     if unitary:
         output *= sqrt(output.shape[axis])
     return output
@@ -325,10 +328,11 @@ def rfft(a, n=None, axis=-1, norm=None):
 
     """
     unitary = _unitary(norm)
+    x = _float_utils.__downcast_float128_array(a)
     if unitary and n is None:
-        a = asarray(a)
-        n = a.shape[axis]
-    output = mkl_fft.rfft_numpy(a, n=n, axis=axis)
+        x = asarray(x)
+        n = x.shape[axis]
+    output = mkl_fft.rfft_numpy(x, n=n, axis=axis)
     if unitary:
         output *= 1 / sqrt(n)
     return output
@@ -413,7 +417,8 @@ def irfft(a, n=None, axis=-1, norm=None):
     specified, and the output array is purely real.
 
     """
-    output = mkl_fft.irfft_numpy(a, n=n, axis=axis)
+    x = _float_utils.__downcast_float128_array(a)
+    output = mkl_fft.irfft_numpy(x, n=n, axis=axis)
     if _unitary(norm):
         output *= sqrt(output.shape[axis])
     return output
@@ -488,12 +493,12 @@ def hfft(a, n=None, axis=-1, norm=None):
            [ 2., -2.]])
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=complex)
+    x = _float_utils.__downcast_float128_array(a)
+    x = array(x, copy=True, dtype=complex)
     if n is None:
-        n = (a.shape[axis] - 1) * 2
+        n = (x.shape[axis] - 1) * 2
     unitary = _unitary(norm)
-    return irfft(conjugate(a), n, axis) * (sqrt(n) if unitary else n)
+    return irfft(conjugate(x), n, axis) * (sqrt(n) if unitary else n)
 
 
 def ihfft(a, n=None, axis=-1, norm=None):
@@ -547,11 +552,12 @@ def ihfft(a, n=None, axis=-1, norm=None):
 
     """
     # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=float)
+    x = _float_utils.__downcast_float128_array(a)
+    x = array(x, copy=True, dtype=float)
     if n is None:
-        n = a.shape[axis]
+        n = x.shape[axis]
     unitary = _unitary(norm)
-    output = conjugate(rfft(a, n, axis))
+    output = conjugate(rfft(x, n, axis))
     return output * (1 / (sqrt(n) if unitary else n))
 
 
@@ -673,7 +679,8 @@ def fftn(a, s=None, axes=None, norm=None):
     >>> plt.show()
 
     """
-    output = mkl_fft.fftn(a, s, axes)
+    x = _float_utils.__downcast_float128_array(a)
+    output = mkl_fft.fftn(x, s, axes)
     if _unitary(norm):
         output *= 1 / sqrt(_tot_size(output, axes))
     return output
@@ -772,7 +779,8 @@ def ifftn(a, s=None, axes=None, norm=None):
 
     """
     unitary = _unitary(norm)
-    output = mkl_fft.ifftn(a, s, axes)
+    x = _float_utils.__downcast_float128_array(a)
+    output = mkl_fft.ifftn(x, s, axes)
     if unitary:
         output *= sqrt(_tot_size(output, axes))
     return output
@@ -863,8 +871,8 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
               0.0 +0.j        ,   0.0 +0.j        ]])
 
     """
-
-    return fftn(a, s=s, axes=axes, norm=norm)
+    x = _float_utils.__downcast_float128_array(a)
+    return fftn(x, s=s, axes=axes, norm=norm)
 
 
 def ifft2(a, s=None, axes=(-2, -1), norm=None):
@@ -949,8 +957,8 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
            [ 0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
 
     """
-
-    return ifftn(a, s=s, axes=axes, norm=norm)
+    x = _float_utils.__downcast_float128_array(a)
+    return ifftn(x, s=s, axes=axes, norm=norm)
 
 
 def rfftn(a, s=None, axes=None, norm=None):
@@ -1036,11 +1044,12 @@ def rfftn(a, s=None, axes=None, norm=None):
 
     """
     unitary = _unitary(norm)
+    x = _float_utils.__downcast_float128_array(a)
     if unitary:
-        a = asarray(a)
-        s, axes = _cook_nd_args(a, s, axes)
+        x = asarray(x)
+        s, axes = _cook_nd_args(x, s, axes)
 
-    output = mkl_fft.rfftn_numpy(a, s, axes)
+    output = mkl_fft.rfftn_numpy(x, s, axes)
     if unitary:
         n_tot = prod(asarray(s, dtype=output.dtype))
         output *= 1 / sqrt(n_tot)
@@ -1079,8 +1088,8 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
     For more details see `rfftn`.
 
     """
-
-    return rfftn(a, s, axes, norm)
+    x = _float_utils.__downcast_float128_array(a)
+    return rfftn(x, s, axes, norm)
 
 
 def irfftn(a, s=None, axes=None, norm=None):
@@ -1167,7 +1176,8 @@ def irfftn(a, s=None, axes=None, norm=None):
             [ 1.,  1.]]])
 
     """
-    output = mkl_fft.irfftn_numpy(a, s, axes)
+    x = _float_utils.__downcast_float128_array(a)
+    output = mkl_fft.irfftn_numpy(x, s, axes)
     if _unitary(norm):
         output *= sqrt(_tot_size(output, axes))
     return output
@@ -1205,6 +1215,6 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
     For more details see `irfftn`.
 
     """
-
-    return irfftn(a, s, axes, norm)
+    x = _float_utils.__downcast_float128_array(a)
+    return irfftn(x, s, axes, norm)
 

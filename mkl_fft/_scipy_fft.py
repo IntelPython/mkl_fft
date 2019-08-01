@@ -25,46 +25,46 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from . import _pydfti
-from . import _float16_utils
+from . import _float_utils
 
 __all__ = ['fft', 'ifft', 'fftn', 'ifftn', 'fft2', 'ifft2', 'rfft', 'irfft']
 
 
 def fft(a, n=None, axis=-1, overwrite_x=False):
-    x = _float16_utils.__upcast_float16_array(a)
+    x = _float_utils.__upcast_float16_array(a)
     return _pydfti.fft(x, n=n, axis=axis, overwrite_x=overwrite_x)
 
 
 def ifft(a, n=None, axis=-1, overwrite_x=False):
-    x = _float16_utils.__upcast_float16_array(a)
+    x = _float_utils.__upcast_float16_array(a)
     return _pydfti.ifft(x, n=n, axis=axis, overwrite_x=overwrite_x)
 
 
 def fftn(a, shape=None, axes=None, overwrite_x=False):
-    x = _float16_utils.__upcast_float16_array(a)
+    x = _float_utils.__upcast_float16_array(a)
     return _pydfti.fftn(x, shape=shape, axes=axes, overwrite_x=overwrite_x)
 
 
 def ifftn(a, shape=None, axes=None, overwrite_x=False):
-    x = _float16_utils.__upcast_float16_array(a)
+    x = _float_utils.__upcast_float16_array(a)
     return _pydfti.ifftn(x, shape=shape, axes=axes, overwrite_x=overwrite_x)
 
 
 def fft2(a, shape=None, axes=(-2,-1), overwrite_x=False):
-    x = _float16_utils.__upcast_float16_array(a)
+    x = _float_utils.__upcast_float16_array(a)
     return _pydfti.fftn(x, shape=shape, axes=axes, overwrite_x=overwrite_x)
 
 
 def ifft2(a, shape=None, axes=(-2,-1), overwrite_x=False):
-    x = _float16_utils.__upcast_float16_array(a)
+    x = _float_utils.__upcast_float16_array(a)
     return _pydfti.ifftn(x, shape=shape, axes=axes, overwrite_x=overwrite_x)
 
 
 def rfft(a, n=None, axis=-1, overwrite_x=False):
-    x = _float16_utils.__upcast_float16_array(a)
+    x = _float_utils.__upcast_float16_array(a)
     return _pydfti.rfft(a, n=n, axis=axis, overwrite_x=overwrite_x)
 
 
 def irfft(a, n=None, axis=-1, overwrite_x=False):
-    x = _float16_utils.__upcast_float16_array(a)
+    x = _float_utils.__upcast_float16_array(a)
     return _pydfti.irfft(a, n=n, axis=axis, overwrite_x=overwrite_x)
