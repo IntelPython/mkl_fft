@@ -2,6 +2,12 @@
 mkl_fft changelog
 =================
 
+1.0.14
+======
+
+Fixed unreferenced bug in `irfftn_numpy`, and adjusted NumPy interfaces to change to pocketfft in NumPy 1.17
+
+
 1.0.13
 ======
 
