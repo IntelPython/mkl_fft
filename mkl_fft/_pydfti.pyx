@@ -971,7 +971,7 @@ def irfftn_numpy(x, s=None, axes=None):
             if not ovr_x:
                 a = a.copy()
                 ovr_x = True
-            ss, aa = _remove_axis(s, axes, la)
+            ss, aa = _remove_axis(s, axes, -1)
             ind = [slice(None,None,1),] * len(s)
             for ii in range(a.shape[la]):
                 ind[la] = ii
