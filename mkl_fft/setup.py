@@ -27,16 +27,30 @@ from __future__ import division, print_function, absolute_import
 import sys
 from os.path import join, exists, abspath, dirname
 from os import getcwd
+from os import environ
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info
     config = Configuration('mkl_fft', parent_package, top_path)
 
+    mkl_root = environ.get('MKLROOT', None)
+    if mkl_root:
+        mkl_info = {
+            'include_dirs': [join(mkl_root, 'include')],
+            'library_dirs': [join(mkl_root, 'lib'), join(mkl_root, 'lib', 'intel64')],
+            'libraries': ['mkl_rt']
+        }
+    else:
+        mkl_info = get_info('mkl')
+
+    mkl_include_dirs = mkl_info.get('include_dirs', [])
+    mkl_library_dirs = mkl_info.get('library_dirs', [])
+    mkl_libraries = mkl_info.get('libraries', ['mkl_rt'])
+
     pdir = dirname(__file__)
     wdir = join(pdir, 'src')
     mkl_info = get_info('mkl')
-    libs = mkl_info.get('libraries', ['mkl_rt'])
 
     try:
         from Cython.Build import cythonize
@@ -58,8 +72,9 @@ def configuration(parent_package='',top_path=None):
             join(wdir, 'mklfft.h'),
             join(wdir, 'multi_iter.h')
         ],
-        include_dirs = [wdir],
-        libraries = libs,
+        include_dirs = [wdir] + mkl_include_dirs,
+        libraries = mkl_libraries,
+        library_dirs = mkl_library_dirs,
         extra_compile_args = [
             '-DNDEBUG',
             # '-ggdb', '-O0', '-Wall', '-Wextra', '-DDEBUG',
