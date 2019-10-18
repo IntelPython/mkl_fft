@@ -36,11 +36,11 @@ import warnings
 
 import mkl_fft
 
-from distutils.version import LooseVersion
-if LooseVersion(np.__version__) < LooseVersion('1.17.0'):
-    import numpy.fft.fftpack as np_fft
-else:
-    import numpy.fft.pocketfft as np_fft
+def naive_fft1d(vec):
+    L = len(vec)
+    phase = -2j*np.pi*(np.arange(L)/float(L))
+    phase = np.arange(L).reshape(-1, 1) * phase
+    return np.sum(vec*np.exp(phase), axis=1)
 
 
 def _datacopied(arr, original):
@@ -66,11 +66,11 @@ class Test_mklfft_vector(TestCase):
     def test_vector1(self):
         """check that mkl_fft gives the same result of numpy.fft"""
         f1 = mkl_fft.fft(self.xz1)
-        f2 = np_fft.fft(self.xz1)
+        f2 = naive_fft1d(self.xz1)
         assert_allclose(f1,f2, rtol=1e-7, atol=2e-12)
 
         f1 = mkl_fft.fft(self.xc1)
-        f2 = np_fft.fft(self.xc1)
+        f2 = naive_fft1d(self.xc1)
         assert_allclose(f1,f2, rtol=2e-6, atol=2e-6)
 
     def test_vector2(self):
