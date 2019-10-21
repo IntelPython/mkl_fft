@@ -2,6 +2,15 @@
 mkl_fft changelog
 =================
 
+1.0.15
+======
+
+Changed tests to not compare against numpy fft, as this broke due to renaming of `np.fft.pocketfft` to
+`np.fft._pocketfft`. Instead compare against naive realization of 1D FFT as a sum.
+
+Setup script is now aware of `MKLROOT` environment variable. If unset, NumPy's mkl_info will be queried.
+
+
 1.0.14
 ======
 
