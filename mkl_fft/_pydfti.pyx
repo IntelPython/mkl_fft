@@ -38,9 +38,7 @@ cimport cpython.pycapsule
 from cpython.exc cimport (PyErr_Occurred, PyErr_Clear)
 from cpython.mem cimport (PyMem_Malloc, PyMem_Free)
 
-from threading import Lock
 from threading import local as threading_local
-_lock = Lock()
 
 # thread-local storage
 _tls = threading_local()
@@ -334,21 +332,20 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
         in_place = 1
 
     if in_place:
-        with _lock:
-            _cache_capsule = _tls_dfti_cache_capsule()
-            _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-            if x_type is cnp.NPY_CDOUBLE:
-                if dir_ < 0:
-                   status = cdouble_mkl_ifft1d_in(x_arr, n_, <int> axis_, _cache)
-                else:
-                   status = cdouble_mkl_fft1d_in(x_arr, n_, <int> axis_, _cache)
-            elif x_type is cnp.NPY_CFLOAT:
-                if dir_ < 0:
-                   status = cfloat_mkl_ifft1d_in(x_arr, n_, <int> axis_, _cache)
-                else:
-                   status = cfloat_mkl_fft1d_in(x_arr, n_, <int> axis_, _cache)
+        _cache_capsule = _tls_dfti_cache_capsule()
+        _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
+        if x_type is cnp.NPY_CDOUBLE:
+            if dir_ < 0:
+               status = cdouble_mkl_ifft1d_in(x_arr, n_, <int> axis_, _cache)
             else:
-                status = 1
+               status = cdouble_mkl_fft1d_in(x_arr, n_, <int> axis_, _cache)
+        elif x_type is cnp.NPY_CFLOAT:
+            if dir_ < 0:
+               status = cfloat_mkl_ifft1d_in(x_arr, n_, <int> axis_, _cache)
+            else:
+               status = cfloat_mkl_fft1d_in(x_arr, n_, <int> axis_, _cache)
+        else:
+            status = 1
 
         if status:
             c_error_msg = mkl_dfti_error(status)
@@ -368,39 +365,38 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
         f_arr = __allocate_result(x_arr, n_, axis_, f_type);
 
         # call out-of-place FFT
-        with _lock:
-            _cache_capsule = _tls_dfti_cache_capsule()
-            _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-            if f_type is cnp.NPY_CDOUBLE:
-                if x_type is cnp.NPY_DOUBLE:
-                    if dir_ < 0:
-                       status = double_cdouble_mkl_ifft1d_out(
-                           x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, _cache)
-                    else:
-                       status = double_cdouble_mkl_fft1d_out(
-                           x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, _cache)
-                elif x_type is cnp.NPY_CDOUBLE:
-                    if dir_ < 0:
-                        status = cdouble_cdouble_mkl_ifft1d_out(
-                            x_arr, n_, <int> axis_, f_arr, _cache)
-                    else:
-                        status = cdouble_cdouble_mkl_fft1d_out(
-                            x_arr, n_, <int> axis_, f_arr, _cache)
-            else:
-                if x_type is cnp.NPY_FLOAT:
-                    if dir_ < 0:
-                       status = float_cfloat_mkl_ifft1d_out(
-                           x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, _cache)
-                    else:
-                       status = float_cfloat_mkl_fft1d_out(
-                           x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, _cache)
-                elif x_type is cnp.NPY_CFLOAT:
-                    if dir_ < 0:
-                        status = cfloat_cfloat_mkl_ifft1d_out(
-                            x_arr, n_, <int> axis_, f_arr, _cache)
-                    else:
-                        status = cfloat_cfloat_mkl_fft1d_out(
-                            x_arr, n_, <int> axis_, f_arr, _cache)
+        _cache_capsule = _tls_dfti_cache_capsule()
+        _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
+        if f_type is cnp.NPY_CDOUBLE:
+            if x_type is cnp.NPY_DOUBLE:
+                if dir_ < 0:
+                    status = double_cdouble_mkl_ifft1d_out(
+                        x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, _cache)
+                else:
+                    status = double_cdouble_mkl_fft1d_out(
+                        x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, _cache)
+            elif x_type is cnp.NPY_CDOUBLE:
+                if dir_ < 0:
+                    status = cdouble_cdouble_mkl_ifft1d_out(
+                        x_arr, n_, <int> axis_, f_arr, _cache)
+                else:
+                    status = cdouble_cdouble_mkl_fft1d_out(
+                        x_arr, n_, <int> axis_, f_arr, _cache)
+        else:
+            if x_type is cnp.NPY_FLOAT:
+                if dir_ < 0:
+                    status = float_cfloat_mkl_ifft1d_out(
+                        x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, _cache)
+                else:
+                    status = float_cfloat_mkl_fft1d_out(
+                        x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, _cache)
+            elif x_type is cnp.NPY_CFLOAT:
+                if dir_ < 0:
+                    status = cfloat_cfloat_mkl_ifft1d_out(
+                        x_arr, n_, <int> axis_, f_arr, _cache)
+                else:
+                    status = cfloat_cfloat_mkl_fft1d_out(
+                        x_arr, n_, <int> axis_, f_arr, _cache)
 
         if (status):
             c_error_msg = mkl_dfti_error(status)
@@ -457,21 +453,20 @@ def _rrfft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
         in_place = 1
 
     if in_place:
-        with _lock:
-            _cache_capsule = _tls_dfti_cache_capsule()
-            _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-            if x_type is cnp.NPY_DOUBLE:
-                if dir_ < 0:
-                   status = double_mkl_irfft_in(x_arr, n_, <int> axis_, _cache)
-                else:
-                   status = double_mkl_rfft_in(x_arr, n_, <int> axis_, _cache)
-            elif x_type is cnp.NPY_FLOAT:
-                if dir_ < 0:
-                   status = float_mkl_irfft_in(x_arr, n_, <int> axis_, _cache)
-                else:
-                   status = float_mkl_rfft_in(x_arr, n_, <int> axis_, _cache)
+        _cache_capsule = _tls_dfti_cache_capsule()
+        _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
+        if x_type is cnp.NPY_DOUBLE:
+            if dir_ < 0:
+                status = double_mkl_irfft_in(x_arr, n_, <int> axis_, _cache)
             else:
-                status = 1
+                status = double_mkl_rfft_in(x_arr, n_, <int> axis_, _cache)
+        elif x_type is cnp.NPY_FLOAT:
+            if dir_ < 0:
+                status = float_mkl_irfft_in(x_arr, n_, <int> axis_, _cache)
+            else:
+                status = float_mkl_rfft_in(x_arr, n_, <int> axis_, _cache)
+        else:
+            status = 1
 
         if status:
             c_error_msg = mkl_dfti_error(status)
@@ -489,19 +484,18 @@ def _rrfft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
         f_arr = __allocate_result(x_arr, n_, axis_, x_type);
 
         # call out-of-place FFT
-        with _lock:
-            _cache_capsule = _tls_dfti_cache_capsule()
-            _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-            if x_type is cnp.NPY_DOUBLE:
-                if dir_ < 0:
-                   status = double_double_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
-                else:
-                   status = double_double_mkl_rfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
+        _cache_capsule = _tls_dfti_cache_capsule()
+        _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
+        if x_type is cnp.NPY_DOUBLE:
+            if dir_ < 0:
+                status = double_double_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
             else:
-                if dir_ < 0:
-                   status = float_float_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
-                else:
-                   status = float_float_mkl_rfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
+                status = double_double_mkl_rfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
+        else:
+            if dir_ < 0:
+                status = float_float_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
+            else:
+                status = float_float_mkl_rfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
 
         if (status):
             c_error_msg = mkl_dfti_error(status)
@@ -558,15 +552,13 @@ def _rc_fft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
 
     # call out-of-place FFT
     if x_type is cnp.NPY_FLOAT:
-        with _lock:
-            _cache_capsule = _tls_dfti_cache_capsule()
-            _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-            status = float_cfloat_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, _cache)
+        _cache_capsule = _tls_dfti_cache_capsule()
+        _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
+        status = float_cfloat_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, _cache)
     else:
-        with _lock:
-            _cache_capsule = _tls_dfti_cache_capsule()
-            _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-            status = double_cdouble_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, _cache)
+        _cache_capsule = _tls_dfti_cache_capsule()
+        _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
+        status = double_cdouble_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, _cache)
 
     if (status):
         c_error_msg = mkl_dfti_error(status)
@@ -645,15 +637,13 @@ def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
 
         # call out-of-place FFT
         if x_type is cnp.NPY_CFLOAT:
-            with _lock:
-                _cache_capsule = _tls_dfti_cache_capsule()
-                _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-                status = cfloat_float_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
+            _cache_capsule = _tls_dfti_cache_capsule()
+            _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
+            status = cfloat_float_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
         else:
-            with _lock:
-                _cache_capsule = _tls_dfti_cache_capsule()
-                _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-                status = cdouble_double_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
+            _cache_capsule = _tls_dfti_cache_capsule()
+            _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
+            status = cdouble_double_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
 
         if (status):
             c_error_msg = mkl_dfti_error(status)
