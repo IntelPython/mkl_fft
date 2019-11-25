@@ -49,7 +49,7 @@ __implemented = dict()
 
 def __ua_function__(method, args, kwargs):
     """Fetch registered UA function."""
-    fn = _implemented.get(method, None)
+    fn = __implemented.get(method, None)
     if fn is None:
         return NotImplemented
     return fn(*args, **kwargs)
@@ -57,7 +57,7 @@ def __ua_function__(method, args, kwargs):
 def _implements(scipy_func):
     """Decorator adds function to the dictionary of implemented UA functions"""
     def inner(func):
-        _implemented[scipy_func] = func
+        __implemented[scipy_func] = func
         return func
 
     return inner
