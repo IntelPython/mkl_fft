@@ -1,4 +1,4 @@
-{% set version = "1.0dev" %}
+{% set version = "1.1.0" %}
 {% set buildnumber = 0 %}
 
 
@@ -19,6 +19,7 @@ build:
       - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_pydfti.*
       - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_numpy_fft.py
       - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_scipy_fft.py
+      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_scipy_fft_backend.py
       - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/setup.py
       - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/tests/test_fft1d.py
       - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/__init__.pyc         [py27]
@@ -36,12 +37,13 @@ requirements:
       - python
       - setuptools
       - intelpython
-      - mkl-devel               [not nomkl]
+      - mkl-devel
       - cython
       - numpy x.x
     run:
       - python
-      - mkl                     [not nomkl]
+      - mkl
+      - mkl-service
       - intelpython
       - numpy x.x
 
