@@ -100,10 +100,34 @@ def _tot_size(x, axes):
     return prod([s[ai] for ai in axes])
 
 
+def _workers_to_num_threads(w):
+    if w is None:
+        return mkl.domain_get_max_threads(domain='fft')
+    return int(w)
+
+
+class Workers:
+    def __init__(self, workers):
+        self.workers = workers
+        self.n_threads = _workers_to_num_threads(workers)
+
+    def __enter__(self):
+        try:
+            mkl.domain_set_num_threads(self.n_threads, domain='fft')
+        except:
+            raise ValueError("Class argument {} result in invalid number of threads {}".format(self.workers, self.n_threads))
+
+    def __exit__(self, *args):
+        # restore default
+        max_num_threads = mkl.domain_get_max_threads(domain='fft')
+        mkl.domain_set_num_threads(max_num_threads, domain='fft')
+
+
 @_implements(_fft.fft)
 def fft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
     x = _float_utils.__upcast_float16_array(a)
-    output = _pydfti.fft(x, n=n, axis=axis, overwrite_x=overwrite_x)
+    with Workers(workers):
+        output = _pydfti.fft(x, n=n, axis=axis, overwrite_x=overwrite_x)
     if _unitary(norm):
         output *= 1 / sqrt(output.shape[axis])
     return output
@@ -112,7 +136,8 @@ def fft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
 @_implements(_fft.ifft)
 def ifft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
     x = _float_utils.__upcast_float16_array(a)
-    output = _pydfti.ifft(x, n=n, axis=axis, overwrite_x=overwrite_x)
+    with Workers(workers):
+        output = _pydfti.ifft(x, n=n, axis=axis, overwrite_x=overwrite_x)
     if _unitary(norm):
         output *= sqrt(output.shape[axis])
     return output
@@ -121,7 +146,8 @@ def ifft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
 @_implements(_fft.fft2)
 def fft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
     x = _float_utils.__upcast_float16_array(a)
-    output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
+    with Workers(workers):
+        output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
     if _unitary(norm):
         factor = 1
         for axis in axes:
@@ -133,7 +159,8 @@ def fft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
 @_implements(_fft.ifft2)
 def ifft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
     x = _float_utils.__upcast_float16_array(a)
-    output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
+    with Workers(workers):
+        output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
     if _unitary(norm):
         factor = 1
         _axes = range(output.ndim) if axes is None else axes
@@ -146,7 +173,8 @@ def ifft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
 @_implements(_fft.fftn)
 def fftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
     x = _float_utils.__upcast_float16_array(a)
-    output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
+    with Workers(workers):
+        output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
     if _unitary(norm):
         factor = 1
         _axes = range(output.ndim) if axes is None else axes
@@ -159,7 +187,8 @@ def fftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
 @_implements(_fft.ifftn)
 def ifftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
     x = _float_utils.__upcast_float16_array(a)
-    output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
+    with Workers(workers):
+        output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
     if _unitary(norm):
         factor = 1
         _axes = range(output.ndim) if axes is None else axes
@@ -170,53 +199,55 @@ def ifftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
 
 
 @_implements(_fft.rfft)
-def rfft(a, n=None, axis=-1, norm=None):
+def rfft(a, n=None, axis=-1, norm=None, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     unitary = _unitary(norm)
     x = _float_utils.__downcast_float128_array(x)
     if unitary and n is None:
         x = asarray(x)
         n = x.shape[axis]
-    output = _pydfti.rfft_numpy(x, n=n, axis=axis)
+    with Workers(workers):
+        output = _pydfti.rfft_numpy(x, n=n, axis=axis)
     if unitary:
         output *= 1 / sqrt(n)
     return output
 
 
 @_implements(_fft.irfft)
-def irfft(a, n=None, axis=-1, norm=None):
+def irfft(a, n=None, axis=-1, norm=None, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     x = _float_utils.__downcast_float128_array(x)
-    output = _pydfti.irfft_numpy(x, n=n, axis=axis)
+    with Workers(workers):
+        output = _pydfti.irfft_numpy(x, n=n, axis=axis)
     if _unitary(norm):
         output *= sqrt(output.shape[axis])
     return output
 
 
 @_implements(_fft.rfft2)
-def rfft2(a, s=None, axes=(-2, -1), norm=None):
+def rfft2(a, s=None, axes=(-2, -1), norm=None, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     x = _float_utils.__downcast_float128_array(a)
-    return rfftn(x, s, axes, norm)
+    return rfftn(x, s, axes, norm, workers)
 
 
 @_implements(_fft.irfft2)
-def irfft2(a, s=None, axes=(-2, -1), norm=None):
+def irfft2(a, s=None, axes=(-2, -1), norm=None, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     x = _float_utils.__downcast_float128_array(x)
-    return irfftn(x, s, axes, norm)
+    return irfftn(x, s, axes, norm, workers)
 
 
 @_implements(_fft.rfftn)
-def rfftn(a, s=None, axes=None, norm=None):
+def rfftn(a, s=None, axes=None, norm=None, workers=None):
     unitary = _unitary(norm)
     x = _float_utils.__upcast_float16_array(a)
     x = _float_utils.__downcast_float128_array(x)
     if unitary:
         x = asarray(x)
         s, axes = _cook_nd_args(x, s, axes)
-
-    output = _pydfti.rfftn_numpy(x, s, axes)
+    with Workers(workers):
+        output = _pydfti.rfftn_numpy(x, s, axes)
     if unitary:
         n_tot = prod(asarray(s, dtype=output.dtype))
         output *= 1 / sqrt(n_tot)
@@ -224,10 +255,11 @@ def rfftn(a, s=None, axes=None, norm=None):
 
 
 @_implements(_fft.irfftn)
-def irfftn(a, s=None, axes=None, norm=None):
+def irfftn(a, s=None, axes=None, norm=None, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     x = _float_utils.__downcast_float128_array(x)
-    output = _pydfti.irfftn_numpy(x, s, axes)
+    with Workers(workers):
+        output = _pydfti.irfftn_numpy(x, s, axes)
     if _unitary(norm):
         output *= sqrt(_tot_size(output, axes))
     return output
