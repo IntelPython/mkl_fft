@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2017, Intel Corporation
+ Copyright (c) 2017-2020, Intel Corporation
 
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
@@ -35,6 +35,7 @@
 #include <limits.h>
 
 #ifdef DEBUG
+#include <assert.h>
 #include <stdio.h>
 #define _debug_print(...)  printf(__VA_ARGS__)
 #else
@@ -471,6 +472,9 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis, DftiCache
     get_basic_array_data(x_inout, &x_rank, &x_shape,
                          &x_strides, &x_itemsize, &x_size);
 
+    if (x_size == 0) /* nothing to do */
+	return status;
+
     assert( x_size > 0 ); /* assert that x is non-empty */
     assert( 0 <= axis && axis < x_rank );
     assert( x_itemsize == sizeof(@MKL_TYPE@) );
@@ -625,6 +629,11 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
 
     assert(xout_rank == xin_rank);
 
+    if (xin_size == 0) {
+	/* nothing to do */
+	assert(xin_size == xout_size);
+	return status;
+    }
     assert( xin_size > 0 ); /* assert that array is non-empty */
     assert(0 <= axis && axis < xin_rank);
     assert( 0 < n && n <= xin_shape[axis] );
@@ -886,6 +895,12 @@ int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
 
     assert(xout_rank == xin_rank);
 
+    if (xin_size == 0) {
+	/* nothing to do */
+	assert(xout_size == 0);
+	return status;
+    }
+
     assert( xin_size > 0 ); /* assert that array is non-empty */
     assert(0 <= axis && axis < xin_rank);
     assert( 0 < n && n <= xin_shape[axis] );
@@ -1059,6 +1074,9 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis, DftiCache
     get_basic_array_data(x_inout, &x_rank, &x_shape,
                          &x_strides, &x_itemsize, &x_size);
 
+    if (x_size == 0) /* nothing to do */
+	return status;
+
     assert( x_size > 0 ); /* assert that  */
     assert(0 <= axis && axis < x_rank);
     assert(x_itemsize == sizeof(@MKL_TYPE@));
@@ -1194,6 +1212,12 @@ int
                          &xout_strides, &xout_itemsize, &xout_size);
 
     assert(xout_rank == xin_rank);
+
+    if (xin_size == 0) {
+	/* nothing to do */
+	assert(xout_size == 0);
+	return status;
+    }
 
     assert( xin_size > 0 ); /* assert that array is non-empty */
     assert(0 <= axis && axis < xin_rank);
@@ -1369,6 +1393,12 @@ int @name@_@name@_mkl_@mode@_out(
 
     assert(xout_rank == xin_rank);
 
+    if(xin_size == 0) {
+	/* nothing to do */
+	assert(xout_size == 0);
+	return status;
+    }
+    
     assert( xin_size > 0 ); /* assert that array is non-empty */
     assert(0 <= axis && axis < xin_rank);
     assert( 0 < n && n <= xin_shape[axis] );
@@ -1543,6 +1573,9 @@ int
                          &x_strides, &x_itemsize, &x_size);
 
 
+    if (x_size == 0) /* nothing to do */
+	return status;
+
     assert(x_size > 0);
     assert(x_itemsize == sizeof(@MKL_IN_TYPE@));
 
@@ -1649,6 +1682,11 @@ int
     get_basic_array_data(x_out, &xout_rank, &xout_shape,
                          &xout_strides, &xout_itemsize, &xout_size);
 
+    if(xin_size == 0) {
+	/* nothing to do */
+	assert(xout_size == 0);
+	return status;
+    }
 
     assert(xin_size > 0);
     assert(xin_itemsize == sizeof(@MKL_IN_TYPE@));
@@ -1778,6 +1816,11 @@ int
     get_basic_array_data(x_out, &xout_rank, &xout_shape,
                          &xout_strides, &xout_itemsize, &xout_size);
 
+    if(xin_size == 0) {
+	/* nothing to do */
+	assert(xout_size == 0);
+	return status;
+    }
 
     assert(xin_size > 0);
     assert(xin_itemsize == sizeof(@MKL_IN_TYPE@));

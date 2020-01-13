@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017-2020, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import division, print_function, absolute_import
 import io
 import re
 
@@ -86,7 +85,7 @@ def setup_package():
         classifiers = [_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Mac OS-X"],
         test_suite = 'nose.collector',
-        python_requires = '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
+        python_requires = '>=3.5',
         install_requires = ['numpy'],
         configuration = configuration
     )
