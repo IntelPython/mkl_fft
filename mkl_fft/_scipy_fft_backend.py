@@ -40,6 +40,9 @@ from scipy.fft import (
 
 from numpy.core import (array, asarray, shape, conjugate, take, sqrt, prod)
 
+_max_threads_count = mkl.get_max_threads()
+
+
 __all__ = ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn',
            'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn',
            'hfft', 'ihfft', 'hfft2', 'ihfft2', 'hfftn', 'ihfftn',
@@ -101,9 +104,20 @@ def _tot_size(x, axes):
 
 
 def _workers_to_num_threads(w):
+    """Handle conversion of workers to a positive number of threads in the
+    same way as scipy.fft.helpers._workers.
+    """
     if w is None:
-        return mkl.domain_get_max_threads(domain='fft')
-    return int(w)
+        return get_workers()
+    _w = int(w)
+    if (_w == 0):
+        raise ValueError("Number of workers must be nonzero")
+    if (_w < 0):
+        _w += _max_threads_count + 1
+        if _w <= 0:
+            raise ValueError("workers value out of range; got {}, must not be"
+                             " less than {}".format(w, -_max_threads_count))
+    return _w
 
 
 class Workers:
@@ -119,8 +133,7 @@ class Workers:
 
     def __exit__(self, *args):
         # restore default
-        max_num_threads = mkl.domain_get_max_threads(domain='fft')
-        mkl.domain_set_num_threads(max_num_threads, domain='fft')
+        mkl.domain_set_num_threads(_max_threads_count, domain='fft')
 
 
 @_implements(_fft.fft)
