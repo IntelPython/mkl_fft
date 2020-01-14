@@ -2,6 +2,33 @@
 mkl_fft changelog
 =================
 
+1.1.0
+=====
+
+Added `scipy.fft` backend, see #42. Fixed #46.
+
+```
+Python 3.7.5 (default, Nov 23 2019, 04:02:01)
+Type 'copyright', 'credits' or 'license' for more information
+IPython 7.11.1 -- An enhanced Interactive Python. Type '?' for help.
+
+In [1]: import numpy as np, mkl_fft, mkl_fft._scipy_fft_backend as mkl_be, scipy, scipy.fft, mkl
+
+In [2]: mkl.verbose(1)
+Out[2]: True
+
+In [3]: x = np.random.randn(8*7).reshape((7, 8))
+...: with scipy.fft.set_backend(mkl_be, only=True):
+...:     ff = scipy.fft.fft2(x, workers=4)
+...: ff2 = scipy.fft.fft2(x)
+MKL_VERBOSE Intel(R) MKL 2020.0 Product build 20191102 for Intel(R) 64 architecture Intel(R) Advanced Vector Extensions 2 (Intel(R) AVX2) enabled processors, Lnx 2.40GHz intel_thread
+MKL_VERBOSE FFT(drfo7:8:8x8:1:1,bScale:0.0178571,tLim:1,desc:0x5629ad31b800) 24.85ms CNR:OFF Dyn:1 FastMM:1 TID:0  NThr:16,FFT:4
+
+In [4]: np.allclose(ff, ff2)
+Out[4]: True
+```
+
+
 1.0.15
 ======
 
