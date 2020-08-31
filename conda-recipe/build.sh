@@ -6,4 +6,4 @@ if [ `uname` == Darwin ]; then
     export MACOSX_DEPLOYMENT_TARGET=10.9
 fi
 
-CFLAGS="-I$PREFIX/include $CFLAGS" $PYTHON setup.py build --force install --old-and-unmanageable
+MKLROOT=$PREFIX CFLAGS="-I$PREFIX/include $CFLAGS" $PYTHON setup.py build --force install --old-and-unmanageable
