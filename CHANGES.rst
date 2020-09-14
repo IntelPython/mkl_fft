@@ -2,6 +2,15 @@
 mkl_fft changelog
 =================
 
+1.2.0
+=====
+
+Due to removal of deprecated real-to-real FFT with `DFTI_CONJUGATE_EVEN_STORAGE=DFTI_COMPLEX_REAL` and `DFTI_PACKED_FORMAT=DFTI_PACK`
+from Intel(R) Math Kernel Library, reimplemented `mkl_fft.rfft` and `mkl_fft.irfft` to use real-to-complex functionality with subsequent
+copying to rearange the transform as expected of `mkl_fft.rfft`, with the associated performance penalty. The use of the real-to-complex
+transform improves multi-core utilization which may offset the performance loss incurred due to copying.
+
+
 1.1.0
 =====
 
