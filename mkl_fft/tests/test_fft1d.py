@@ -198,6 +198,8 @@ class Test_mklfft_vector(TestCase):
         assert_allclose(f1, f2)
 
 
+class DuckArray(np.ndarray): pass
+
 class Test_mklfft_matrix(TestCase):
     def setUp(self):
         rnd.seed(1234567)
@@ -208,7 +210,7 @@ class Test_mklfft_matrix(TestCase):
               np.array([1.0 + 0.0j, 0.0 + 1.0j], dtype=np.complex128)
         )
         self.ac2 = self.az2.astype(np.complex64)
-        self.mat = np.matrix(self.az2)
+        self.mat = self.az2.view(DuckArray)
         self.xd1 = rnd.standard_normal(128)
 
     def test_matrix1(self):
@@ -367,7 +369,7 @@ class Test_mklfft_rfft(TestCase):
                     x = self.m2.copy().astype(dt)
                     f1 = mkl_fft.rfft(x, axis=a, overwrite_x=ovwr_x)
                     f2 = mkl_fft.irfft(f1, axis=a, overwrite_x=ovwr_x)
-                    assert_allclose(f2, self.m2.astype(dt), atol=atol)
+                    assert_allclose(f2, self.m2.astype(dt), atol=atol, err_msg=(a, ovwr_x))
 
     def test4(self):
         for a in range(0,2):

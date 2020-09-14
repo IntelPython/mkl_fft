@@ -1,7 +1,6 @@
 {% set version = "1.1.0" %}
 {% set buildnumber = 0 %}
 
-
 package:
     name: mkl_fft
     version: {{ version }}
@@ -10,42 +9,25 @@ source:
     path: ../
 
 build:
-    number: {{buildnumber}}
-    features:
-      - intel
-    always_include_files:
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/__init__.py
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_float16_utils.py
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_pydfti.*
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_numpy_fft.py
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_scipy_fft.py
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_scipy_fft_backend.py
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/setup.py
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/tests/test_fft1d.py
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/__init__.pyc         [py27]
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_float16_utils.pyc   [py27]
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_numpy_fft.pyc       [py27]
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/_scipy_fft.pyc       [py27]
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/setup.pyc            [py27]
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/tests/test_fft1d.pyc [py27]
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/__pycache__/*        [py3k]
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/tests/__pycache__/*  [py3k]
-      - {{ SP_DIR.replace('\\', '/') if win else SP_DIR }}/mkl_fft/
+    number: {{ buildnumber }}
+    ignore_run_exports:
+      - blas
 
 requirements:
     build:
+      - {{ compiler('c') }}
+    host:
       - python
       - setuptools
-      - intelpython
       - mkl-devel
       - cython
-      - numpy x.x
+      - blas=*=mkl
+      - numpy-base
     run:
       - python
       - mkl
       - mkl-service
-      - intelpython
-      - numpy x.x
+      - {{ pin_compatible('numpy') }}
 
 test:
     commands:

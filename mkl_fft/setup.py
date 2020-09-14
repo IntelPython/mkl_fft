@@ -42,7 +42,10 @@ def configuration(parent_package='',top_path=None):
             'libraries': ['mkl_rt']
         }
     else:
-        mkl_info = get_info('mkl')
+        try:
+            mkl_info = get_info('mkl')
+        except:
+            mrl_info = dict()
 
     mkl_include_dirs = mkl_info.get('include_dirs', [])
     mkl_library_dirs = mkl_info.get('library_dirs', [])

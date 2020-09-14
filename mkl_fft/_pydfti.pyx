@@ -56,7 +56,7 @@ cdef void _capsule_destructor(object caps):
     PyMem_Free(_cache)
     if (status != 0):
         raise ValueError("Internal Error: Freeing DFTI Cache returned with error = {}".format(status))
-    
+
 
 def _tls_dfti_cache_capsule():
     cdef DftiCache *_cache_struct
@@ -72,7 +72,7 @@ def _tls_dfti_cache_capsule():
     capsule = getattr(_tls, 'capsule', None)
     if (not cpython.pycapsule.PyCapsule_IsValid(capsule, capsule_name)):
         raise ValueError("Internal Error: invalid capsule stored in TLS")
-    return capsule    
+    return capsule
 
 
 cdef extern from "Python.h":
@@ -113,11 +113,6 @@ cdef extern from "src/mklfft.h":
     int float_mkl_rfft_in(cnp.ndarray, int, int, DftiCache*)
     int float_mkl_irfft_in(cnp.ndarray, int, int, DftiCache*)
 
-    int double_double_mkl_rfft_out(cnp.ndarray, int, int, cnp.ndarray, DftiCache*)
-    int double_double_mkl_irfft_out(cnp.ndarray, int, int, cnp.ndarray, DftiCache*)
-    int float_float_mkl_rfft_out(cnp.ndarray, int, int, cnp.ndarray, DftiCache*)
-    int float_float_mkl_irfft_out(cnp.ndarray, int, int, cnp.ndarray, DftiCache*)
-
     int cdouble_double_mkl_irfft_out(cnp.ndarray, int, int, cnp.ndarray, DftiCache*)
     int cfloat_float_mkl_irfft_out(cnp.ndarray, int, int, cnp.ndarray, DftiCache*)
 
@@ -138,7 +133,9 @@ cdef extern from "src/mklfft.h":
     char * mkl_dfti_error(int)
 
 # Initialize numpy
-cnp.import_array()
+cdef int numpy_import_status = cnp.import_array()
+if numpy_import_status < 0:
+    raise ImportError("Failed to import NumPy as dependency of mkl_fft")
 
 
 cdef int _datacopied(cnp.ndarray arr, object orig):
@@ -408,101 +405,239 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
 
 def rfft(x, n=None, axis=-1, overwrite_x=False):
     """Packed real-valued harmonics of FFT of a real sequence x"""
-    return _rrfft1d_impl(x, n=n, axis=axis, overwrite_arg=overwrite_x, direction=+1)
+    return _rr_fft1d_impl2(x, n=n, axis=axis, overwrite_arg=overwrite_x)
 
 
 def irfft(x, n=None, axis=-1, overwrite_x=False):
     """Inverse FFT of a real sequence, takes packed real-valued harmonics of FFT"""
-    return _rrfft1d_impl(x, n=n, axis=axis, overwrite_arg=overwrite_x, direction=-1)
+    return _rr_ifft1d_impl2(x, n=n, axis=axis, overwrite_arg=overwrite_x)
 
 
-def _rrfft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
+cdef object _rc_to_rr(cnp.ndarray rc_arr, int n, int axis, int xnd, int x_type):
+    cdef object res
+    cdef object sl, sl1, sl2
+
+    inp = <object>rc_arr
+
+    slice_ = [slice(None, None, None)] * xnd
+    sl_0 = list(slice_)
+    sl_0[axis] = 0
+
+    sl_1 = list(slice_)
+    sl_1[axis] = 1
+    if (inp.flags['C'] and inp.strides[axis] == inp.itemsize):
+        res = inp
+        res = res.view(dtype=np.single if (x_type == cnp.NPY_FLOAT) else np.double)
+        res[tuple(sl_1)] = res[tuple(sl_0)]
+
+        slice_[axis] = slice(1, n + 1, None)
+
+        return res[tuple(slice_)]
+    else:
+        res_shape = list(inp.shape)
+        res_shape[axis] = n
+        res = np.empty(tuple(res_shape), dtype=np.single if (x_type == cnp.NPY_FLOAT) else np.double)
+
+        res[tuple(sl_0)] = inp[tuple(sl_0)].real
+        sl_dst_real = list(slice_)
+        sl_dst_real[axis] = slice(1, None, 2)
+        sl_src_real = list(slice_)
+        sl_src_real[axis] = slice(1, None, None)
+        res[tuple(sl_dst_real)] = inp[tuple(sl_src_real)].real
+        sl_dst_imag = list(slice_)
+        sl_dst_imag[axis] = slice(2, None, 2)
+        sl_src_imag = list(slice_)
+        sl_src_imag[axis] = slice(1, inp.shape[axis] if (n & 1) else inp.shape[axis] - 1, None)
+        res[tuple(sl_dst_imag)] = inp[tuple(sl_src_imag)].imag
+
+        return res[tuple(slice_)]
+
+cdef object _rr_to_rc(cnp.ndarray rr_arr, int n, int axis, int xnd, int x_type):
+
+    inp = <object> rr_arr
+
+    rc_shape = list(inp.shape)
+    rc_shape[axis] = (n // 2 + 1)
+    rc_shape = tuple(rc_shape)
+
+    rc_dtype = np.cdouble if x_type == cnp.NPY_DOUBLE else np.csingle
+    rc = np.empty(rc_shape, dtype=rc_dtype, order='C')
+
+    slice_ = [slice(None, None, None)] * xnd
+    sl_src_real = list(slice_)
+    sl_src_imag = list(slice_)
+    sl_src_real[axis] = slice(1, n, 2)
+    sl_src_imag[axis] = slice(2, n, 2)
+
+    sl_dest_real = list(slice_)
+    sl_dest_real[axis] = slice(1, None, None)
+    sl_dest_imag = list(slice_)
+    sl_dest_imag[axis] = slice(1, (n+1)//2, None)
+
+    sl_0 = list(slice_)
+    sl_0[axis] = 0
+
+    rc_real = rc.real
+    rc_imag = rc.imag
+
+    rc_real[tuple(sl_dest_real)] = inp[tuple(sl_src_real)]
+    rc_imag[tuple(sl_dest_imag)] = inp[tuple(sl_src_imag)]
+    rc_real[tuple(sl_0)] = inp[tuple(sl_0)]
+    rc_imag[tuple(sl_0)] = 0
+    if (n & 1 == 0):
+        sl_last = list(slice_)
+        sl_last[axis] = -1
+        rc_imag[tuple(sl_last)] = 0
+
+    return rc
+
+
+def _repack_rr_to_rc(x, n, axis):
+    """Debugging utility"""
+    cdef cnp.ndarray x_arr
+    cdef int n_ = n, axis_ = axis
+    cdef x_type
+
+    x_arr = <cnp.ndarray> np.asarray(x)
+    x_type = cnp.PyArray_TYPE(x_arr)
+    return _rr_to_rc(x, n_, axis_, cnp.PyArray_NDIM(x_arr), x_type)
+
+
+def _repack_rc_to_rr(x, n, axis):
+    """Debugging utility"""
+    cdef cnp.ndarray x_arr
+    cdef int n_ = n, axis_ = axis
+    cdef c_type, x_type
+
+    x_arr = <cnp.ndarray> np.asarray(x)
+    c_type = cnp.PyArray_TYPE(x_arr)
+    x_type = cnp.NPY_DOUBLE if c_type == cnp.NPY_CDOUBLE else cnp.NPY_FLOAT
+    return _rc_to_rr(x, n_, axis_, cnp.PyArray_NDIM(x_arr), x_type)
+
+
+def _rr_fft1d_impl2(x, n=None, axis=-1, overwrite_arg=False):
     """
     Uses MKL to perform real packed 1D FFT on the input array x along the given axis.
+
+    This done by using rfft_numpy and post-processing the result.
+    Thus overwrite_arg is effectively discarded.
+
+    Functionally equivalent to scipy.fftpack.rfft
     """
     cdef cnp.ndarray x_arr "x_arrayObject"
     cdef cnp.ndarray f_arr "f_arrayObject"
     cdef int xnd, err, n_max = 0, in_place, dir_
     cdef long n_, axis_
-    cdef int x_type, status
+    cdef int HALF_HARMONICS = 0 # give only positive index harmonics
+    cdef int x_type, status, f_type
     cdef char * c_error_msg = NULL
     cdef bytes py_error_msg
     cdef DftiCache *_cache
 
-    x_arr = __process_arguments(x, n, axis, overwrite_arg, direction,
+    x_arr = __process_arguments(x, n, axis, overwrite_arg, <object>(+1),
                                 &axis_, &n_, &in_place, &xnd, &dir_, 1)
 
     x_type = cnp.PyArray_TYPE(x_arr)
 
     if x_type is cnp.NPY_FLOAT or x_type is cnp.NPY_DOUBLE:
-        # we can operate in place if requested.
-        if in_place:
-           if not cnp.PyArray_ISONESEGMENT(x_arr):
-              in_place = 0 if internal_overlap(x_arr) else 1;
+        in_place = 0
     elif x_type is cnp.NPY_CFLOAT or x_type is cnp.NPY_CDOUBLE:
         raise TypeError("1st argument must be a real sequence")
     else:
-        # we must cast the input and allocate the output,
-        # so we cast to double and operate in place
         try:
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
                 x_arr, cnp.NPY_DOUBLE, cnp.NPY_BEHAVED)
         except:
             raise TypeError("1st argument must be a real sequence")
         x_type = cnp.PyArray_TYPE(x_arr)
+        in_place = 0
+
+    f_type = cnp.NPY_CFLOAT if x_type is cnp.NPY_FLOAT else cnp.NPY_CDOUBLE
+    f_arr = __allocate_result(x_arr, n_ // 2 + 1, axis_, f_type);
+
+    _cache_capsule = _tls_dfti_cache_capsule()
+    _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
+    if x_type is cnp.NPY_DOUBLE:
+        status = double_cdouble_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, _cache)
+    else:
+        status = float_cfloat_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, _cache)
+
+    if (status):
+        c_error_msg = mkl_dfti_error(status)
+        py_error_msg = c_error_msg
+        raise ValueError("Internal error occurred: {}".format(py_error_msg))
+
+    # post-process and return
+    return _rc_to_rr(f_arr, n_, axis_, xnd, x_type)
+
+
+def _rr_ifft1d_impl2(x, n=None, axis=-1, overwrite_arg=False):
+    """
+    Uses MKL to perform real packed 1D FFT on the input array x along the given axis.
+
+    This done by using rfft_numpy and post-processing the result.
+    Thus overwrite_arg is effectively discarded.
+
+    Functionally equivalent to scipy.fftpack.irfft
+    """
+    cdef cnp.ndarray x_arr "x_arrayObject"
+    cdef cnp.ndarray f_arr "f_arrayObject"
+    cdef int xnd, err, n_max = 0, in_place, dir_, int_n
+    cdef long n_, axis_
+    cdef int x_type, rc_type, status
+    cdef int direction = 1 # dummy, only used for the sake of arg-processing
+    cdef char * c_error_msg = NULL
+    cdef bytes py_error_msg
+    cdef DftiCache *_cache
+
+    x_arr = __process_arguments(x, n, axis, overwrite_arg, <object>(-1),
+                                &axis_, &n_, &in_place, &xnd, &dir_, 1)
+
+    x_type = cnp.PyArray_TYPE(x_arr)
+
+    if x_type is cnp.NPY_FLOAT or x_type is cnp.NPY_DOUBLE:
+        pass
+    else:
+        # we must cast the input and allocate the output,
+        # so we cast to complex double and operate in place
+        try:
+            x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
+                x_arr, cnp.NPY_DOUBLE, cnp.NPY_BEHAVED)
+        except:
+            raise ValueError("First argument should be a real or a complex sequence of single or double precision")
+        x_type = cnp.PyArray_TYPE(x_arr)
         in_place = 1
 
+    # need to convert this into complex array
+    rc_obj = _rr_to_rc(x_arr, n_, axis_, xnd, x_type)
+    rc_arr = <cnp.ndarray> rc_obj
+
+    rc_type = cnp.NPY_CFLOAT if x_type is cnp.NPY_FLOAT else cnp.NPY_CDOUBLE
+    in_place = False
     if in_place:
-        _cache_capsule = _tls_dfti_cache_capsule()
-        _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-        if x_type is cnp.NPY_DOUBLE:
-            if dir_ < 0:
-                status = double_mkl_irfft_in(x_arr, n_, <int> axis_, _cache)
-            else:
-                status = double_mkl_rfft_in(x_arr, n_, <int> axis_, _cache)
-        elif x_type is cnp.NPY_FLOAT:
-            if dir_ < 0:
-                status = float_mkl_irfft_in(x_arr, n_, <int> axis_, _cache)
-            else:
-                status = float_mkl_rfft_in(x_arr, n_, <int> axis_, _cache)
-        else:
-            status = 1
-
-        if status:
-            c_error_msg = mkl_dfti_error(status)
-            py_error_msg = c_error_msg
-            raise ValueError("Internal error occurred: {}".format(py_error_msg))
-
-        n_max = <long> cnp.PyArray_DIM(x_arr, axis_)
-        if (n_ < n_max):
-            ind = [slice(0, None, None), ] * xnd
-            ind[axis_] = slice(0, n_, None)
-            x_arr = x_arr[tuple(ind)]
-
-        return x_arr
+        f_arr = x_arr
     else:
-        f_arr = __allocate_result(x_arr, n_, axis_, x_type);
+        f_arr = __allocate_result(x_arr, n_, axis_, x_type)
 
-        # call out-of-place FFT
+    # call out-of-place FFT
+    if rc_type is cnp.NPY_CFLOAT:
         _cache_capsule = _tls_dfti_cache_capsule()
         _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-        if x_type is cnp.NPY_DOUBLE:
-            if dir_ < 0:
-                status = double_double_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
-            else:
-                status = double_double_mkl_rfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
-        else:
-            if dir_ < 0:
-                status = float_float_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
-            else:
-                status = float_float_mkl_rfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
+        status = cfloat_float_mkl_irfft_out(rc_arr, n_, <int> axis_, f_arr, _cache)
+    elif rc_type is cnp.NPY_CDOUBLE:
+        _cache_capsule = _tls_dfti_cache_capsule()
+        _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
+        status = cdouble_double_mkl_irfft_out(rc_arr, n_, <int> axis_, f_arr, _cache)
+    else:
+        raise ValueError("Internal mkl_fft error occurred: Unrecognized rc_type")
 
-        if (status):
-            c_error_msg = mkl_dfti_error(status)
-            py_error_msg = c_error_msg
-            raise ValueError("Internal error occurred: {}".format(py_error_msg))
+    if (status):
+        c_error_msg = mkl_dfti_error(status)
+        py_error_msg = c_error_msg
+        raise ValueError("Internal error occurred: {}".format(str(py_error_msg)))
 
-        return f_arr
+    return f_arr
+
 
 # this routine is functionally equivalent to numpy.fft.rfft
 def _rc_fft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
@@ -582,13 +717,13 @@ cdef int _is_integral(object num):
     return _integral
 
 
-# this routine is functionally equivalent to numpy.fft.rfft
+# this routine is functionally equivalent to numpy.fft.irfft
 def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
     """
     Uses MKL to perform 1D FFT on the real input array x along the given axis,
     producing complex output, but giving only half of the harmonics.
 
-    cf. numpy.fft.rfft
+    cf. numpy.fft.irfft
     """
     cdef cnp.ndarray x_arr "x_arrayObject"
     cdef cnp.ndarray f_arr "f_arrayObject"
@@ -891,8 +1026,8 @@ def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1):
     if _direct:
         return _direct_fftnd(x, overwrite_arg=overwrite_x, direction=direction)
     else:
-        return _iter_fftnd(x, s=shape, axes=axes, 
-                           overwrite_arg=overwrite_x, 
+        return _iter_fftnd(x, s=shape, axes=axes,
+                           overwrite_arg=overwrite_x,
                            function=fft if direction == 1 else ifft)
 
 
@@ -933,7 +1068,7 @@ def _remove_axis(s, axes, axis_to_remove):
 
 
 cdef cnp.ndarray _trim_array(cnp.ndarray arr, object s, object axes):
-    """Forms a view into subarray of arr if any element of shape parameter s is 
+    """Forms a view into subarray of arr if any element of shape parameter s is
     smaller than the corresponding element of the shape of the input array arr,
     otherwise returns the input array"""
     arr_shape = (<object> arr).shape
