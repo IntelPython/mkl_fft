@@ -153,14 +153,13 @@ class Workers:
 
     def __enter__(self):
         try:
-            mkl.domain_set_num_threads(self.n_threads, domain='fft')
+            self.prev_num_threads = mkl.set_num_threads_local(self.n_threads)
         except:
             raise ValueError("Class argument {} result in invalid number of threads {}".format(self.workers, self.n_threads))
 
     def __exit__(self, *args):
-        # restore default
-        n_threads = _hardware_counts.get_max_threads_count()
-        mkl.domain_set_num_threads(n_threads, domain='fft')
+        # restore old value
+        mkl.set_num_threads_local(self.prev_num_threads)
 
 
 @_implements(_fft.fft)
