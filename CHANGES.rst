@@ -2,6 +2,11 @@
 mkl_fft changelog
 =================
 
+1.2.1
+=====
+
+Includes bug fix #54
+
 1.2.0
 =====
 
