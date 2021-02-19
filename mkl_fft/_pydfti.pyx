@@ -94,42 +94,42 @@ cdef extern from "src/mklfft.h":
         void * hand
         int initialized
     int _free_dfti_cache(DftiCache *)
-    int cdouble_mkl_fft1d_in(cnp.ndarray, int, int, DftiCache*)
-    int cfloat_mkl_fft1d_in(cnp.ndarray, int, int, DftiCache*)
-    int float_cfloat_mkl_fft1d_out(cnp.ndarray, int, int, cnp.ndarray, int, DftiCache*)
-    int cfloat_cfloat_mkl_fft1d_out(cnp.ndarray, int, int, cnp.ndarray, DftiCache*)
-    int double_cdouble_mkl_fft1d_out(cnp.ndarray, int, int, cnp.ndarray, int, DftiCache*)
-    int cdouble_cdouble_mkl_fft1d_out(cnp.ndarray, int, int, cnp.ndarray, DftiCache*)
+    int cdouble_mkl_fft1d_in(cnp.ndarray, int, int, double, DftiCache*)
+    int cfloat_mkl_fft1d_in(cnp.ndarray, int, int, double, DftiCache*)
+    int float_cfloat_mkl_fft1d_out(cnp.ndarray, int, int, cnp.ndarray, int, double, DftiCache*)
+    int cfloat_cfloat_mkl_fft1d_out(cnp.ndarray, int, int, cnp.ndarray, double, DftiCache*)
+    int double_cdouble_mkl_fft1d_out(cnp.ndarray, int, int, cnp.ndarray, int, double, DftiCache*)
+    int cdouble_cdouble_mkl_fft1d_out(cnp.ndarray, int, int, cnp.ndarray, double, DftiCache*)
 
-    int cdouble_mkl_ifft1d_in(cnp.ndarray, int, int, DftiCache*)
-    int cfloat_mkl_ifft1d_in(cnp.ndarray, int, int, DftiCache*)
-    int float_cfloat_mkl_ifft1d_out(cnp.ndarray, int, int, cnp.ndarray, int, DftiCache*)
-    int cfloat_cfloat_mkl_ifft1d_out(cnp.ndarray, int, int, cnp.ndarra, DftiCache*)
-    int double_cdouble_mkl_ifft1d_out(cnp.ndarray, int, int, cnp.ndarray, int, DftiCache*)
-    int cdouble_cdouble_mkl_ifft1d_out(cnp.ndarray, int, int, cnp.ndarray, DftiCache*)
+    int cdouble_mkl_ifft1d_in(cnp.ndarray, int, int, double, DftiCache*)
+    int cfloat_mkl_ifft1d_in(cnp.ndarray, int, int, double, DftiCache*)
+    int float_cfloat_mkl_ifft1d_out(cnp.ndarray, int, int, cnp.ndarray, int, double, DftiCache*)
+    int cfloat_cfloat_mkl_ifft1d_out(cnp.ndarray, int, int, cnp.ndarray, double, DftiCache*)
+    int double_cdouble_mkl_ifft1d_out(cnp.ndarray, int, int, cnp.ndarray, int, double, DftiCache*)
+    int cdouble_cdouble_mkl_ifft1d_out(cnp.ndarray, int, int, cnp.ndarray, double, DftiCache*)
 
-    int double_mkl_rfft_in(cnp.ndarray, int, int, DftiCache*)
-    int double_mkl_irfft_in(cnp.ndarray, int, int, DftiCache*)
-    int float_mkl_rfft_in(cnp.ndarray, int, int, DftiCache*)
-    int float_mkl_irfft_in(cnp.ndarray, int, int, DftiCache*)
+    int double_mkl_rfft_in(cnp.ndarray, int, int, double, DftiCache*)
+    int double_mkl_irfft_in(cnp.ndarray, int, int, double, DftiCache*)
+    int float_mkl_rfft_in(cnp.ndarray, int, int, double, DftiCache*)
+    int float_mkl_irfft_in(cnp.ndarray, int, int, double, DftiCache*)
 
-    int cdouble_double_mkl_irfft_out(cnp.ndarray, int, int, cnp.ndarray, DftiCache*)
-    int cfloat_float_mkl_irfft_out(cnp.ndarray, int, int, cnp.ndarray, DftiCache*)
+    int cdouble_double_mkl_irfft_out(cnp.ndarray, int, int, cnp.ndarray, double, DftiCache*)
+    int cfloat_float_mkl_irfft_out(cnp.ndarray, int, int, cnp.ndarray, double, DftiCache*)
 
-    int cdouble_cdouble_mkl_fftnd_in(cnp.ndarray)
-    int cdouble_cdouble_mkl_ifftnd_in(cnp.ndarray)
-    int cfloat_cfloat_mkl_fftnd_in(cnp.ndarray)
-    int cfloat_cfloat_mkl_ifftnd_in(cnp.ndarray)
+    int cdouble_cdouble_mkl_fftnd_in(cnp.ndarray, double)
+    int cdouble_cdouble_mkl_ifftnd_in(cnp.ndarray, double)
+    int cfloat_cfloat_mkl_fftnd_in(cnp.ndarray, double)
+    int cfloat_cfloat_mkl_ifftnd_in(cnp.ndarray, double)
 
-    int cdouble_cdouble_mkl_fftnd_out(cnp.ndarray, cnp.ndarray)
-    int cdouble_cdouble_mkl_ifftnd_out(cnp.ndarray, cnp.ndarray)
-    int cfloat_cfloat_mkl_fftnd_out(cnp.ndarray, cnp.ndarray)
-    int cfloat_cfloat_mkl_ifftnd_out(cnp.ndarray, cnp.ndarray)
+    int cdouble_cdouble_mkl_fftnd_out(cnp.ndarray, cnp.ndarray, double)
+    int cdouble_cdouble_mkl_ifftnd_out(cnp.ndarray, cnp.ndarray, double)
+    int cfloat_cfloat_mkl_fftnd_out(cnp.ndarray, cnp.ndarray, double)
+    int cfloat_cfloat_mkl_ifftnd_out(cnp.ndarray, cnp.ndarray, double)
 
-    int float_cfloat_mkl_fftnd_out(cnp.ndarray, cnp.ndarray)
-    int double_cdouble_mkl_fftnd_out(cnp.ndarray, cnp.ndarray)
-    int float_cfloat_mkl_ifftnd_out(cnp.ndarray, cnp.ndarray)
-    int double_cdouble_mkl_ifftnd_out(cnp.ndarray, cnp.ndarray)
+    int float_cfloat_mkl_fftnd_out(cnp.ndarray, cnp.ndarray, double)
+    int double_cdouble_mkl_fftnd_out(cnp.ndarray, cnp.ndarray, double)
+    int float_cfloat_mkl_ifftnd_out(cnp.ndarray, cnp.ndarray, double)
+    int double_cdouble_mkl_ifftnd_out(cnp.ndarray, cnp.ndarray, double)
     char * mkl_dfti_error(int)
 
 # Initialize numpy
@@ -289,7 +289,7 @@ cdef cnp.ndarray __allocate_result(cnp.ndarray x_arr, long n_, long axis_, int f
 # Float/double inputs are not cast to complex, but are effectively
 # treated as complexes with zero imaginary parts.
 # All other types are cast to complex double.
-def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
+def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1, double fsc=1.0):
     """
     Uses MKL to perform 1D FFT on the input array x along the given axis.
     """
@@ -333,14 +333,14 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
         _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
         if x_type is cnp.NPY_CDOUBLE:
             if dir_ < 0:
-               status = cdouble_mkl_ifft1d_in(x_arr, n_, <int> axis_, _cache)
+               status = cdouble_mkl_ifft1d_in(x_arr, n_, <int> axis_, fsc, _cache)
             else:
-               status = cdouble_mkl_fft1d_in(x_arr, n_, <int> axis_, _cache)
+               status = cdouble_mkl_fft1d_in(x_arr, n_, <int> axis_, fsc, _cache)
         elif x_type is cnp.NPY_CFLOAT:
             if dir_ < 0:
-               status = cfloat_mkl_ifft1d_in(x_arr, n_, <int> axis_, _cache)
+               status = cfloat_mkl_ifft1d_in(x_arr, n_, <int> axis_, fsc, _cache)
             else:
-               status = cfloat_mkl_fft1d_in(x_arr, n_, <int> axis_, _cache)
+               status = cfloat_mkl_fft1d_in(x_arr, n_, <int> axis_, fsc, _cache)
         else:
             status = 1
 
@@ -368,32 +368,32 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1):
             if x_type is cnp.NPY_DOUBLE:
                 if dir_ < 0:
                     status = double_cdouble_mkl_ifft1d_out(
-                        x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, _cache)
+                        x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, fsc, _cache)
                 else:
                     status = double_cdouble_mkl_fft1d_out(
-                        x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, _cache)
+                        x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, fsc, _cache)
             elif x_type is cnp.NPY_CDOUBLE:
                 if dir_ < 0:
                     status = cdouble_cdouble_mkl_ifft1d_out(
-                        x_arr, n_, <int> axis_, f_arr, _cache)
+                        x_arr, n_, <int> axis_, f_arr, fsc, _cache)
                 else:
                     status = cdouble_cdouble_mkl_fft1d_out(
-                        x_arr, n_, <int> axis_, f_arr, _cache)
+                        x_arr, n_, <int> axis_, f_arr, fsc, _cache)
         else:
             if x_type is cnp.NPY_FLOAT:
                 if dir_ < 0:
                     status = float_cfloat_mkl_ifft1d_out(
-                        x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, _cache)
+                        x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, fsc, _cache)
                 else:
                     status = float_cfloat_mkl_fft1d_out(
-                        x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, _cache)
+                        x_arr, n_, <int> axis_, f_arr, ALL_HARMONICS, fsc, _cache)
             elif x_type is cnp.NPY_CFLOAT:
                 if dir_ < 0:
                     status = cfloat_cfloat_mkl_ifft1d_out(
-                        x_arr, n_, <int> axis_, f_arr, _cache)
+                        x_arr, n_, <int> axis_, f_arr, fsc, _cache)
                 else:
                     status = cfloat_cfloat_mkl_fft1d_out(
-                        x_arr, n_, <int> axis_, f_arr, _cache)
+                        x_arr, n_, <int> axis_, f_arr, fsc, _cache)
 
         if (status):
             c_error_msg = mkl_dfti_error(status)
@@ -515,7 +515,7 @@ def _repack_rc_to_rr(x, n, axis):
     return _rc_to_rr(x, n_, axis_, cnp.PyArray_NDIM(x_arr), x_type)
 
 
-def _rr_fft1d_impl2(x, n=None, axis=-1, overwrite_arg=False):
+def _rr_fft1d_impl2(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
     """
     Uses MKL to perform real packed 1D FFT on the input array x along the given axis.
 
@@ -558,9 +558,9 @@ def _rr_fft1d_impl2(x, n=None, axis=-1, overwrite_arg=False):
     _cache_capsule = _tls_dfti_cache_capsule()
     _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
     if x_type is cnp.NPY_DOUBLE:
-        status = double_cdouble_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, _cache)
+        status = double_cdouble_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, fsc, _cache)
     else:
-        status = float_cfloat_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, _cache)
+        status = float_cfloat_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, fsc, _cache)
 
     if (status):
         c_error_msg = mkl_dfti_error(status)
@@ -571,7 +571,7 @@ def _rr_fft1d_impl2(x, n=None, axis=-1, overwrite_arg=False):
     return _rc_to_rr(f_arr, n_, axis_, xnd, x_type)
 
 
-def _rr_ifft1d_impl2(x, n=None, axis=-1, overwrite_arg=False):
+def _rr_ifft1d_impl2(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
     """
     Uses MKL to perform real packed 1D FFT on the input array x along the given axis.
 
@@ -623,11 +623,11 @@ def _rr_ifft1d_impl2(x, n=None, axis=-1, overwrite_arg=False):
     if rc_type is cnp.NPY_CFLOAT:
         _cache_capsule = _tls_dfti_cache_capsule()
         _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-        status = cfloat_float_mkl_irfft_out(rc_arr, n_, <int> axis_, f_arr, _cache)
+        status = cfloat_float_mkl_irfft_out(rc_arr, n_, <int> axis_, f_arr, fsc, _cache)
     elif rc_type is cnp.NPY_CDOUBLE:
         _cache_capsule = _tls_dfti_cache_capsule()
         _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-        status = cdouble_double_mkl_irfft_out(rc_arr, n_, <int> axis_, f_arr, _cache)
+        status = cdouble_double_mkl_irfft_out(rc_arr, n_, <int> axis_, f_arr, fsc, _cache)
     else:
         raise ValueError("Internal mkl_fft error occurred: Unrecognized rc_type")
 
@@ -640,7 +640,7 @@ def _rr_ifft1d_impl2(x, n=None, axis=-1, overwrite_arg=False):
 
 
 # this routine is functionally equivalent to numpy.fft.rfft
-def _rc_fft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
+def _rc_fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
     """
     Uses MKL to perform 1D FFT on the real input array x along the given axis,
     producing complex output, but giving only half of the harmonics.
@@ -689,11 +689,11 @@ def _rc_fft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
     if x_type is cnp.NPY_FLOAT:
         _cache_capsule = _tls_dfti_cache_capsule()
         _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-        status = float_cfloat_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, _cache)
+        status = float_cfloat_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, fsc, _cache)
     else:
         _cache_capsule = _tls_dfti_cache_capsule()
         _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-        status = double_cdouble_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, _cache)
+        status = double_cdouble_mkl_fft1d_out(x_arr, n_, <int> axis_, f_arr, HALF_HARMONICS, fsc, _cache)
 
     if (status):
         c_error_msg = mkl_dfti_error(status)
@@ -718,7 +718,7 @@ cdef int _is_integral(object num):
 
 
 # this routine is functionally equivalent to numpy.fft.irfft
-def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
+def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
     """
     Uses MKL to perform 1D FFT on the real input array x along the given axis,
     producing complex output, but giving only half of the harmonics.
@@ -774,11 +774,11 @@ def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False):
         if x_type is cnp.NPY_CFLOAT:
             _cache_capsule = _tls_dfti_cache_capsule()
             _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-            status = cfloat_float_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
+            status = cfloat_float_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, fsc, _cache)
         else:
             _cache_capsule = _tls_dfti_cache_capsule()
             _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(_cache_capsule, capsule_name)
-            status = cdouble_double_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, _cache)
+            status = cdouble_double_mkl_irfft_out(x_arr, n_, <int> axis_, f_arr, fsc, _cache)
 
         if (status):
             c_error_msg = mkl_dfti_error(status)
@@ -912,7 +912,7 @@ def _iter_fftnd(a, s=None, axes=None, function=fft, overwrite_arg=False):
     return a
 
 
-def _direct_fftnd(x, overwrite_arg=False, direction=+1):
+def _direct_fftnd(x, overwrite_arg=False, direction=+1, double fsc=1.0):
     """Perform n-dimensional FFT over all axes"""
     cdef int err
     cdef long n_max = 0
@@ -948,14 +948,14 @@ def _direct_fftnd(x, overwrite_arg=False, direction=+1):
     if in_place:
         if x_type == cnp.NPY_CDOUBLE:
             if dir_ == 1:
-                err = cdouble_cdouble_mkl_fftnd_in(x_arr)
+                err = cdouble_cdouble_mkl_fftnd_in(x_arr, fsc)
             else:
-                err = cdouble_cdouble_mkl_ifftnd_in(x_arr)
+                err = cdouble_cdouble_mkl_ifftnd_in(x_arr, fsc)
         elif x_type == cnp.NPY_CFLOAT:
             if dir_ == 1:
-                err = cfloat_cfloat_mkl_fftnd_in(x_arr)
+                err = cfloat_cfloat_mkl_fftnd_in(x_arr, fsc)
             else:
-                err = cfloat_cfloat_mkl_ifftnd_in(x_arr)
+                err = cfloat_cfloat_mkl_ifftnd_in(x_arr, fsc)
         else:
             raise ValueError("An input argument x is not complex type array")
 
@@ -965,24 +965,24 @@ def _direct_fftnd(x, overwrite_arg=False, direction=+1):
         f_arr = __allocate_result(x_arr, -1, 0, f_type);
         if x_type == cnp.NPY_CDOUBLE:
             if dir_ == 1:
-                err = cdouble_cdouble_mkl_fftnd_out(x_arr, f_arr)
+                err = cdouble_cdouble_mkl_fftnd_out(x_arr, f_arr, fsc)
             else:
-                err = cdouble_cdouble_mkl_ifftnd_out(x_arr, f_arr)
+                err = cdouble_cdouble_mkl_ifftnd_out(x_arr, f_arr, fsc)
         elif x_type == cnp.NPY_CFLOAT:
             if dir_ == 1:
-                err = cfloat_cfloat_mkl_fftnd_out(x_arr, f_arr)
+                err = cfloat_cfloat_mkl_fftnd_out(x_arr, f_arr, fsc)
             else:
-                err = cfloat_cfloat_mkl_ifftnd_out(x_arr, f_arr)
+                err = cfloat_cfloat_mkl_ifftnd_out(x_arr, f_arr, fsc)
         elif x_type == cnp.NPY_DOUBLE:
             if dir_ == 1:
-                err = double_cdouble_mkl_fftnd_out(x_arr, f_arr)
+                err = double_cdouble_mkl_fftnd_out(x_arr, f_arr, fsc)
             else:
-                err = double_cdouble_mkl_ifftnd_out(x_arr, f_arr)
+                err = double_cdouble_mkl_ifftnd_out(x_arr, f_arr, fsc)
         elif x_type == cnp.NPY_FLOAT:
             if dir_ == 1:
-                err = float_cfloat_mkl_fftnd_out(x_arr, f_arr)
+                err = float_cfloat_mkl_fftnd_out(x_arr, f_arr, fsc)
             else:
-                err = float_cfloat_mkl_ifftnd_out(x_arr, f_arr)
+                err = float_cfloat_mkl_ifftnd_out(x_arr, f_arr, fsc)
         else:
             raise ValueError("An input argument x is not complex type array")
 
@@ -1006,7 +1006,7 @@ def _check_shapes_for_direct(xs, shape, axes):
     return True
 
 
-def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1):
+def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1, double fsc=1.0):
     if direction not in [-1, +1]:
         raise ValueError("Direction of FFT should +1 or -1")
 
@@ -1024,10 +1024,10 @@ def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1):
         _direct = False
 
     if _direct:
-        return _direct_fftnd(x, overwrite_arg=overwrite_x, direction=direction)
+        return _direct_fftnd(x, overwrite_arg=overwrite_x, direction=direction, fsc=fsc)
     else:
         return _iter_fftnd(x, s=shape, axes=axes,
-                           overwrite_arg=overwrite_x,
+                           overwrite_arg=overwrite_x, fsc=fsc,
                            function=fft if direction == 1 else ifft)
 
 
