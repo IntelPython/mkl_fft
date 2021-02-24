@@ -1,4 +1,4 @@
-g#!/usr/bin/env python
+#!/usr/bin/env python
 # Copyright (c) 2017-2019, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without

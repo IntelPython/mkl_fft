@@ -99,6 +99,24 @@ class Test_mklfft_matrix(TestCase):
             assert_allclose(t_strided, t_contig, rtol=r_tol, atol=a_tol)
 
 
+    def test_matrix5(self):
+        """fftn of strided array is same as fftn of a contiguous copy"""
+        rs = rnd.RandomState(1234)
+        x = rs.randn(6, 11, 12, 13)
+        y = x[::-2, :, :, ::3]
+        r_tol, a_tol = _get_rtol_atol(y)
+        f = mkl_fft.fftn(y, axes=(1,2))
+        for i0 in range(y.shape[0]):
+            for i3 in range(y.shape[3]):
+                assert_allclose(
+                    f[i0, :, :, i3],
+                    mkl_fft.fftn(y[i0, :, : , i3]),
+                    rtol=r_tol, atol=a_tol
+                )
+        
+            
+
+
 class Test_Regressions(TestCase):
 
     def setUp(self):
@@ -128,6 +146,7 @@ class Test_Regressions(TestCase):
                 rfft_tr = mkl_fft.rfftn_numpy(np.transpose(x, a))
                 tr_rfft = np.transpose(mkl_fft.rfftn_numpy(x, axes=a), a)
                 assert_allclose(rfft_tr, tr_rfft, rtol=r_tol, atol=a_tol)
+
 
 class Test_Scales(TestCase):
     def setUp(self):
