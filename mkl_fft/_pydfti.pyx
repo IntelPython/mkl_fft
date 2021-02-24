@@ -912,6 +912,48 @@ def _iter_fftnd(a, s=None, axes=None, function=fft, overwrite_arg=False, scale_f
     return a
 
 
+def flat_to_multi(ind, shape):
+    nd = len(shape)
+    m_ind = [-1] * nd
+    j = ind
+    for i in range(nd):
+        si = shape[nd-1-i]
+        q = j // si
+        r = j - si * q
+        m_ind[nd-1-i] = r
+        j = q
+    return m_ind
+
+
+def iter_complementary(x, axes, func, kwargs, result):
+    if axes is None:
+        return func(x, **kwargs)
+    x_shape = x.shape
+    nd = x.ndim
+    r = list(range(nd))
+    sl = [slice(None, None, None)] * nd
+    if not isinstance(axes, tuple):
+        axes = (axes,)
+    for ai in axes:
+        r[ai] = None
+    size = 1
+    sub_shape = []
+    dual_ind = []
+    for ri in r:
+        if ri is not None:
+            size *= x_shape[ri]
+            sub_shape.append(x_shape[ri])
+            dual_ind.append(ri)
+    
+    for ind in range(size):
+        m_ind = flat_to_multi(ind, sub_shape)
+        for k1, k2 in zip(dual_ind, m_ind):
+            sl[k1] = k2
+        np.copyto(result[tuple(sl)], func(x[tuple(sl)], **kwargs))
+
+    return result
+
+
 def _direct_fftnd(x, overwrite_arg=False, direction=+1, double fsc=1.0):
     """Perform n-dimensional FFT over all axes"""
     cdef int err
@@ -988,6 +1030,7 @@ def _direct_fftnd(x, overwrite_arg=False, direction=+1, double fsc=1.0):
 
         return f_arr
 
+
 def _check_shapes_for_direct(xs, shape, axes):
     if len(axes) > 7: # Intel MKL supports up to 7D
        return False
@@ -1004,6 +1047,14 @@ def _check_shapes_for_direct(xs, shape, axes):
         if not (xsi == sh_ai):
             return False
     return True
+
+
+def _output_dtype(dt):
+    if dt == np.double:
+        return np.cdouble
+    if dt == np.single:
+        return np.csingle
+    return dt
 
 
 def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1, double fsc=1.0):
@@ -1026,10 +1077,20 @@ def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1, doubl
     if _direct:
         return _direct_fftnd(x, overwrite_arg=overwrite_x, direction=direction, fsc=fsc)
     else:
-        sc = (<object> fsc)**(1/x.ndim)
-        return _iter_fftnd(x, s=shape, axes=axes,
-                           overwrite_arg=overwrite_x, scale_function=lambda n: sc,
-                           function=fft if direction == 1 else ifft)
+        if (shape is None):
+            x = np.asarray(x)
+            res = np.empty(x.shape, dtype=_output_dtype(x.dtype))
+            return iter_complementary(
+                x, axes,
+                _direct_fftnd,
+                {'overwrite_arg': overwrite_x, 'direction': direction, 'fsc': fsc},
+                res
+                )
+        else:
+            sc = (<object> fsc)**(1/x.ndim)
+            return _iter_fftnd(x, s=shape, axes=axes,
+                               overwrite_arg=overwrite_x, scale_function=lambda n: sc,
+                               function=fft if direction == 1 else ifft)
 
 
 def fft2(x, shape=None, axes=(-2,-1), overwrite_x=False, forward_scale=1.0):
