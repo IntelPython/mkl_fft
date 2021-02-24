@@ -2,6 +2,14 @@
 mkl_fft changelog
 =================
 
+1.3.0
+=====
+
+Updated numpy interface to support new in NumPy 1.20 supported values of norm keyword, such as "forward" and "backward".
+To enable this, `mkl_fft` functions now support `forward_scale` parameter that defaults to 1.
+
+Fixed issue #48.
+
 1.2.1
 =====
 
