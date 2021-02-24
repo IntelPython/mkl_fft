@@ -38,17 +38,17 @@ import mkl_fft
 
 reps_64 = (2**11)*np.finfo(np.float64).eps
 reps_32 = (2**11)*np.finfo(np.float32).eps
-atol_64 = (2**8)*np.finfo(np.float64).eps
-atol_32 = (2**8)*np.finfo(np.float32).eps
+atol_64 = (2**9)*np.finfo(np.float64).eps
+atol_32 = (2**9)*np.finfo(np.float32).eps
 
 def _get_rtol_atol(x):
     dt = x.dtype
-    if dt == np.double or dt == np.complex128:
+    if dt == np.float64 or dt == np.complex128:
         return reps_64, atol_64
-    elif dt == np.single or dt == np.complex64:
+    elif dt == np.float32 or dt == np.complex64:
         return reps_32, atol_32
     else:
-        assert (dt == np.double or dt == np.complex128 or dt == np.single or dt == np.complex64), "Unexpected dtype {}".format(dt)
+        assert (dt == np.float64 or dt == np.complex128 or dt == np.float32 or dt == np.complex64), "Unexpected dtype {}".format(dt)
         return reps_64, atol_64
 
 
@@ -128,3 +128,54 @@ class Test_Regressions(TestCase):
                 rfft_tr = mkl_fft.rfftn_numpy(np.transpose(x, a))
                 tr_rfft = np.transpose(mkl_fft.rfftn_numpy(x, axes=a), a)
                 assert_allclose(rfft_tr, tr_rfft, rtol=r_tol, atol=a_tol)
+
+class Test_Scales(TestCase):
+    def setUp(self):
+        pass
+
+    def test_scale_1d_vector(self):
+        X = np.ones(128, dtype='d')
+        f1 = mkl_fft.fft(X, forward_scale=0.25)
+        f2 = mkl_fft.fft(X)
+        r_tol, a_tol = _get_rtol_atol(X)
+        assert_allclose(4*f1, f2, rtol=r_tol, atol=a_tol)
+
+        X1 = mkl_fft.ifft(f1, forward_scale=0.25)
+        assert_allclose(X, X1, rtol=r_tol, atol=a_tol)
+
+        f3 = mkl_fft.rfft(X, forward_scale=0.5)
+        X2 = mkl_fft.irfft(f3, forward_scale=0.5)
+        assert_allclose(X, X2, rtol=r_tol, atol=a_tol)
+
+    def test_scale_1d_array(self):
+        X = np.ones((8, 4, 4,), dtype='d')
+        f1 = mkl_fft.fft(X, axis=1, forward_scale=0.25)
+        f2 = mkl_fft.fft(X, axis=1)
+        r_tol, a_tol = _get_rtol_atol(X)
+        assert_allclose(4*f1, f2, rtol=r_tol, atol=a_tol)
+
+        X1 = mkl_fft.ifft(f1, axis=1, forward_scale=0.25)
+        assert_allclose(X, X1, rtol=r_tol, atol=a_tol)
+
+        f3 = mkl_fft.rfft(X, axis=0, forward_scale=0.5)
+        X2 = mkl_fft.irfft(f3, axis=0, forward_scale=0.5)
+        assert_allclose(X, X2, rtol=r_tol, atol=a_tol)
+
+    def test_scale_nd(self):
+        X = np.empty((2, 4, 8, 16), dtype='d')
+        X.flat[:] = np.cbrt(np.arange(0, X.size, dtype=X.dtype))
+        f = mkl_fft.fftn(X)
+        f_scale = mkl_fft.fftn(X, forward_scale=0.2)
+        
+        r_tol, a_tol = _get_rtol_atol(X)
+        assert_allclose(f, 5*f_scale, rtol=r_tol, atol=a_tol)
+
+    def test_scale_nd_axes(self):
+        X = np.empty((4, 2, 16, 8), dtype='d')
+        X.flat[:] = np.cbrt(np.arange(X.size, dtype=X.dtype))
+        f = mkl_fft.fftn(X, axes=(0, 1, 2, 3))
+        f_scale = mkl_fft.fftn(X, axes=(0, 1, 2, 3), forward_scale=0.2)
+        
+        r_tol, a_tol = _get_rtol_atol(X)
+        assert_allclose(f, 5*f_scale, rtol=r_tol, atol=a_tol)
+        

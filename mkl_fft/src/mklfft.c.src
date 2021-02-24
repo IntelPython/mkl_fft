@@ -457,7 +457,7 @@ compute_strides_and_distances_inout(
 * #mode=(fft1d)*2,(ifft1d)*2#
 * #DftiCompute_MODE=(DftiComputeForward)*2,(DftiComputeBackward)*2#
 */
-int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis, DftiCache* dfti_cache)
+int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis, double fsc, DftiCache* dfti_cache)
 {
     MKL_LONG status = 0, input_distance = 0,
              input_number_of_transforms = 1;
@@ -498,7 +498,7 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis, DftiCache
         &input_number_of_transforms, &input_distance);
 
     status = __create_descriptor_1d_@DFTI_PRECISION@_DFTI_COMPLEX(
-        _to_mkl_long(n), 1.0, 1.0/n, dfti_cache);
+        _to_mkl_long(n), fsc, 1.0/(fsc*n), dfti_cache);
     if (status != 0) goto failed;
 
     /* these must be always set, since previous cached element
@@ -601,7 +601,8 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis, DftiCache
 * #vml_conj_func=(vmcConj,vmzConj)*2#
 */
 int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
-    PyArrayObject *x_in, npy_intp n, int axis, PyArrayObject *x_out, int all_harmonics, DftiCache* dfti_cache)
+    PyArrayObject *x_in, npy_intp n, int axis, PyArrayObject *x_out,
+    int all_harmonics, double fsc, DftiCache* dfti_cache)
 {
     MKL_LONG status = 0, input_distance = 0,
              output_distance = 0, input_number_of_transforms = 1;
@@ -684,11 +685,11 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
         );
 
     if (@POST_CONJUGATE@) { /* we are doing IFFT using Forward computation, swap scales */
-        forward_scale = 1.0/n;
-        backward_scale = 1.0;
+        forward_scale = 1.0/(fsc*n);
+        backward_scale = fsc;
     } else {
-        forward_scale = 1.0;
-        backward_scale = 1.0/n;
+        forward_scale = fsc;
+        backward_scale = 1.0/(fsc*n);
     }
     status = __create_descriptor_1d_@DFTI_PRECISION@_DFTI_REAL(
         _to_mkl_long(n), forward_scale, backward_scale, dfti_cache);
@@ -872,7 +873,7 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
 * #DftiCompute_MODE=(DftiComputeForward)*2,(DftiComputeBackward)*2#
 */
 int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
-    PyArrayObject *x_in, npy_intp n, int axis, PyArrayObject *x_out, DftiCache *dfti_cache)
+    PyArrayObject *x_in, npy_intp n, int axis, PyArrayObject *x_out, double fsc, DftiCache *dfti_cache)
 {
     MKL_LONG status = 0, input_distance = 0, output_distance = 0,
              input_number_of_transforms = 1;
@@ -947,7 +948,7 @@ int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
         );
 
     status = __create_descriptor_1d_@DFTI_PRECISION@_DFTI_COMPLEX(
-        _to_mkl_long(n), 1.0, 1.0/n, dfti_cache);
+        _to_mkl_long(n), fsc, 1.0/(fsc*n), dfti_cache);
     if (status != 0) goto failed;
 
     status = __set_descriptor_1d_value_enum(
@@ -1062,7 +1063,7 @@ int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
 /* n here is the length of the output along the axis */
 int
 @namein@_@nameout@_mkl_irfft_out(
-    PyArrayObject* x_in, npy_intp n, int axis, PyArrayObject* x_out, DftiCache *dfti_cache)
+    PyArrayObject* x_in, npy_intp n, int axis, PyArrayObject* x_out, double fsc, DftiCache *dfti_cache)
 {
     MKL_LONG status = 0, input_distance = 0, output_distance = 0,
              input_number_of_transforms = 1;
@@ -1134,7 +1135,7 @@ int
         );
 
     status = __create_descriptor_1d_@DFTI_PRECISION@_DFTI_REAL(
-        _to_mkl_long(n), 1.0, 1.0/n, dfti_cache);
+        _to_mkl_long(n), fsc, 1.0/(fsc*n), dfti_cache);
     if (status != 0) goto failed;
 
     status = __set_descriptor_1d_value_enum(
@@ -1243,7 +1244,7 @@ int
 * #DftiCompute_MODE=DftiComputeForward*2,DftiComputeBackward*2#
 */
 int
-@inp_type_name@_@out_type_name@_mkl_@op_name@_in(PyArrayObject *x_inout)
+@inp_type_name@_@out_type_name@_mkl_@op_name@_in(PyArrayObject *x_inout, double fsc)
 {
     DFTI_DESCRIPTOR_HANDLE hand = 0;
     MKL_LONG status = 0;
@@ -1295,10 +1296,10 @@ int
     }
     if (0 != status) goto cleanup;
 
-    status = DftiSetValue(hand, DFTI_FORWARD_SCALE, 1.0);
+    status = DftiSetValue(hand, DFTI_FORWARD_SCALE, fsc);
     if (0 != status) goto cleanup;
 
-    status = DftiSetValue(hand, DFTI_BACKWARD_SCALE, 1.0 / x_size);
+    status = DftiSetValue(hand, DFTI_BACKWARD_SCALE, 1.0 / (fsc * x_size));
     if (0 != status) goto cleanup;
 
     input_strides = (MKL_LONG *) mkl_malloc((x_rank + 1) * sizeof(MKL_LONG), 64);
@@ -1350,7 +1351,7 @@ int
 */
 int
 @inp_type_name@_@out_type_name@_mkl_@op_name@_out(
-    PyArrayObject *x_in, PyArrayObject *x_out)
+    PyArrayObject *x_in, PyArrayObject *x_out, double fsc)
 {
     DFTI_DESCRIPTOR_HANDLE hand = 0;
     MKL_LONG status = 0;
@@ -1410,10 +1411,10 @@ int
     }
     if (0 != status) goto cleanup;
 
-    status = DftiSetValue(hand, DFTI_FORWARD_SCALE, 1.0);
+    status = DftiSetValue(hand, DFTI_FORWARD_SCALE, fsc);
     if (0 != status) goto cleanup;
 
-    status = DftiSetValue(hand, DFTI_BACKWARD_SCALE, 1.0 / xin_size);
+    status = DftiSetValue(hand, DFTI_BACKWARD_SCALE, 1.0 / (fsc * xin_size));
     if (0 != status) goto cleanup;
 
     input_strides = (MKL_LONG *) mkl_malloc((xin_rank + 1) * sizeof(MKL_LONG), 64);
@@ -1484,7 +1485,7 @@ int
 */
 int
 @inp_type_name@_@out_type_name@_mkl_@op_name@_out(
-    PyArrayObject *x_in, PyArrayObject *x_out)
+    PyArrayObject *x_in, PyArrayObject *x_out, double fsc)
 {
     DFTI_DESCRIPTOR_HANDLE hand = 0;
     MKL_LONG status = 0;
@@ -1544,10 +1545,10 @@ int
     }
     if (0 != status) goto cleanup;
 
-    status = DftiSetValue(hand, DFTI_FORWARD_SCALE, (@POST_CONJUGATE@) ? 1.0/xin_size :  1.0);
+    status = DftiSetValue(hand, DFTI_FORWARD_SCALE, (@POST_CONJUGATE@) ? 1.0/(fsc * xin_size) :  fsc);
     if (0 != status) goto cleanup;
 
-    status = DftiSetValue(hand, DFTI_BACKWARD_SCALE, (@POST_CONJUGATE@) ? 1.0 : 1.0 / xin_size);
+    status = DftiSetValue(hand, DFTI_BACKWARD_SCALE, (@POST_CONJUGATE@) ? fsc : 1.0 / (fsc*xin_size));
     if (0 != status) goto cleanup;
 
     input_strides = (MKL_LONG *) mkl_malloc((xin_rank + 1) * sizeof(MKL_LONG), 64);

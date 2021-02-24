@@ -34,55 +34,55 @@ typedef struct DftiCache {
 extern int _free_dfti_cache(DftiCache *);
 
 /* Complex input, in-place */
-extern int cdouble_mkl_fft1d_in(PyArrayObject*, npy_intp, int, DftiCache*);
-extern int cfloat_mkl_fft1d_in(PyArrayObject*, npy_intp, int, DftiCache*);
-extern int cdouble_mkl_ifft1d_in(PyArrayObject*, npy_intp, int, DftiCache*);
-extern int cfloat_mkl_ifft1d_in(PyArrayObject*, npy_intp, int, DftiCache*);
+extern int cdouble_mkl_fft1d_in(PyArrayObject*, npy_intp, int, double, DftiCache*);
+extern int cfloat_mkl_fft1d_in(PyArrayObject*, npy_intp, int, double, DftiCache*);
+extern int cdouble_mkl_ifft1d_in(PyArrayObject*, npy_intp, int, double, DftiCache*);
+extern int cfloat_mkl_ifft1d_in(PyArrayObject*, npy_intp, int, double, DftiCache*);
 
 /* Complex input/output, out-of-place */
-extern int cfloat_cfloat_mkl_fft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, DftiCache*);
-extern int cdouble_cdouble_mkl_fft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, DftiCache*);
-extern int cfloat_cfloat_mkl_ifft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, DftiCache*);
-extern int cdouble_cdouble_mkl_ifft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, DftiCache*);
+extern int cfloat_cfloat_mkl_fft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, double, DftiCache*);
+extern int cdouble_cdouble_mkl_fft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, double, DftiCache*);
+extern int cfloat_cfloat_mkl_ifft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, double, DftiCache*);
+extern int cdouble_cdouble_mkl_ifft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, double, DftiCache*);
 
 /* Real input, complex output, out-of-place */
-extern int float_cfloat_mkl_fft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, int, DftiCache*);
-extern int double_cdouble_mkl_fft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, int, DftiCache*);
-extern int float_cfloat_mkl_ifft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, int, DftiCache*);
-extern int double_cdouble_mkl_ifft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, int, DftiCache*);
+extern int float_cfloat_mkl_fft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, int, double, DftiCache*);
+extern int double_cdouble_mkl_fft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, int, double, DftiCache*);
+extern int float_cfloat_mkl_ifft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, int, double, DftiCache*);
+extern int double_cdouble_mkl_ifft1d_out(PyArrayObject*, npy_intp, int, PyArrayObject*, int, double, DftiCache*);
 
 /* Real input, real output, in-place */
-extern int float_mkl_rfft_in(PyArrayObject*, npy_intp, int, DftiCache*);
-extern int float_mkl_irfft_in(PyArrayObject*, npy_intp, int, DftiCache*);
+extern int float_mkl_rfft_in(PyArrayObject*, npy_intp, int, double, DftiCache*);
+extern int float_mkl_irfft_in(PyArrayObject*, npy_intp, int, double, DftiCache*);
 
-extern int double_mkl_rfft_in(PyArrayObject*, npy_intp, int, DftiCache*);
-extern int double_mkl_irfft_in(PyArrayObject*, npy_intp, int, DftiCache*);
+extern int double_mkl_rfft_in(PyArrayObject*, npy_intp, int, double, DftiCache*);
+extern int double_mkl_irfft_in(PyArrayObject*, npy_intp, int, double, DftiCache*);
 
 /* Real input, real output, out-of-place */
-extern int float_float_mkl_rfft_out(PyArrayObject*, npy_intp, int, PyArrayObject*, DftiCache*);
-extern int float_float_mkl_irfft_out(PyArrayObject*, npy_intp, int, PyArrayObject*, DftiCache*);
+extern int float_float_mkl_rfft_out(PyArrayObject*, npy_intp, int, PyArrayObject*, double, DftiCache*);
+extern int float_float_mkl_irfft_out(PyArrayObject*, npy_intp, int, PyArrayObject*, double, DftiCache*);
 
-extern int double_double_mkl_rfft_out(PyArrayObject*, npy_intp, int, PyArrayObject*, DftiCache*);
-extern int double_double_mkl_irfft_out(PyArrayObject*, npy_intp, int, PyArrayObject*, DftiCache*);
+extern int double_double_mkl_rfft_out(PyArrayObject*, npy_intp, int, PyArrayObject*, double, DftiCache*);
+extern int double_double_mkl_irfft_out(PyArrayObject*, npy_intp, int, PyArrayObject*, double, DftiCache*);
 
 /* Complex input. real output, out-of-place */
-extern int cdouble_double_mkl_irfft_out(PyArrayObject*, npy_intp, int, PyArrayObject*, DftiCache*);
-extern int cfloat_float_mkl_irfft_out(PyArrayObject*, npy_intp, int, PyArrayObject*, DftiCache*);
+extern int cdouble_double_mkl_irfft_out(PyArrayObject*, npy_intp, int, PyArrayObject*, double, DftiCache*);
+extern int cfloat_float_mkl_irfft_out(PyArrayObject*, npy_intp, int, PyArrayObject*, double, DftiCache*);
 
 /* Complex, ND, in-place */
-extern int cdouble_cdouble_mkl_fftnd_in(PyArrayObject*);
-extern int cdouble_cdouble_mkl_ifftnd_in(PyArrayObject*);
-extern int cfloat_cfloat_mkl_fftnd_in(PyArrayObject*);
-extern int cfloat_cfloat_mkl_ifftnd_in(PyArrayObject*);
+extern int cdouble_cdouble_mkl_fftnd_in(PyArrayObject*, double);
+extern int cdouble_cdouble_mkl_ifftnd_in(PyArrayObject*, double);
+extern int cfloat_cfloat_mkl_fftnd_in(PyArrayObject*, double);
+extern int cfloat_cfloat_mkl_ifftnd_in(PyArrayObject*, double);
 
-extern int cdouble_cdouble_mkl_fftnd_out(PyArrayObject*, PyArrayObject*);
-extern int cdouble_cdouble_mkl_ifftnd_out(PyArrayObject*, PyArrayObject*);
-extern int cfloat_cfloat_mkl_fftnd_out(PyArrayObject*, PyArrayObject*);
-extern int cfloat_cfloat_mkl_ifftnd_out(PyArrayObject*, PyArrayObject*);
+extern int cdouble_cdouble_mkl_fftnd_out(PyArrayObject*, PyArrayObject*, double);
+extern int cdouble_cdouble_mkl_ifftnd_out(PyArrayObject*, PyArrayObject*, double);
+extern int cfloat_cfloat_mkl_fftnd_out(PyArrayObject*, PyArrayObject*, double);
+extern int cfloat_cfloat_mkl_ifftnd_out(PyArrayObject*, PyArrayObject*, double);
 
-extern int float_cfloat_mkl_fftnd_out(PyArrayObject*, PyArrayObject*);
-extern int float_cfloat_mkl_ifftnd_out(PyArrayObject*, PyArrayObject*);
-extern int double_cdouble_mkl_fftnd_out(PyArrayObject*, PyArrayObject*);
-extern int double_cdouble_mkl_ifftnd_out(PyArrayObject*, PyArrayObject*);
+extern int float_cfloat_mkl_fftnd_out(PyArrayObject*, PyArrayObject*, double);
+extern int float_cfloat_mkl_ifftnd_out(PyArrayObject*, PyArrayObject*, double);
+extern int double_cdouble_mkl_fftnd_out(PyArrayObject*, PyArrayObject*, double);
+extern int double_cdouble_mkl_ifftnd_out(PyArrayObject*, PyArrayObject*, double);
 
 extern char* mkl_dfti_error(MKL_LONG);

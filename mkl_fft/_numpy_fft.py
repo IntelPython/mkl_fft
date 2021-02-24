@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+g#!/usr/bin/env python
 # Copyright (c) 2017-2019, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,23 +52,56 @@ n = n-dimensional transform
 behavior.)
 
 """
-from __future__ import division, absolute_import, print_function
 
 __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
-from numpy.core import (array, asarray, shape, conjugate, take, sqrt, prod)
+from numpy.core import (array, asarray, asanyarray, shape, conjugate, take, sqrt, prod)
 
 import numpy
 from . import _pydfti as mkl_fft
 from . import _float_utils
+import re
+
+def check_norm(norm):
+    if norm not in (None, "ortho", "forward", "backward"):
+        raise ValueError(
+            ("Invalid norm value {} should be None, "
+             "\"ortho\", \"forward\", or \"backward\".").format(norm))
+
+
+def frwd_sc_1d(n, s):
+    nn = n if n else s
+    return 1/nn if nn != 0 else 1
+
+
+def frwd_sc_nd(s, axes, x_shape):
+    ss = s if s else x_shape
+    if axes:
+        nn = prod([ss[ai] for ai in axes])
+    else:
+        nn = prod(ss)
+    return 1/nn if nn != 0 else 1
+
+
+def ortho_sc_1d(n, s):
+    return sqrt(frwd_sc_1d(n, s))
 
 
 def _unitary(norm):
-    if norm not in (None, "ortho"):
-        raise ValueError("Invalid norm value %s, should be None or \"ortho\"."
-                         % norm)
+    check_norm(norm)
     return norm is not None
+
+
+def trycall(func, args, kwrds):
+    try:
+        res = func(*args, **kwrds)
+    except ValueError as ve:
+        if len(ve.args)==1:
+            if re.match("^Dimension n", ve.args[0]):
+                raise ValueError("Invalid number of FFT data points")
+        raise ve
+    return res
 
 
 def fft(a, n=None, axis=-1, norm=None):
@@ -91,9 +124,16 @@ def fft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the FFT.  If not given, the last axis is
         used.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -156,10 +196,25 @@ def fft(a, n=None, axis=-1, norm=None):
     the `numpy.fft` documentation.
 
     """
+    check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
-    output = mkl_fft.fft(x, n, axis)
-    if _unitary(norm):
-        output *= 1 / sqrt(output.shape[axis])
+    if norm in (None, "backward"):
+        output = trycall(
+            mkl_fft.fft,
+            (x,),
+            {'n':n, 'axis': axis})
+    elif norm is "forward":
+        output = trycall(
+            mkl_fft.fft,
+            (x,),
+            {'n': n, 'axis': axis,
+             'forward_scale': frwd_sc_1d(n, x.shape[axis])})
+    else:
+        output = trycall(
+            mkl_fft.fft,
+            (x, ),
+            {'n': n, 'axis': axis,
+             'forward_scale': ortho_sc_1d(n, x.shape[axis])})
     return output
 
 
@@ -194,9 +249,16 @@ def ifft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the inverse DFT.  If not given, the last
         axis is used.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -242,11 +304,21 @@ def ifft(a, n=None, axis=-1, norm=None):
     >>> plt.show()
 
     """
-    unitary = _unitary(norm)
+    check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
-    output = mkl_fft.ifft(x, n, axis)
-    if unitary:
-        output *= sqrt(output.shape[axis])
+    if norm in (None, "backward"):
+        output = trycall(
+            mkl_fft.ifft, (x,), {'n': n, 'axis':axis})
+    elif norm == "forward":
+        output = trycall(
+            mkl_fft.ifft, (x, ),
+            {'n': n, 'axis': axis,
+             'forward_scale': frwd_sc_1d(n, x.shape[axis])})
+    else:
+        output = trycall(
+            mkl_fft.ifft, (x,),
+            {'n': n, 'axis': axis,
+             'forward_scale': ortho_sc_1d(n, x.shape[axis])})
     return output
 
 
@@ -270,9 +342,16 @@ def rfft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the FFT. If not given, the last axis is
         used.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -327,14 +406,24 @@ def rfft(a, n=None, axis=-1, norm=None):
     exploited to compute only the non-negative frequency terms.
 
     """
-    unitary = _unitary(norm)
+    check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
-    if unitary and n is None:
-        x = asarray(x)
-        n = x.shape[axis]
-    output = mkl_fft.rfft_numpy(x, n=n, axis=axis)
-    if unitary:
-        output *= 1 / sqrt(n)
+    if norm in (None, "backward"):
+        output = trycall(
+            mkl_fft.rfft_numpy,
+            (x,), {'n': n, 'axis': axis})
+    elif norm == "forward":
+        x = asanyarray(x)
+        output = trycall(
+            mkl_fft.rfft_numpy,
+            (x,),
+            {'n': n, 'axis': axis, 'forward_scale': frwd_sc_1d(n, x.shape[axis])})
+    else:
+        x = asanyarray(x)
+        output = trycall(
+            mkl_fft.rfft_numpy,
+            (x,),
+            {'n': n, 'axis': axis, 'forward_scale': ortho_sc_1d(n, x.shape[axis])})
     return output
 
 
@@ -366,9 +455,16 @@ def irfft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the inverse FFT. If not given, the last
         axis is used.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -417,10 +513,24 @@ def irfft(a, n=None, axis=-1, norm=None):
     specified, and the output array is purely real.
 
     """
+    check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
-    output = mkl_fft.irfft_numpy(x, n=n, axis=axis)
-    if _unitary(norm):
-        output *= sqrt(output.shape[axis])
+    if norm in (None, "backward"):
+        output = trycall(
+            mkl_fft.irfft_numpy,
+            (x,), {'n': n, 'axis': axis})
+    elif norm == 'forward':
+        nn = n if n else 2*(x.shape[axis]-1)
+        output = trycall(
+            mkl_fft.irfft_numpy,
+            (x,), {'n': n, 'axis': axis,
+                   'forward_scale': frwd_sc_1d(nn, nn)})
+    else:
+        nn = n if n else 2*(x.shape[axis]-1)
+        output = trycall(
+            mkl_fft.irfft_numpy,
+            (x,), {'n': n, 'axis': axis,
+                   'forward_scale': ortho_sc_1d(nn, nn)})
     return output
 
 
@@ -441,9 +551,16 @@ def hfft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the FFT. If not given, the last
         axis is used.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -493,12 +610,28 @@ def hfft(a, n=None, axis=-1, norm=None):
            [ 2., -2.]])
 
     """
+    check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
     x = array(x, copy=True, dtype=complex)
     if n is None:
         n = (x.shape[axis] - 1) * 2
-    unitary = _unitary(norm)
-    return irfft(conjugate(x), n, axis) * (sqrt(n) if unitary else n)
+    conjugate(x, out=x)
+    if (norm in (None, "backward")):
+        res = trycall(
+            irfft,
+            (x, ),
+            {'n': n, 'axis': axis, 'norm': 'forward'})
+    elif norm == "forward":
+        res = trycall(
+            irfft,
+            (x, ),
+            {'n': n, 'axis': axis, 'norm': 'backward'})
+    else:
+        res = trycall(
+            irfft,
+            (x, ),
+            {'n': n, 'axis': axis, 'norm': 'ortho'})
+    return res
 
 
 def ihfft(a, n=None, axis=-1, norm=None):
@@ -518,9 +651,16 @@ def ihfft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the inverse FFT. If not given, the last
         axis is used.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -552,13 +692,28 @@ def ihfft(a, n=None, axis=-1, norm=None):
 
     """
     # The copy may be required for multithreading.
+    check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
     x = array(x, copy=True, dtype=float)
     if n is None:
         n = x.shape[axis]
-    unitary = _unitary(norm)
-    output = conjugate(rfft(x, n, axis))
-    return output * (1 / (sqrt(n) if unitary else n))
+    if (norm in (None, 'backward')):
+        output = trycall(
+            rfft,
+            (x,),
+            {'n': n, 'axis': axis, 'norm': 'forward'})
+    elif norm == 'forward':
+        output = trycall(
+            rfft,
+            (x,),
+            {'n': n, 'axis': axis, 'norm': 'backward'})
+    else:
+        output = trycall(
+            rfft,
+            (x,),
+            {'n': n, 'axis': axis, 'norm': 'ortho'})
+    conjugate(output, out=output)
+    return output
 
 
 def _cook_nd_args(a, s=None, axes=None, invreal=0):
@@ -612,9 +767,16 @@ def fftn(a, s=None, axes=None, norm=None):
         axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the transform over that axis is
         performed multiple times.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -679,10 +841,25 @@ def fftn(a, s=None, axes=None, norm=None):
     >>> plt.show()
 
     """
+    check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
-    output = mkl_fft.fftn(x, s, axes)
-    if _unitary(norm):
-        output *= 1 / sqrt(_tot_size(output, axes))
+    if (norm in (None, "backward")):
+        output = trycall(
+            mkl_fft.fftn,
+            (x,),
+            {'shape': s, 'axes': axes})
+    elif norm == "forward":
+        fsc = frwd_sc_nd(s, axes, x.shape)
+        output = trycall(
+            mkl_fft.fftn,
+            (x,),
+            {'shape': s, 'axes': axes, 'forward_scale': fsc})
+    else:
+        fsc = frwd_sc_nd(s, axes, x.shape)
+        output = trycall(
+            mkl_fft.fftn,
+            (x,),
+            {'shape': s, 'axes': axes, 'forward_scale': sqrt(fsc)})
     return output
 
 
@@ -720,9 +897,16 @@ def ifftn(a, s=None, axes=None, norm=None):
         axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the inverse transform over that
         axis is performed multiple times.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -778,11 +962,25 @@ def ifftn(a, s=None, axes=None, norm=None):
     >>> plt.show()
 
     """
-    unitary = _unitary(norm)
+    check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
-    output = mkl_fft.ifftn(x, s, axes)
-    if unitary:
-        output *= sqrt(_tot_size(output, axes))
+    if (norm in (None, "backward")):
+        output = trycall(
+            mkl_fft.ifftn,
+            (x,),
+            {'shape': s, 'axes': axes})
+    elif norm == "forward":
+        fsc = frwd_sc_nd(s, axes, x.shape)
+        output = trycall(
+            mkl_fft.ifftn,
+            (x,),
+            {'shape': s, 'axes': axes, 'forward_scale': fsc})
+    else:
+        fsc = frwd_sc_nd(s, axes, x.shape)
+        output = trycall(
+            mkl_fft.ifftn,
+            (x,),
+            {'shape': s, 'axes': axes, 'forward_scale': sqrt(fsc)})
     return output
 
 
@@ -812,9 +1010,16 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
         axes are used.  A repeated index in `axes` means the transform over
         that axis is performed multiple times.  A one-element sequence means
         that a one-dimensional FFT is performed.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -871,6 +1076,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
               0.0 +0.j        ,   0.0 +0.j        ]])
 
     """
+    check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
     return fftn(x, s=s, axes=axes, norm=norm)
 
@@ -908,9 +1114,16 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
         axes are used.  A repeated index in `axes` means the transform over
         that axis is performed multiple times.  A one-element sequence means
         that a one-dimensional FFT is performed.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -957,6 +1170,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
            [ 0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
 
     """
+    check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
     return ifftn(x, s=s, axes=axes, norm=norm)
 
@@ -987,9 +1201,16 @@ def rfftn(a, s=None, axes=None, norm=None):
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -1043,16 +1264,30 @@ def rfftn(a, s=None, axes=None, norm=None):
             [ 0.+0.j,  0.+0.j]]])
 
     """
+    check_norm(norm)
     unitary = _unitary(norm)
     x = _float_utils.__downcast_float128_array(a)
-    if unitary:
-        x = asarray(x)
+    if (norm in (None, "backward")):
+        output = trycall(
+            mkl_fft.rfftn_numpy,
+            (x,),
+            {'s': s, 'axes': axes })
+    elif norm == "forward":
+        x = asanyarray(x)
         s, axes = _cook_nd_args(x, s, axes)
-
-    output = mkl_fft.rfftn_numpy(x, s, axes)
-    if unitary:
-        n_tot = prod(asarray(s, dtype=output.dtype))
-        output *= 1 / sqrt(n_tot)
+        fsc = frwd_sc_nd(s, axes, x.shape)
+        output = trycall(
+            mkl_fft.rfftn_numpy,
+            (x,),
+            {'s': s, 'axes': axes, 'forward_scale': fsc})
+    else:
+        x = asanyarray(x)
+        s, axes = _cook_nd_args(x, s, axes)
+        fsc = frwd_sc_nd(s, axes, x.shape)
+        output = trycall(
+            mkl_fft.rfftn_numpy,
+            (x,),
+            {'s': s, 'axes': axes, 'forward_scale': sqrt(fsc)})
     return output
 
 
@@ -1068,9 +1303,16 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
         Shape of the FFT.
     axes : sequence of ints, optional
         Axes over which to compute the FFT.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -1088,6 +1330,7 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
     For more details see `rfftn`.
 
     """
+    check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
     return rfftn(x, s, axes, norm)
 
@@ -1125,9 +1368,16 @@ def irfftn(a, s=None, axes=None, norm=None):
         `len(s)` axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the inverse transform over that
         axis is performed multiple times.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -1176,10 +1426,29 @@ def irfftn(a, s=None, axes=None, norm=None):
             [ 1.,  1.]]])
 
     """
+    check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
-    output = mkl_fft.irfftn_numpy(x, s, axes)
-    if _unitary(norm):
-        output *= sqrt(_tot_size(output, axes))
+    if (norm in (None, "backward")):
+        output = trycall(
+            mkl_fft.irfftn_numpy,
+            (x,),
+            {'s': s, 'axes': axes })
+    elif norm == "forward":
+        x = asanyarray(x)
+        s, axes = _cook_nd_args(x, s, axes, invreal=1)
+        fsc = frwd_sc_nd(s, axes, x.shape)
+        output = trycall(
+            mkl_fft.irfftn_numpy,
+            (x,),
+            {'s': s, 'axes': axes, 'forward_scale': fsc})
+    else:
+        x = asanyarray(x)
+        s, axes = _cook_nd_args(x, s, axes, invreal=1)
+        fsc = frwd_sc_nd(s, axes, x.shape)
+        output = trycall(
+            mkl_fft.irfftn_numpy,
+            (x,),
+            {'s': s, 'axes': axes, 'forward_scale': sqrt(fsc)})
     return output
 
 
@@ -1196,9 +1465,16 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
     axes : sequence of ints, optional
         The axes over which to compute the inverse fft.
         Default is the last two axes.
-    norm : {None, "ortho"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        Normalization mode (see `numpy.fft`). Default is None.
+
+        Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
+
+        .. versionadded:: 1.20.0
+
+            The "backward", "forward" values were added.
 
     Returns
     -------
@@ -1215,6 +1491,7 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
     For more details see `irfftn`.
 
     """
+    check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
     return irfftn(x, s, axes, norm)
 
