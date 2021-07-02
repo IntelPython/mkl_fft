@@ -30,6 +30,9 @@ import re
 with io.open('mkl_fft/_version.py', 'rt', encoding='utf8') as f:
     version = re.search(r'__version__ = \'(.*?)\'', f.read()).group(1)
 
+with open("README.md", "r", encoding="utf-8") as file:
+    long_description = file.read()
+
 VERSION = version
 
 CLASSIFIERS = """\
@@ -77,7 +80,8 @@ def setup_package():
         maintainer = "Intel Corp.",
         maintainer_email = "scripting@intel.com",
         description = "MKL-based FFT transforms for NumPy arrays",
-        long_description = """NumPy-based implementation of Fast Fourier Transform using Intel (R) Math Kernel Library. 1D and ND, complex and real transforms, in-place and not-in-place on single and double precision arrays""",
+        long_description = long_description,
+        long_description_content_type="text/markdown",
         url = "http://github.com/IntelPython/mkl_fft",
         author = "Intel Corporation",
         download_url = "http://github.com/IntelPython/mkl_fft",
@@ -85,7 +89,7 @@ def setup_package():
         classifiers = [_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Mac OS-X"],
         test_suite = 'nose.collector',
-        python_requires = '>=3.5',
+        python_requires = '>=3.6',
         install_requires = ['numpy >=1.16'],
         configuration = configuration
     )
