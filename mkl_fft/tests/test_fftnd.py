@@ -113,8 +113,8 @@ class Test_mklfft_matrix(TestCase):
                     mkl_fft.fftn(y[i0, :, : , i3]),
                     rtol=r_tol, atol=a_tol
                 )
-        
-            
+
+
 
 
 class Test_Regressions(TestCase):
@@ -146,6 +146,16 @@ class Test_Regressions(TestCase):
                 rfft_tr = mkl_fft.rfftn_numpy(np.transpose(x, a))
                 tr_rfft = np.transpose(mkl_fft.rfftn_numpy(x, axes=a), a)
                 assert_allclose(rfft_tr, tr_rfft, rtol=r_tol, atol=a_tol)
+
+    def test_gh64(self):
+        """Test example from #64"""
+        a = np.arange(12).reshape((3,4))
+        x = a.astype(np.cdouble)
+        # should executed successfully
+        r1 = mkl_fft.fftn(a, shape=None, axes=(-2,-1))
+        r2 = mkl_fft.fftn(x)
+        r_tol, a_tol = _get_rtol_atol(x)
+        assert_allclose(r1, r2, rtol=r_tol, atol=a_tol)
 
 
 class Test_Scales(TestCase):
@@ -185,7 +195,7 @@ class Test_Scales(TestCase):
         X.flat[:] = np.cbrt(np.arange(0, X.size, dtype=X.dtype))
         f = mkl_fft.fftn(X)
         f_scale = mkl_fft.fftn(X, forward_scale=0.2)
-        
+
         r_tol, a_tol = _get_rtol_atol(X)
         assert_allclose(f, 5*f_scale, rtol=r_tol, atol=a_tol)
 
@@ -194,7 +204,6 @@ class Test_Scales(TestCase):
         X.flat[:] = np.cbrt(np.arange(X.size, dtype=X.dtype))
         f = mkl_fft.fftn(X, axes=(0, 1, 2, 3))
         f_scale = mkl_fft.fftn(X, axes=(0, 1, 2, 3), forward_scale=0.2)
-        
+
         r_tol, a_tol = _get_rtol_atol(X)
         assert_allclose(f, 5*f_scale, rtol=r_tol, atol=a_tol)
-        
