@@ -944,7 +944,7 @@ def iter_complementary(x, axes, func, kwargs, result):
             size *= x_shape[ri]
             sub_shape.append(x_shape[ri])
             dual_ind.append(ri)
-    
+
     for ind in range(size):
         m_ind = flat_to_multi(ind, sub_shape)
         for k1, k2 in zip(dual_ind, m_ind):
@@ -1077,7 +1077,7 @@ def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1, doubl
     if _direct:
         return _direct_fftnd(x, overwrite_arg=overwrite_x, direction=direction, fsc=fsc)
     else:
-        if (shape is None):
+        if (shape is None and x.dtype in [np.complex64, np.complex128, np.float32, np.float64]):
             x = np.asarray(x)
             res = np.empty(x.shape, dtype=_output_dtype(x.dtype))
             return iter_complementary(
