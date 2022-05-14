@@ -932,7 +932,7 @@ def iter_complementary(x, axes, func, kwargs, result):
     nd = x.ndim
     r = list(range(nd))
     sl = [slice(None, None, None)] * nd
-    if not isinstance(axes, tuple):
+    if not np.iterable(axes):
         axes = (axes,)
     for ai in axes:
         r[ai] = None
