@@ -114,6 +114,18 @@ class Test_mklfft_matrix(TestCase):
                     rtol=r_tol, atol=a_tol
                 )
 
+    def test_matrix6(self):
+        """fftn with tuple, list and ndarray axes and s"""
+        for ar in [self.md, self.mz, self.mf, self.mc]:
+            d = ar.copy()
+            for norm in ["forward", "backward", "ortho"]:
+                for container in [tuple, list, np.array]:
+                    axes = container(range(d.ndim))
+                    s = container(d.shape)
+                    kwargs = dict(s=s, axes=axes, norm=norm)
+                    r_tol, a_tol = _get_rtol_atol(d)
+                    t = mkl_fft._numpy_fft.fftn(mkl_fft._numpy_fft.ifftn(d, **kwargs), **kwargs)
+                    assert_allclose(d, t, rtol=r_tol, atol=a_tol, err_msg = "failed test for dtype {}, max abs diff: {}".format(d.dtype, np.max(np.abs(d-t))))
 
 
 
