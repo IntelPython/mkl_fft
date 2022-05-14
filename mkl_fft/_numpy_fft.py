@@ -203,7 +203,7 @@ def fft(a, n=None, axis=-1, norm=None):
             mkl_fft.fft,
             (x,),
             {'n':n, 'axis': axis})
-    elif norm is "forward":
+    elif norm == "forward":
         output = trycall(
             mkl_fft.fft,
             (x,),
