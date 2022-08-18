@@ -24,21 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import absolute_import
-import numpy as np
-cimport numpy as cnp
-try:
-    from numpy.core.multiarray_tests import internal_overlap
-except ImportError:
-    # Module has been renamed in NumPy 1.15
-    from numpy.core._multiarray_tests import internal_overlap
+#cython: language_level=3
 
+# imports
+import numpy as np
+from numpy.core._multiarray_tests import internal_overlap
+from threading import local as threading_local
+
+# cimports
+cimport numpy as cnp
 from libc.string cimport memcpy
 cimport cpython.pycapsule
 from cpython.exc cimport (PyErr_Occurred, PyErr_Clear)
 from cpython.mem cimport (PyMem_Malloc, PyMem_Free)
 
-from threading import local as threading_local
 
 # thread-local storage
 _tls = threading_local()
