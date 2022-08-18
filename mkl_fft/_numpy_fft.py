@@ -76,8 +76,8 @@ def frwd_sc_1d(n, s):
 
 
 def frwd_sc_nd(s, axes, x_shape):
-    ss = s if s else x_shape
-    if axes:
+    ss = s if s is not None else x_shape
+    if axes is not None:
         nn = prod([ss[ai] for ai in axes])
     else:
         nn = prod(ss)
@@ -203,7 +203,7 @@ def fft(a, n=None, axis=-1, norm=None):
             mkl_fft.fft,
             (x,),
             {'n':n, 'axis': axis})
-    elif norm is "forward":
+    elif norm == "forward":
         output = trycall(
             mkl_fft.fft,
             (x,),
