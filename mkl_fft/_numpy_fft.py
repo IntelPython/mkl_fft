@@ -1494,4 +1494,3 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
     check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
     return irfftn(x, s, axes, norm)
-

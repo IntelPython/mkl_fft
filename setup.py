@@ -25,7 +25,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import io
+import os
 import re
+from os.path import join
+from Cython.Build import cythonize
+from setuptools import setup, Extension
+import numpy as np
+from numpy.distutils.conv_template import process_file as process_c_file
 
 with io.open('mkl_fft/_version.py', 'rt', encoding='utf8') as f:
     version = re.search(r'__version__ = \'(.*?)\'', f.read()).group(1)
@@ -42,11 +48,11 @@ Intended Audience :: Developers
 License :: OSI Approved
 Programming Language :: C
 Programming Language :: Python
-Programming Language :: Python :: 2
-Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.5
-Programming Language :: Python :: 3.6
+Programming Language :: Python :: 3.7
+Programming Language :: Python :: 3.8
+Programming Language :: Python :: 3.9
+Programming Language :: Python :: 3.10
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
 Topic :: Scientific/Engineering
@@ -56,46 +62,73 @@ Operating System :: Unix
 Operating System :: MacOS
 """
 
-def configuration(parent_package='',top_path=None):
-    from numpy.distutils.misc_util import Configuration
+def extensions():
+    mkl_root = os.environ.get('MKLROOT', None)
+    if mkl_root:
+        mkl_info = {
+            'include_dirs': [join(mkl_root, 'include')],
+            'library_dirs': [join(mkl_root, 'lib'), join(mkl_root, 'lib', 'intel64')],
+            'libraries': ['mkl_rt']
+        }
+    else:
+        try:
+            mkl_info = get_info('mkl')
+        except:
+            mkl_info = dict()
 
-    config = Configuration(None, parent_package, top_path)
-    config.set_options(ignore_setup_xxx_py=True,
-                       assume_default_configuration=True,
-                       delegate_options_to_subpackages=True,
-                       quiet=True)
+    mkl_include_dirs = mkl_info.get('include_dirs', [])
+    mkl_library_dirs = mkl_info.get('library_dirs', [])
+    mkl_libraries = mkl_info.get('libraries', ['mkl_rt'])
 
-    config.add_subpackage('mkl_fft')
+    mklfft_templ = os.path.join("mkl_fft", "src", "mklfft.c.src")
+    processed_mklfft_fn = os.path.join("mkl_fft", "src", "mklfft.c")
+    src_processed = process_c_file(mklfft_templ)
 
-    config.version = VERSION
+    with open(processed_mklfft_fn, 'w') as fid:
+        fid.write(src_processed)
 
-    return config
+    return [
+        Extension(
+            "mkl_fft._pydfti",
+            [
+                os.path.join("mkl_fft", "_pydfti.pyx"),
+                os.path.join("mkl_fft", "src", "mklfft.c"),
+            ],
+            depends = [
+                os.path.join("mkl_fft", "src", 'mklfft.h'),
+                os.path.join("mkl_fft", "src", "multi_iter.h")
+            ],
+            include_dirs = [os.path.join("mkl_fft", "src"), np.get_include()] + mkl_include_dirs,
+            libraries = mkl_libraries,
+            library_dirs = mkl_library_dirs,
+            extra_compile_args = [
+                '-DNDEBUG',
+                # '-ggdb', '-O0', '-Wall', '-Wextra', '-DDEBUG',
+            ]
+        )
+    ]
 
 
-def setup_package():
-    from setuptools import setup
-    from numpy.distutils.core import setup
-    metadata = dict(
-        name = 'mkl_fft',
-        maintainer = "Intel Corp.",
-        maintainer_email = "scripting@intel.com",
-        description = "MKL-based FFT transforms for NumPy arrays",
-        long_description = long_description,
-        long_description_content_type="text/markdown",
-        url = "http://github.com/IntelPython/mkl_fft",
-        author = "Intel Corporation",
-        download_url = "http://github.com/IntelPython/mkl_fft",
-        license = 'BSD',
-        classifiers = [_f for _f in CLASSIFIERS.split('\n') if _f],
-        platforms = ["Windows", "Linux", "Mac OS-X"],
-        test_suite = 'nose.collector',
-        python_requires = '>=3.6',
-        install_requires = ['numpy >=1.16'],
-        configuration = configuration
-    )
-    setup(**metadata)
-
-    return None
-
-if __name__ == '__main__':
-    setup_package()
+setup(
+    name = "mkl_fft",
+    maintainer = "Intel Corp.",
+    maintainer_email = "scripting@intel.com",
+    description = "MKL-based FFT transforms for NumPy arrays",
+    version = version,
+    include_package_data=True,
+    ext_modules=extensions(),
+    zip_safe=False,
+    long_description = long_description,
+    long_description_content_type="text/markdown",
+    url = "http://github.com/IntelPython/mkl_fft",
+    author = "Intel Corporation",
+    download_url = "http://github.com/IntelPython/mkl_fft",
+    license = "BSD",
+    classifiers = [_f for _f in CLASSIFIERS.split('\n') if _f],
+    platforms = ["Windows", "Linux", "Mac OS-X"],
+    test_suite = "pytest",
+    python_requires = '>=3.7',
+    setup_requires=["Cython",],
+    install_requires = ["numpy >=1.16"],
+    keywords=["DFTI", "FFT", "Fourier", "MKL",],
+)
