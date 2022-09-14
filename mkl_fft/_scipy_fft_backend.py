@@ -67,24 +67,28 @@ class _cpu_max_threads_count:
 
 
 _hardware_counts = _cpu_max_threads_count()
-    
+
 
 __all__ = ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn',
            'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn',
            'hfft', 'ihfft', 'hfft2', 'ihfft2', 'hfftn', 'ihfftn',
            'dct', 'idct', 'dst', 'idst', 'dctn', 'idctn', 'dstn', 'idstn',
            'fftshift', 'ifftshift', 'fftfreq', 'rfftfreq', 'get_workers',
-           'set_workers', 'next_fast_len']
+           'set_workers', 'next_fast_len', 'DftiBackend']
 
-__ua_domain__ = 'numpy.scipy.fft'
+
+class DftiBackend:
+    __ua_domain__ = "numpy.scipy.fft"
+    @staticmethod
+    def __ua_function__(method, args, kwargs):
+        """Fetch registered UA function."""
+        fn = __implemented.get(method, None)
+        if fn is None:
+            return NotImplemented
+        return fn(*args, **kwargs)
+
+
 __implemented = dict()
-
-def __ua_function__(method, args, kwargs):
-    """Fetch registered UA function."""
-    fn = __implemented.get(method, None)
-    if fn is None:
-        return NotImplemented
-    return fn(*args, **kwargs)
 
 
 def _implements(scipy_func):
