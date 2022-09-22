@@ -1,8 +1,8 @@
 ## ``mkl_fft`` --  a NumPy-based Python interface to Intel (R) MKL FFT functionality
 [![Build Status](https://travis-ci.com/IntelPython/mkl_fft.svg?branch=master)](https://travis-ci.com/IntelPython/mkl_fft)
 
-`mkl_fft` started as a part of Intel (R) Distribution for Python* optimizations to NumPy, and is now being released 
-as a stand-alone package. It can be installed into conda environment using 
+`mkl_fft` started as a part of Intel (R) Distribution for Python* optimizations to NumPy, and is now being released
+as a stand-alone package. It can be installed into conda environment using
 
 ```
    conda install -c intel mkl_fft
@@ -13,13 +13,13 @@ as a stand-alone package. It can be installed into conda environment using
 To install mkl_fft Pypi package please use following command:
 
 ```
-   python -m pip install --i https://pypi.anaconda.org/intel/simple -extra-index-url https://pypi.org/simple mkl_fft
+   python -m pip install --index-url https://pypi.anaconda.org/intel/simple --extra-index-url https://pypi.org/simple mkl_fft
 ```
 
 If command above installs NumPy package from the Pypi, please use following command to install Intel optimized NumPy wheel package from Anaconda Cloud:
 
 ```
-   python -m pip install --i https://pypi.anaconda.org/intel/simple -extra-index-url https://pypi.org/simple mkl_fft numpy==<numpy_version>
+   python -m pip install --index-url https://pypi.anaconda.org/intel/simple --extra-index-url https://pypi.org/simple mkl_fft numpy==<numpy_version>
 ```
 
 Where `<numpy_version>` should be the latest version from https://anaconda.org/intel/numpy
@@ -27,7 +27,7 @@ Where `<numpy_version>` should be the latest version from https://anaconda.org/i
 ---
 
 Since MKL FFT supports performing discrete Fourier transforms over non-contiguously laid out arrays, MKL can be directly
-used on any well-behaved floating point array with no internal overlaps for both in-place and not in-place transforms of 
+used on any well-behaved floating point array with no internal overlaps for both in-place and not in-place transforms of
 arrays in single and double floating point precision.
 
 This eliminates the need to copy input array contiguously into an intermediate buffer.
@@ -70,9 +70,9 @@ It implements the following functions:
 
 The package also provides `mkl_fft._numpy_fft` and `mkl_fft._scipy_fft` interfaces which provide drop-in replacements for equivalent functions in NumPy and SciPy respectively.
 
---- 
+---
 
 To build ``mkl_fft`` from sources on Linux:
   - install a recent version of MKL, if necessary;
-  - execute ``source /path/to/mklroot/bin/mklvars.sh intel64`` ; 
+  - execute ``source /path/to/mklroot/bin/mklvars.sh intel64`` ;
   - execute ``pip install .``
