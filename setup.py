@@ -28,7 +28,7 @@ import io
 import os
 import re
 from os.path import join
-from Cython.Build import cythonize
+import Cython.Build
 from setuptools import setup, Extension
 import numpy as np
 from numpy.distutils.conv_template import process_file as process_c_file
@@ -115,6 +115,7 @@ setup(
     maintainer_email = "scripting@intel.com",
     description = "MKL-based FFT transforms for NumPy arrays",
     version = version,
+    cmdclass={'build_ext': Cython.Build.build_ext},
     include_package_data=True,
     ext_modules=extensions(),
     zip_safe=False,
