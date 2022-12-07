@@ -28,19 +28,23 @@ from . import _pydfti
 from . import _float_utils
 import mkl
 
-import scipy.fft as _fft
-
-# Complete the namespace (these are not actually used in this module)
-from scipy.fft import (
-    dct, idct, dst, idst, dctn, idctn, dstn, idstn,
-    hfft2, ihfft2, hfftn, ihfftn,
-    fftshift, ifftshift, fftfreq, rfftfreq,
-    get_workers, set_workers
-)
-
 from numpy.core import (array, asarray, shape, conjugate, take, sqrt, prod)
 from os import cpu_count as os_cpu_count
 import warnings
+
+
+__doc__ = """
+This module implements interfaces mimicing `scipy.fft` module.
+
+It also provides DftiBackend class which can be used to set mkl_fft to be used
+via `scipy.fft` namespace.
+
+:Example:
+    import scipy.fft
+    import mkl_fft._scipy_fft_backend as be
+    # Set mkl_fft to be used as backend of SciPy's FFT functions.
+    scipy.fft.set_global_backend(be)
+"""
 
 class _cpu_max_threads_count:
     def __init__(self):
@@ -48,8 +52,8 @@ class _cpu_max_threads_count:
         self.max_threads_count = None
 
     def get_cpu_count(self):
-        max_threads = self.get_max_threads_count()
         if self.cpu_count is None:
+            max_threads = self.get_max_threads_count()
             self.cpu_count = os_cpu_count()
             if self.cpu_count > max_threads:
                 warnings.warn(
@@ -76,28 +80,25 @@ __all__ = ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn',
            'fftshift', 'ifftshift', 'fftfreq', 'rfftfreq', 'get_workers',
            'set_workers', 'next_fast_len', 'DftiBackend']
 
+__ua_domain__ = "numpy.scipy.fft"
+
+def __ua_function__(method, args, kwargs):
+    """Fetch registered UA function."""
+    fn = globals().get(method.__name__, None)
+    if fn is None:
+        return NotImplemented
+    return fn(*args, **kwargs)
+
 
 class DftiBackend:
     __ua_domain__ = "numpy.scipy.fft"
     @staticmethod
     def __ua_function__(method, args, kwargs):
         """Fetch registered UA function."""
-        fn = __implemented.get(method, None)
+        fn = globals().get(method.__name__, None)
         if fn is None:
             return NotImplemented
         return fn(*args, **kwargs)
-
-
-__implemented = dict()
-
-
-def _implements(scipy_func):
-    """Decorator adds function to the dictionary of implemented UA functions"""
-    def inner(func):
-        __implemented[scipy_func] = func
-        return func
-
-    return inner
 
 
 def _unitary(norm):
@@ -138,7 +139,7 @@ def _workers_to_num_threads(w):
     same way as scipy.fft.helpers._workers.
     """
     if w is None:
-        return get_workers()
+        return _hardware_counts.get_cpu_count()
     _w = int(w)
     if (_w == 0):
         raise ValueError("Number of workers must be nonzero")
@@ -166,7 +167,6 @@ class Workers:
         mkl.set_num_threads_local(self.prev_num_threads)
 
 
-@_implements(_fft.fft)
 def fft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     with Workers(workers):
@@ -176,7 +176,6 @@ def fft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
     return output
 
 
-@_implements(_fft.ifft)
 def ifft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     with Workers(workers):
@@ -186,7 +185,6 @@ def ifft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
     return output
 
 
-@_implements(_fft.fft2)
 def fft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     with Workers(workers):
@@ -199,7 +197,6 @@ def fft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
     return output
 
 
-@_implements(_fft.ifft2)
 def ifft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     with Workers(workers):
@@ -213,7 +210,6 @@ def ifft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
     return output
 
 
-@_implements(_fft.fftn)
 def fftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     with Workers(workers):
@@ -227,7 +223,6 @@ def fftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
     return output
 
 
-@_implements(_fft.ifftn)
 def ifftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     with Workers(workers):
@@ -241,7 +236,6 @@ def ifftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
     return output
 
 
-@_implements(_fft.rfft)
 def rfft(a, n=None, axis=-1, norm=None, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     unitary = _unitary(norm)
@@ -256,7 +250,6 @@ def rfft(a, n=None, axis=-1, norm=None, workers=None):
     return output
 
 
-@_implements(_fft.irfft)
 def irfft(a, n=None, axis=-1, norm=None, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     x = _float_utils.__downcast_float128_array(x)
@@ -267,21 +260,18 @@ def irfft(a, n=None, axis=-1, norm=None, workers=None):
     return output
 
 
-@_implements(_fft.rfft2)
 def rfft2(a, s=None, axes=(-2, -1), norm=None, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     x = _float_utils.__downcast_float128_array(a)
     return rfftn(x, s, axes, norm, workers)
 
 
-@_implements(_fft.irfft2)
 def irfft2(a, s=None, axes=(-2, -1), norm=None, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     x = _float_utils.__downcast_float128_array(x)
     return irfftn(x, s, axes, norm, workers)
 
 
-@_implements(_fft.rfftn)
 def rfftn(a, s=None, axes=None, norm=None, workers=None):
     unitary = _unitary(norm)
     x = _float_utils.__upcast_float16_array(a)
@@ -297,7 +287,6 @@ def rfftn(a, s=None, axes=None, norm=None, workers=None):
     return output
 
 
-@_implements(_fft.irfftn)
 def irfftn(a, s=None, axes=None, norm=None, workers=None):
     x = _float_utils.__upcast_float16_array(a)
     x = _float_utils.__downcast_float128_array(x)
