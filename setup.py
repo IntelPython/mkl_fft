@@ -130,6 +130,6 @@ setup(
     test_suite = "pytest",
     python_requires = '>=3.7',
     setup_requires=["Cython",],
-    install_requires = ["numpy >=1.16"],
+    install_requires = ["numpy >=1.16", "mkl"],
     keywords=["DFTI", "FFT", "Fourier", "MKL",],
 )
