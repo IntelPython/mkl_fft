@@ -54,13 +54,7 @@ class _cpu_max_threads_count:
     def get_cpu_count(self):
         if self.cpu_count is None:
             max_threads = self.get_max_threads_count()
-            self.cpu_count = os_cpu_count()
-            if self.cpu_count > max_threads:
-                warnings.warn(
-                    ("os.cpu_count() returned value of {} greater than mkl.get_max_threads()'s value of {}. "
-                               "Using negative values of worker option may amount to requesting more threads than "
-                               "Intel(R) MKL can acommodate."
-                    ).format(self.cpu_count, max_threads))
+            self.cpu_count = max_threads
         return self.cpu_count
 
     def get_max_threads_count(self):
