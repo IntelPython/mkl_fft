@@ -162,7 +162,10 @@ class Workers:
 
 
 def fft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
-    x = _float_utils.__upcast_float16_array(a)
+    try:
+        x = _float_utils.__upcast_float16_array(a)
+    except ValueError:
+        return NotImplemented
     with Workers(workers):
         output = _pydfti.fft(x, n=n, axis=axis, overwrite_x=overwrite_x)
     if _unitary(norm):
@@ -171,7 +174,10 @@ def fft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
 
 
 def ifft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
-    x = _float_utils.__upcast_float16_array(a)
+    try:
+        x = _float_utils.__upcast_float16_array(a)
+    except ValueError:
+        return NotImplemented
     with Workers(workers):
         output = _pydfti.ifft(x, n=n, axis=axis, overwrite_x=overwrite_x)
     if _unitary(norm):
@@ -180,7 +186,10 @@ def ifft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
 
 
 def fft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
-    x = _float_utils.__upcast_float16_array(a)
+    try:
+        x = _float_utils.__upcast_float16_array(a)
+    except ValueError:
+        return NotImplemented
     with Workers(workers):
         output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
     if _unitary(norm):
@@ -192,7 +201,10 @@ def fft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
 
 
 def ifft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
-    x = _float_utils.__upcast_float16_array(a)
+    try:
+        x = _float_utils.__upcast_float16_array(a)
+    except ValueError:
+        return NotImplemented
     with Workers(workers):
         output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
     if _unitary(norm):
@@ -205,7 +217,10 @@ def ifft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
 
 
 def fftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
-    x = _float_utils.__upcast_float16_array(a)
+    try:
+        x = _float_utils.__upcast_float16_array(a)
+    except ValueError:
+        return NotImplemented
     with Workers(workers):
         output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
     if _unitary(norm):
@@ -218,7 +233,10 @@ def fftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
 
 
 def ifftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
-    x = _float_utils.__upcast_float16_array(a)
+    try:
+        x = _float_utils.__upcast_float16_array(a)
+    except ValueError:
+        return NotImplemented
     with Workers(workers):
         output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
     if _unitary(norm):
@@ -231,7 +249,10 @@ def ifftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
 
 
 def rfft(a, n=None, axis=-1, norm=None, workers=None):
-    x = _float_utils.__upcast_float16_array(a)
+    try:
+        x = _float_utils.__upcast_float16_array(a)
+    except ValueError:
+        return NotImplemented
     unitary = _unitary(norm)
     x = _float_utils.__downcast_float128_array(x)
     if unitary and n is None:
@@ -245,8 +266,10 @@ def rfft(a, n=None, axis=-1, norm=None, workers=None):
 
 
 def irfft(a, n=None, axis=-1, norm=None, workers=None):
-    x = _float_utils.__upcast_float16_array(a)
-    x = _float_utils.__downcast_float128_array(x)
+    try:
+        x = _float_utils.__upcast_float16_array(a)
+    except ValueError:
+        return NotImplemented
     with Workers(workers):
         output = _pydfti.irfft_numpy(x, n=n, axis=axis)
     if _unitary(norm):
@@ -255,21 +278,27 @@ def irfft(a, n=None, axis=-1, norm=None, workers=None):
 
 
 def rfft2(a, s=None, axes=(-2, -1), norm=None, workers=None):
-    x = _float_utils.__upcast_float16_array(a)
-    x = _float_utils.__downcast_float128_array(a)
+    try:
+        x = _float_utils.__upcast_float16_array(a)
+    except ValueError:
+        return NotImplemented
     return rfftn(x, s, axes, norm, workers)
 
 
 def irfft2(a, s=None, axes=(-2, -1), norm=None, workers=None):
-    x = _float_utils.__upcast_float16_array(a)
-    x = _float_utils.__downcast_float128_array(x)
+    try:
+        x = _float_utils.__upcast_float16_array(a)
+    except ValueError:
+        return NotImplemented
     return irfftn(x, s, axes, norm, workers)
 
 
 def rfftn(a, s=None, axes=None, norm=None, workers=None):
     unitary = _unitary(norm)
-    x = _float_utils.__upcast_float16_array(a)
-    x = _float_utils.__downcast_float128_array(x)
+    try:
+        x = _float_utils.__upcast_float16_array(a)
+    except ValueError:
+        return NotImplemented
     if unitary:
         x = asarray(x)
         s, axes = _cook_nd_args(x, s, axes)
@@ -282,8 +311,10 @@ def rfftn(a, s=None, axes=None, norm=None, workers=None):
 
 
 def irfftn(a, s=None, axes=None, norm=None, workers=None):
-    x = _float_utils.__upcast_float16_array(a)
-    x = _float_utils.__downcast_float128_array(x)
+    try:
+        x = _float_utils.__upcast_float16_array(a)
+    except ValueError:
+        return NotImplemented
     with Workers(workers):
         output = _pydfti.irfftn_numpy(x, s, axes)
     if _unitary(norm):
