@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2019-2020, Intel Corporation
+# Copyright (c) 2019-2023, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -95,13 +95,6 @@ class DftiBackend:
         return fn(*args, **kwargs)
 
 
-def _unitary(norm):
-    if norm not in (None, "ortho"):
-        raise ValueError("Invalid norm value %s, should be None or \"ortho\"."
-                         % norm)
-    return norm is not None
-
-
 def _cook_nd_args(a, s=None, axes=None, invreal=0):
     if s is None:
         shapeless = 1
@@ -161,162 +154,239 @@ class Workers:
         mkl.set_num_threads_local(self.prev_num_threads)
 
 
-def fft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
+def _check_norm(norm):
+    if norm not in (None, "ortho", "forward", "backward"):
+        raise ValueError(
+            ("Invalid norm value {} should be None, "
+             "\"ortho\", \"forward\", or \"backward\".").format(norm))
+
+def _check_plan(plan):
+    if plan is None:
+        return
+    raise ValueError(
+        f"Value plan={plan} is currently not supported"
+    )
+
+
+def _frwd_sc_1d(n, s):
+    nn = n if n else s
+    return 1/nn if nn != 0 else 1
+
+
+def _frwd_sc_nd(s, axes, x_shape):
+    ss = s if s is not None else x_shape
+    if axes is not None:
+        nn = prod([ss[ai] for ai in axes])
+    else:
+        nn = prod(ss)
+    return 1/nn if nn != 0 else 1
+
+
+def _ortho_sc_1d(n, s):
+    return sqrt(_frwd_sc_1d(n, s))
+
+
+def _compute_1d_forward_scale(norm, n, s):
+    if norm in (None, "backward"):
+        fsc = 1.0
+    elif norm == "forward":
+        fsc = _frwd_sc_1d(n, s)
+    elif norm == "ortho":
+        fsc = _ortho_sc_1d(n, s)
+    else:
+        _check_norm(norm)
+    return fsc
+
+
+def _compute_nd_forward_scale(norm, s, axes, x_shape):
+    if norm in (None, "backward"):
+        fsc = 1.0
+    elif norm == "forward":
+        fsc = _frwd_sc_nd(s, axes, x_shape)
+    elif norm == "ortho":
+        fsc = sqrt(_frwd_sc_nd(s, axes, x-shape))
+    else:
+        _check_norm(norm)
+    return fsc
+
+
+def fft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, plan=None):
     try:
-        x = _float_utils.__upcast_float16_array(a)
+        x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
         return NotImplemented
+    if x is NotImplemented:
+        return x
+    fsc = _compute_1d_forward_scale(norm, n, x.shape[axis])
+    _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.fft(x, n=n, axis=axis, overwrite_x=overwrite_x)
-    if _unitary(norm):
-        output *= 1 / sqrt(output.shape[axis])
+        output = _pydfti.fft(x, n=n, axis=axis, overwrite_x=overwrite_x, forward_scale=fsc)
     return output
 
 
-def ifft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None):
+def ifft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, plan=None):
     try:
-        x = _float_utils.__upcast_float16_array(a)
+        x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
         return NotImplemented
+    if x is NotImplemented:
+        return x
+    fsc = _compute_1d_forward_scale(norm, n, x.shape[axis])
+    _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.ifft(x, n=n, axis=axis, overwrite_x=overwrite_x)
-    if _unitary(norm):
-        output *= sqrt(output.shape[axis])
+        output = _pydfti.ifft(x, n=n, axis=axis, overwrite_x=overwrite_x, forward_scale=fsc)
     return output
 
 
-def fft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
+def fft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None, plan=None):
     try:
-        x = _float_utils.__upcast_float16_array(a)
+        x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
         return NotImplemented
+    if x is NotImplemented:
+        return x
+    fsc = _compute_nd_forward_scale(norm, s, axes, x.shape)
+    _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
-    if _unitary(norm):
-        factor = 1
-        for axis in axes:
-            factor *= 1 / sqrt(output.shape[axis])
-        output *= factor
+        output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, forward_scale=fsc)
     return output
 
 
-def ifft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None):
+def ifft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None, plan=None):
     try:
-        x = _float_utils.__upcast_float16_array(a)
+        x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
         return NotImplemented
+    if x is NotImplemented:
+        return x
+    fsc = _compute_nd_forward_scale(norm, s, axes, x.shape)
+    _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
-    if _unitary(norm):
-        factor = 1
-        _axes = range(output.ndim) if axes is None else axes
-        for axis in _axes:
-            factor *= sqrt(output.shape[axis])
-        output *= factor
+        output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, forward_scale=fsc)
     return output
 
 
-def fftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
+def fftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan=None):
     try:
-        x = _float_utils.__upcast_float16_array(a)
+        x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
         return NotImplemented
+    if x is NotImplemented:
+        return x
+    fsc = _compute_nd_forward_scale(norm, s, axes, x.shape)
+    _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
-    if _unitary(norm):
-        factor = 1
-        _axes = range(output.ndim) if axes is None else axes
-        for axis in _axes:
-            factor *= 1 / sqrt(output.shape[axis])
-        output *= factor
+        output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, forward_scale=fsc)
     return output
 
 
-def ifftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None):
+def ifftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan=None):
     try:
-        x = _float_utils.__upcast_float16_array(a)
+        x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
         return NotImplemented
+    if x is NotImplemented:
+        return x
+    fsc = _compute_nd_forward_scale(norm, s, axes, x.shape)
+    _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x)
-    if _unitary(norm):
-        factor = 1
-        _axes = range(output.ndim) if axes is None else axes
-        for axis in _axes:
-            factor *= sqrt(output.shape[axis])
-        output *= factor
+        output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, forward_scale=fsc)
     return output
 
 
-def rfft(a, n=None, axis=-1, norm=None, workers=None):
+def rfft(a, n=None, axis=-1, norm=None, workers=None, plan=None):
     try:
-        x = _float_utils.__upcast_float16_array(a)
+        x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
         return NotImplemented
-    unitary = _unitary(norm)
-    x = _float_utils.__downcast_float128_array(x)
-    if unitary and n is None:
-        x = asarray(x)
-        n = x.shape[axis]
+    if x is NotImplemented:
+        return x
+    fsc = _compute_1d_forward_scale(norm, n, x.shape[axis])
+    _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.rfft_numpy(x, n=n, axis=axis)
-    if unitary:
-        output *= 1 / sqrt(n)
+        output = _pydfti.rfft_numpy(x, n=n, axis=axis, forward_scale=fsc)
     return output
 
 
-def irfft(a, n=None, axis=-1, norm=None, workers=None):
+def irfft(a, n=None, axis=-1, norm=None, workers=None, plan=None):
     try:
-        x = _float_utils.__upcast_float16_array(a)
+        x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
         return NotImplemented
+    if x is NotImplemented:
+        return x
+    fsc = _compute_1d_forward_scale(norm, n, x.shape[axis])
+    _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.irfft_numpy(x, n=n, axis=axis)
-    if _unitary(norm):
-        output *= sqrt(output.shape[axis])
+        output = _pydfti.irfft_numpy(x, n=n, axis=axis, forward_scale=fsc)
     return output
 
 
-def rfft2(a, s=None, axes=(-2, -1), norm=None, workers=None):
-    try:
-        x = _float_utils.__upcast_float16_array(a)
-    except ValueError:
-        return NotImplemented
-    return rfftn(x, s, axes, norm, workers)
-
-
-def irfft2(a, s=None, axes=(-2, -1), norm=None, workers=None):
-    try:
-        x = _float_utils.__upcast_float16_array(a)
-    except ValueError:
-        return NotImplemented
-    return irfftn(x, s, axes, norm, workers)
-
-
-def rfftn(a, s=None, axes=None, norm=None, workers=None):
-    unitary = _unitary(norm)
-    try:
-        x = _float_utils.__upcast_float16_array(a)
-    except ValueError:
-        return NotImplemented
-    if unitary:
-        x = asarray(x)
+def _compute_nd_forward_scale_for_rfft(norm, s, axes, x):
+    if norm in (None, "backward"):
+        fsc = 1.0
+    elif norm == "forward":
         s, axes = _cook_nd_args(x, s, axes)
+        fsc = _frwd_sc_nd(s, axes, x.shape)
+    elif norm == "ortho":
+        s, axes = _cook_nd_args(x, s, axes)
+        fsc = sqrt(_frwd_sc_nd(s, axes, x.shape))
+    else:
+        _check_norm(norm)
+    return s, axes, fsc
+
+
+def rfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, plan=None):
+    try:
+        x = _float_utils.__supported_array_or_not_implemented(a)
+    except ValueError:
+        return NotImplemented
+    if x is NotImplemented:
+        return x
+    s, axes, fsc = _compute_nd_forward_scale_for_rfft(norm, s, axes, x)
+    _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.rfftn_numpy(x, s, axes)
-    if unitary:
-        n_tot = prod(asarray(s, dtype=output.dtype))
-        output *= 1 / sqrt(n_tot)
+        output = _pydfti.rfftn_numpy(x, s, axes, forward_scale=fsc)
     return output
 
 
-def irfftn(a, s=None, axes=None, norm=None, workers=None):
+def irfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, plan=None):
     try:
-        x = _float_utils.__upcast_float16_array(a)
+        x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
         return NotImplemented
+    if x is NotImplemented:
+        return x
+    s, axes, fsc = _compute_nd_forward_scale_for_rfft(norm, s, axes, x)
+    _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.irfftn_numpy(x, s, axes)
-    if _unitary(norm):
-        output *= sqrt(_tot_size(output, axes))
+        output = _pydfti.irfftn_numpy(x, s, axes, forward_scale=fsc)
+    return output
+
+
+def rfftn(a, s=None, axes=None, norm=None, workers=None, plan=None):
+    try:
+        x = _float_utils.__supported_array_or_not_implemented(a)
+    except ValueError:
+        return NotImplemented
+    if x is NotImplemented:
+        return x
+    s, axes, fsc = _compute_nd_forward_scale_for_rfft(norm, s, axes, x)
+    _check_plan(plan)
+    with Workers(workers):
+        output = _pydfti.rfftn_numpy(x, s, axes, forward_scale=fsc)
+    return output
+
+
+def irfftn(a, s=None, axes=None, norm=None, workers=None, plan=None):
+    try:
+        x = _float_utils.__supported_array_or_not_implemented(a)
+    except ValueError:
+        return NotImplemented
+    if x is NotImplemented:
+        return x
+    s, axes, fsc = _compute_nd_forward_scale_for_rfft(norm, s, axes, x)
+    _check_plan(plan)
+    with Workers(workers):
+        output = _pydfti.irfftn_numpy(x, s, axes, forward_scale=fsc)
     return output
