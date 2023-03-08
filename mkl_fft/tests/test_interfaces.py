@@ -41,8 +41,18 @@ def test_interfaces_has_scipy():
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.complex64, np.complex128])
 def test_scipy_fft(norm, dtype):
     x = np.ones(511, dtype=dtype)
-    w = mfi.scipy_fft.fft(x, norm=norm)
-    xx = mfi.scipy_fft.ifft(w, norm=norm)
+    w = mfi.scipy_fft.fft(x, norm=norm, workers=None, plan=None)
+    xx = mfi.scipy_fft.ifft(w, norm=norm, workers=None, plan=None)
+    tol = 64 * np.finfo(np.dtype(dtype)).eps
+    assert np.allclose(x, xx, atol=tol, rtol=tol)
+
+
+@pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64, np.complex64, np.complex128])
+def test_numpy_fft(norm, dtype):
+    x = np.ones(511, dtype=dtype)
+    w = mfi.numpy_fft.fft(x, norm=norm)
+    xx = mfi.numpy_fft.ifft(w, norm=norm)
     tol = 64 * np.finfo(np.dtype(dtype)).eps
     assert np.allclose(x, xx, atol=tol, rtol=tol)
 
@@ -51,8 +61,18 @@ def test_scipy_fft(norm, dtype):
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_scipy_rfft(norm, dtype):
     x = np.ones(511, dtype=dtype)
-    w = mfi.scipy_fft.rfft(x, norm=norm)
-    xx = mfi.scipy_fft.irfft(w, n=x.shape[0], norm=norm)
+    w = mfi.scipy_fft.rfft(x, norm=norm, workers=None, plan=None)
+    xx = mfi.scipy_fft.irfft(w, n=x.shape[0], norm=norm, workers=None, plan=None)
+    tol = 64 * np.finfo(np.dtype(dtype)).eps
+    assert np.allclose(x, xx, atol=tol, rtol=tol)
+
+
+@pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_numpy_rfft(norm, dtype):
+    x = np.ones(511, dtype=dtype)
+    w = mfi.numpy_fft.rfft(x, norm=norm)
+    xx = mfi.numpy_fft.irfft(w, n=x.shape[0], norm=norm)
     tol = 64 * np.finfo(np.dtype(dtype)).eps
     assert np.allclose(x, xx, atol=tol, rtol=tol)
 
@@ -61,8 +81,18 @@ def test_scipy_rfft(norm, dtype):
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.complex64, np.complex128])
 def test_scipy_fftn(norm, dtype):
     x = np.ones((37, 83), dtype=dtype)
-    w = mfi.scipy_fft.fftn(x, norm=norm)
-    xx = mfi.scipy_fft.ifftn(w, norm=norm)
+    w = mfi.scipy_fft.fftn(x, norm=norm, workers=None, plan=None)
+    xx = mfi.scipy_fft.ifftn(w, norm=norm, workers=None, plan=None)
+    tol = 64 * np.finfo(np.dtype(dtype)).eps
+    assert np.allclose(x, xx, atol=tol, rtol=tol)
+
+
+@pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64, np.complex64, np.complex128])
+def test_numpy_fftn(norm, dtype):
+    x = np.ones((37, 83), dtype=dtype)
+    w = mfi.numpy_fft.fftn(x, norm=norm)
+    xx = mfi.numpy_fft.ifftn(w, norm=norm)
     tol = 64 * np.finfo(np.dtype(dtype)).eps
     assert np.allclose(x, xx, atol=tol, rtol=tol)
 
@@ -71,7 +101,33 @@ def test_scipy_fftn(norm, dtype):
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_scipy_rftn(norm, dtype):
     x = np.ones((37, 83), dtype=dtype)
-    w = mfi.scipy_fft.rfftn(x, norm=norm)
-    xx = mfi.scipy_fft.ifftn(w, s=x.shape, norm=norm)
+    w = mfi.scipy_fft.rfftn(x, norm=norm, workers=None, plan=None)
+    xx = mfi.scipy_fft.ifftn(w, s=x.shape, norm=norm, workers=None, plan=None)
     tol = 64 * np.finfo(np.dtype(dtype)).eps
     assert np.allclose(x, xx, atol=tol, rtol=tol)
+
+
+@pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_numpy_rftn(norm, dtype):
+    x = np.ones((37, 83), dtype=dtype)
+    w = mfi.numpy_fft.rfftn(x, norm=norm)
+    xx = mfi.numpy_fft.ifftn(w, s=x.shape, norm=norm)
+    tol = 64 * np.finfo(np.dtype(dtype)).eps
+    assert np.allclose(x, xx, atol=tol, rtol=tol)
+
+
+@pytest.mark.parametrize('dtype', [np.float16, np.float128, np.complex256])
+def test_scipy_no_support_for(dtype):
+    x = np.ones(16, dtype=dtype)
+    w = mfi.scipy_fft.fft(x)
+    assert w is NotImplemented
+
+
+def test_scipy_fft_arg_validate():
+    with pytest.raises(ValueError):
+        mfi.scipy_fft.fft([1,2,3,4], norm=b"invalid")
+
+    with pytest.raises(ValueError):
+        mfi.scipy_fft.fft([1,2,3,4], plan="magic")
+
