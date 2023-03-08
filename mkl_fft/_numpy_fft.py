@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2017-2019, Intel Corporation
+# Copyright (c) 2017-2023, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -86,11 +86,6 @@ def frwd_sc_nd(s, axes, x_shape):
 
 def ortho_sc_1d(n, s):
     return sqrt(frwd_sc_1d(n, s))
-
-
-def _unitary(norm):
-    check_norm(norm)
-    return norm is not None
 
 
 def trycall(func, args, kwrds):
@@ -735,13 +730,6 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
     return s, axes
 
 
-def _tot_size(x, axes):
-    s = x.shape
-    if axes is None:
-        return x.size
-    return prod([s[ai] for ai in axes])
-
-
 def fftn(a, s=None, axes=None, norm=None):
     """
     Compute the N-dimensional discrete Fourier Transform.
@@ -1265,7 +1253,6 @@ def rfftn(a, s=None, axes=None, norm=None):
 
     """
     check_norm(norm)
-    unitary = _unitary(norm)
     x = _float_utils.__downcast_float128_array(a)
     if (norm in (None, "backward")):
         output = trycall(

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2017-2020, Intel Corporation
+# Copyright (c) 2017-2023, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -116,6 +116,11 @@ setup(
     description = "MKL-based FFT transforms for NumPy arrays",
     version = version,
     cmdclass={'build_ext': Cython.Build.build_ext},
+    packages=[
+        "mkl_fft",
+        "mkl_fft.interfaces",
+    ],
+    package_data={"mkl_fft": ["tests/*.py"]},
     include_package_data=True,
     ext_modules=extensions(),
     zip_safe=False,
@@ -130,6 +135,6 @@ setup(
     test_suite = "pytest",
     python_requires = '>=3.7',
     setup_requires=["Cython",],
-    install_requires = ["numpy >=1.16"],
+    install_requires = ["numpy >=1.16", "mkl"],
     keywords=["DFTI", "FFT", "Fourier", "MKL",],
 )

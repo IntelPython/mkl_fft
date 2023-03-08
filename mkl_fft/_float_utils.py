@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2017-2019, Intel Corporation
+# Copyright (c) 2017-2023, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,9 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from numpy import (half, float32, asarray, ndarray,
-                   longdouble, float64, longcomplex, complex_)
+                   longdouble, float64, longcomplex, complex_, float128, complex256)
 
-__all__ = ['__upcast_float16_array', '__downcast_float128_array']
+__all__ = ['__upcast_float16_array', '__downcast_float128_array', '__supported_array_or_not_implemented']
 
 def __upcast_float16_array(x):
     """
@@ -71,3 +71,14 @@ def __downcast_float128_array(x):
             return asarray(x, dtype=complex_)
         return __x
     return x
+
+
+def __supported_array_or_not_implemented(x):
+    """
+    Used in _scipy_fft_backend to convert array to float32,
+    float64, complex64, or complex128 type or return NotImplemented
+    """
+    __x = asarray(x)
+    if __x.dtype in [half, float128, complex256]:
+        return NotImplemented
+    return __x

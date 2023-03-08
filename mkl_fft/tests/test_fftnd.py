@@ -24,8 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises, assert_equal,

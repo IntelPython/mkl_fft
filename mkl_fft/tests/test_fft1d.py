@@ -24,8 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises, assert_equal,
@@ -127,7 +125,7 @@ class Test_mklfft_vector(TestCase):
         f1 = mkl_fft.fft(x, overwrite_x=True)
         f2 = mkl_fft.fft(self.xz1[::-2])
         assert_(np.allclose(f1,f2))
-    
+
     def test_vector6(self):
         "fft in place"
         x = self.xz1.copy()
@@ -137,8 +135,8 @@ class Test_mklfft_vector(TestCase):
         x = self.xz1.copy()
         f1 = mkl_fft.fft(x[::-2], overwrite_x=True)
         assert_( not np.allclose(x, self.xz1) ) # this is also in-place
-        assert_( np.allclose(x[-2::-2], self.xz1[-2::-2]) ) 
-        assert_( np.allclose(x[-1::-2], f1) ) 
+        assert_( np.allclose(x[-2::-2], self.xz1[-2::-2]) )
+        assert_( np.allclose(x[-1::-2], f1) )
 
     def test_vector7(self):
         "fft of real array is the same as fft of its complex cast"

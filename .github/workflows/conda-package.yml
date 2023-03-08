@@ -8,12 +8,12 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         python: [3.9]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -21,7 +21,7 @@ jobs:
         run: |
           echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
       - name: Cache conda packages
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
@@ -38,7 +38,7 @@ jobs:
         run: conda install conda-build
       - name: Build conda package
         run: |
-          CHANNELS="-c intel -c defaults --override-channels"
+          CHANNELS="-c intel -c main --override-channels"
           VERSIONS="--python ${{ matrix.python }}"
           TEST="--no-test"
 
@@ -48,7 +48,7 @@ jobs:
             $CHANNELS \
             conda-recipe
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
           path: /usr/share/miniconda/conda-bld/linux-64/${{ env.PACKAGE_NAME }}-*.tar.bz2
@@ -61,14 +61,14 @@ jobs:
       matrix:
         python: [3.9]
         experimental: [false]
-        runner: [ubuntu-latest]
+        runner: [ubuntu-20.04]
     continue-on-error: ${{ matrix.experimental }}
     env:
-      CHANNELS: -c intel -c defaults --override-channels
+      CHANNELS: -c intel -c main --override-channels
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
       - name: Add conda to system path
@@ -86,12 +86,14 @@ jobs:
       - name: Collect dependencies
         run: |
           CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda install $PACKAGE_NAME python=${{ matrix.python }} $CHANNELS --only-deps --dry-run > lockfile
+          conda create -n test_mkl_fft $PACKAGE_NAME python=${{ matrix.python }} $CHANNELS --only-deps --dry-run > lockfile
+      - name: Display lockfile
+        run: cat lockfile
       - name: Set pkgs_dirs
         run: |
           echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
       - name: Cache conda packages
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
@@ -105,9 +107,11 @@ jobs:
       - name: Install mkl_fft
         run: |
           CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda install $PACKAGE_NAME pytest python=${{ matrix.python }} $CHANNELS
+          conda create -n test_mkl_fft python=${{ matrix.python }} $PACKAGE_NAME pytest $CHANNELS
           # Test installed packages
-          conda list
+          conda list -n test_mkl_fft
       - name: Run tests
         run: |
-          python -m pytest --pyargs $MODULE_NAME
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate test_mkl_fft
+          pytest -v --pyargs $MODULE_NAME
