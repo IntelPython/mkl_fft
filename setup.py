@@ -120,6 +120,7 @@ setup(
         "mkl_fft",
         "mkl_fft.interfaces",
     ],
+    package_data={"mkl_fft": ["tests/*.py"]},
     include_package_data=True,
     ext_modules=extensions(),
     zip_safe=False,
