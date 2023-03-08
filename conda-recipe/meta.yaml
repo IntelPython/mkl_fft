@@ -36,8 +36,9 @@ test:
       - nose
     imports:
       - mkl_fft
-      - mkl_fft._numpy_fft
-      - mkl_fft._scipy_fft
+      - mkl_fft.interface
+      - mkl_fft.interface.numpy_fft
+      - mkl_fft.interface.scipy_fft
 
 about:
     home: http://github.com/IntelPython/mkl_fft
