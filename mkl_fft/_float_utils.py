@@ -27,7 +27,7 @@
 from numpy import (half, float32, asarray, ndarray,
                    longdouble, float64, longcomplex, complex_, float128, complex256)
 
-__all__ = ['__upcast_float16_array', '__downcast_float128_array']
+__all__ = ['__upcast_float16_array', '__downcast_float128_array', '__supported_array_or_not_implemented']
 
 def __upcast_float16_array(x):
     """
@@ -81,4 +81,4 @@ def __supported_array_or_not_implemented(x):
     __x = asarray(x)
     if __x.dtype in [half, float128, complex256]:
         return NotImplemented
-    return x
+    return __x
