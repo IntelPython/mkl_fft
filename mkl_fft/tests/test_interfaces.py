@@ -26,6 +26,7 @@
 
 import mkl_fft.interfaces as mfi
 import pytest
+import numpy as np
 
 
 def test_interfaces_has_numpy():
@@ -34,3 +35,43 @@ def test_interfaces_has_numpy():
 
 def test_interfaces_has_scipy():
     assert hasattr(mfi, 'scipy_fft')
+
+
+@pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64, np.complex64, np.complex128])
+def test_scipy_fft(norm, dtype):
+    x = np.ones(511, dtype=dtype)
+    w = mfi.scipy_fft.fft(x, norm=norm)
+    xx = mfi.scipy_fft.ifft(w, norm=norm)
+    tol = 64 * np.finfo(np.dtype(dtype)).eps
+    assert np.allclose(x, xx, atol=tol, rtol=tol)
+
+
+@pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_scipy_rfft(norm, dtype):
+    x = np.ones(511, dtype=dtype)
+    w = mfi.scipy_fft.rfft(x, norm=norm)
+    xx = mfi.scipy_fft.irfft(w, n=x.shape[0], norm=norm)
+    tol = 64 * np.finfo(np.dtype(dtype)).eps
+    assert np.allclose(x, xx, atol=tol, rtol=tol)
+
+
+@pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64, np.complex64, np.complex128])
+def test_scipy_fftn(norm, dtype):
+    x = np.ones((37, 83), dtype=dtype)
+    w = mfi.scipy_fft.fftn(x, norm=norm)
+    xx = mfi.scipy_fft.ifftn(w, norm=norm)
+    tol = 64 * np.finfo(np.dtype(dtype)).eps
+    assert np.allclose(x, xx, atol=tol, rtol=tol)
+
+
+@pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_scipy_rftn(norm, dtype):
+    x = np.ones((37, 83), dtype=dtype)
+    w = mfi.scipy_fft.rfftn(x, norm=norm)
+    xx = mfi.scipy_fft.ifftn(w, s=x.shape, norm=norm)
+    tol = 64 * np.finfo(np.dtype(dtype)).eps
+    assert np.allclose(x, xx, atol=tol, rtol=tol)

@@ -107,11 +107,11 @@ jobs:
       - name: Install mkl_fft
         run: |
           CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda create -n test_mkl_fft python=${{ matrix.python }} "libffi>=3.4" $PACKAGE_NAME pytest $CHANNELS
+          conda create -n test_mkl_fft python=${{ matrix.python }} $PACKAGE_NAME pytest $CHANNELS
           # Test installed packages
           conda list -n test_mkl_fft
       - name: Run tests
         run: |
           source $CONDA/etc/profile.d/conda.sh
           conda activate test_mkl_fft
-          python -m pytest --pyargs $MODULE_NAME
+          pytest -v --pyargs $MODULE_NAME

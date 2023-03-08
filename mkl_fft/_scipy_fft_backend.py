@@ -204,7 +204,7 @@ def _compute_nd_forward_scale(norm, s, axes, x_shape):
     elif norm == "forward":
         fsc = _frwd_sc_nd(s, axes, x_shape)
     elif norm == "ortho":
-        fsc = sqrt(_frwd_sc_nd(s, axes, x-shape))
+        fsc = sqrt(_frwd_sc_nd(s, axes, x_shape))
     else:
         _check_norm(norm)
     return fsc
