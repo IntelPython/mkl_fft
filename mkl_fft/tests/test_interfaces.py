@@ -117,7 +117,15 @@ def test_numpy_rftn(norm, dtype):
     assert np.allclose(x, xx, atol=tol, rtol=tol)
 
 
-@pytest.mark.parametrize('dtype', [np.float16, np.float128, np.complex256])
+def _get_blacklisted_dtypes():
+    bl_list = []
+    for dt in ['float16', 'float128', 'complex256']:
+        if hasattr(np, dt):
+            bl_list.append(getattr(np, dt))
+    return bl_list
+
+    
+@pytest.mark.parametrize('dtype', _get_blacklisted_dtypes())
 def test_scipy_no_support_for(dtype):
     x = np.ones(16, dtype=dtype)
     w = mfi.scipy_fft.fft(x)
