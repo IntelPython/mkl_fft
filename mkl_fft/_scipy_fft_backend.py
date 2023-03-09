@@ -28,9 +28,9 @@ from . import _pydfti
 from . import _float_utils
 import mkl
 
-from numpy.core import (array, asarray, shape, conjugate, take, sqrt, prod)
-from os import cpu_count as os_cpu_count
-import warnings
+from numpy.core import (take, sqrt, prod)
+import contextvars
+import operator
 
 
 __doc__ = """
@@ -64,15 +64,44 @@ class _cpu_max_threads_count:
         return self.max_threads_count
 
 
-_hardware_counts = _cpu_max_threads_count()
+class _workers_data:
+    def __init__(self, workers=None):
+        if workers:
+            self.workers_ = workers
+        else:
+            self.workers_ = _cpu_max_threads_count().get_cpu_count()
+        self.workers_ = operator.index(self.workers_)
+
+    @property
+    def workers(self):
+        return self.workers_
+
+    @workers.setter
+    def workers(self, workers_val):
+        self.workerks_ = operator.index(workers_val)
+
+
+_workers_global_settings = contextvars.ContextVar('scipy_backend_workers', default=_workers_data())
+
+
+def get_workers():
+    "Gets the number of workers used by mkl_fft by default"
+    return _workers_global_settings.get().workers
+
+
+def set_workers(n_workers):
+    "Set the value of workers used by default, returns the previous value"
+    nw = operator.index(n_workers)
+    wd = _workers_global_settings.get()
+    saved_nw = wd.workers
+    wd.workers = nw
+    _workers_global_settings.set(wd)
+    return saved_nw
 
 
 __all__ = ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn',
            'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn',
-           'hfft', 'ihfft', 'hfft2', 'ihfft2', 'hfftn', 'ihfftn',
-           'dct', 'idct', 'dst', 'idst', 'dctn', 'idctn', 'dstn', 'idstn',
-           'fftshift', 'ifftshift', 'fftfreq', 'rfftfreq', 'get_workers',
-           'set_workers', 'next_fast_len', 'DftiBackend']
+           'get_workers', 'set_workers', 'DftiBackend']
 
 __ua_domain__ = "numpy.scipy.fft"
 
@@ -114,27 +143,21 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
     return s, axes
 
 
-def _tot_size(x, axes):
-    s = x.shape
-    if axes is None:
-        return x.size
-    return prod([s[ai] for ai in axes])
-
-
 def _workers_to_num_threads(w):
     """Handle conversion of workers to a positive number of threads in the
     same way as scipy.fft.helpers._workers.
     """
     if w is None:
-        return _hardware_counts.get_cpu_count()
-    _w = int(w)
+        return _workers_global_settings.get().workers
+    _w = operator.index(w)
     if (_w == 0):
         raise ValueError("Number of workers must be nonzero")
     if (_w < 0):
-        _w += _hardware_counts.get_cpu_count() + 1
+        ub = _cpu_max_threads_count().get_cpu_count()
+        _w += ub + 1
         if _w <= 0:
             raise ValueError("workers value out of range; got {}, must not be"
-                             " less than {}".format(w, -_hardware_counts.get_cpu_count()))
+                             " less than {}".format(w, -ub))
     return _w
 
 

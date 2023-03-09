@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright (c) 2017-2023, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,5 +24,4 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from . import numpy_fft
-from . import scipy_fft
+from .._numpy_fft import *
