@@ -151,7 +151,7 @@ def _workers_to_num_threads(w):
         return _workers_global_settings.get().workers
     _w = operator.index(w)
     if (_w == 0):
-        raise ValueError("Number of workers must be nonzero")
+        raise ValueError("Number of workers must not be zero")
     if (_w < 0):
         ub = _cpu_max_threads_count().get_cpu_count()
         _w += ub + 1
@@ -338,21 +338,22 @@ def irfft(a, n=None, axis=-1, norm=None, workers=None, plan=None):
         return NotImplemented
     if x is NotImplemented:
         return x
-    fsc = _compute_1d_forward_scale(norm, n, x.shape[axis])
+    nn = n if n else 2*(x.shape[axis]-1)
+    fsc = _compute_1d_forward_scale(norm, nn, x.shape[axis])
     _check_plan(plan)
     with Workers(workers):
         output = _pydfti.irfft_numpy(x, n=n, axis=axis, forward_scale=fsc)
     return output
 
 
-def _compute_nd_forward_scale_for_rfft(norm, s, axes, x):
+def _compute_nd_forward_scale_for_rfft(norm, s, axes, x, invreal=False):
     if norm in (None, "backward"):
         fsc = 1.0
     elif norm == "forward":
-        s, axes = _cook_nd_args(x, s, axes)
+        s, axes = _cook_nd_args(x, s, axes, invreal=invreal)
         fsc = _frwd_sc_nd(s, axes, x.shape)
     elif norm == "ortho":
-        s, axes = _cook_nd_args(x, s, axes)
+        s, axes = _cook_nd_args(x, s, axes, invreal=invreal)
         fsc = sqrt(_frwd_sc_nd(s, axes, x.shape))
     else:
         _check_norm(norm)
@@ -380,7 +381,7 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, plan=None):
         return NotImplemented
     if x is NotImplemented:
         return x
-    s, axes, fsc = _compute_nd_forward_scale_for_rfft(norm, s, axes, x)
+    s, axes, fsc = _compute_nd_forward_scale_for_rfft(norm, s, axes, x, invreal=True)
     _check_plan(plan)
     with Workers(workers):
         output = _pydfti.irfftn_numpy(x, s, axes, forward_scale=fsc)
@@ -408,7 +409,7 @@ def irfftn(a, s=None, axes=None, norm=None, workers=None, plan=None):
         return NotImplemented
     if x is NotImplemented:
         return x
-    s, axes, fsc = _compute_nd_forward_scale_for_rfft(norm, s, axes, x)
+    s, axes, fsc = _compute_nd_forward_scale_for_rfft(norm, s, axes, x, invreal=True)
     _check_plan(plan)
     with Workers(workers):
         output = _pydfti.irfftn_numpy(x, s, axes, forward_scale=fsc)
