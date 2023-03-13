@@ -186,8 +186,8 @@ def _check_norm(norm):
 def _check_plan(plan):
     if plan is None:
         return
-    raise ValueError(
-        f"Value plan={plan} is currently not supported"
+    raise NotImplementedError(
+        f"Passing a precomputed plan with value={plan} is currently not supported"
     )
 
 
