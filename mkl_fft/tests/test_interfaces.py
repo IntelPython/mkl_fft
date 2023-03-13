@@ -65,6 +65,12 @@ def test_scipy_rfft(norm, dtype):
     xx = mfi.scipy_fft.irfft(w, n=x.shape[0], norm=norm, workers=None, plan=None)
     tol = 64 * np.finfo(np.dtype(dtype)).eps
     assert np.allclose(x, xx, atol=tol, rtol=tol)
+    
+    x = np.ones(510, dtype=dtype)
+    w = mfi.scipy_fft.rfft(x, norm=norm, workers=None, plan=None)
+    xx = mfi.scipy_fft.irfft(w, norm=norm, workers=None, plan=None)
+    tol = 64 * np.finfo(np.dtype(dtype)).eps
+    assert np.allclose(x, xx, atol=tol, rtol=tol)
 
 
 @pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
@@ -99,20 +105,26 @@ def test_numpy_fftn(norm, dtype):
 
 @pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
-def test_scipy_rftn(norm, dtype):
+def test_scipy_rfftn(norm, dtype):
     x = np.ones((37, 83), dtype=dtype)
     w = mfi.scipy_fft.rfftn(x, norm=norm, workers=None, plan=None)
-    xx = mfi.scipy_fft.ifftn(w, s=x.shape, norm=norm, workers=None, plan=None)
+    xx = mfi.scipy_fft.irfftn(w, s=x.shape, norm=norm, workers=None, plan=None)
+    tol = 64 * np.finfo(np.dtype(dtype)).eps
+    assert np.allclose(x, xx, atol=tol, rtol=tol)
+
+    x = np.ones((36, 82), dtype=dtype)
+    w = mfi.scipy_fft.rfftn(x, norm=norm, workers=None, plan=None)
+    xx = mfi.scipy_fft.irfftn(w, norm=norm, workers=None, plan=None)
     tol = 64 * np.finfo(np.dtype(dtype)).eps
     assert np.allclose(x, xx, atol=tol, rtol=tol)
 
 
 @pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
-def test_numpy_rftn(norm, dtype):
+def test_numpy_rfftn(norm, dtype):
     x = np.ones((37, 83), dtype=dtype)
     w = mfi.numpy_fft.rfftn(x, norm=norm)
-    xx = mfi.numpy_fft.ifftn(w, s=x.shape, norm=norm)
+    xx = mfi.numpy_fft.irfftn(w, s=x.shape, norm=norm)
     tol = 64 * np.finfo(np.dtype(dtype)).eps
     assert np.allclose(x, xx, atol=tol, rtol=tol)
 
