@@ -151,7 +151,7 @@ def _workers_to_num_threads(w):
         return _workers_global_settings.get().workers
     _w = operator.index(w)
     if (_w == 0):
-        raise ValueError("Number of workers must be nonzero")
+        raise ValueError("Number of workers must not be zero")
     if (_w < 0):
         ub = _cpu_max_threads_count().get_cpu_count()
         _w += ub + 1
