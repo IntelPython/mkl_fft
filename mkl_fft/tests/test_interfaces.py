@@ -136,6 +136,6 @@ def test_scipy_fft_arg_validate():
     with pytest.raises(ValueError):
         mfi.scipy_fft.fft([1,2,3,4], norm=b"invalid")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(NotImplementedError):
         mfi.scipy_fft.fft([1,2,3,4], plan="magic")
 
