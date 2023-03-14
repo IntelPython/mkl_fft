@@ -321,7 +321,7 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1, double fs
         # so we cast to complex double and operate in place
         try:
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
-                x_arr, cnp.NPY_CDOUBLE, cnp.NPY_BEHAVED)
+                x_arr, cnp.NPY_CDOUBLE, cnp.NPY_BEHAVED | cnp.NPY_ENSURECOPY)
         except:
             raise ValueError("First argument must be a complex or real sequence of single or double precision")
         x_type = cnp.PyArray_TYPE(x_arr)
@@ -545,7 +545,7 @@ def _rr_fft1d_impl2(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
     else:
         try:
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
-                x_arr, cnp.NPY_DOUBLE, cnp.NPY_BEHAVED)
+                x_arr, cnp.NPY_DOUBLE, cnp.NPY_BEHAVED | cnp.NPY_ENSURECOPY)
         except:
             raise TypeError("1st argument must be a real sequence")
         x_type = cnp.PyArray_TYPE(x_arr)
@@ -601,7 +601,7 @@ def _rr_ifft1d_impl2(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
         # so we cast to complex double and operate in place
         try:
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
-                x_arr, cnp.NPY_DOUBLE, cnp.NPY_BEHAVED)
+                x_arr, cnp.NPY_DOUBLE, cnp.NPY_BEHAVED | cnp.NPY_ENSURECOPY)
         except:
             raise ValueError("First argument should be a real or a complex sequence of single or double precision")
         x_type = cnp.PyArray_TYPE(x_arr)
@@ -669,7 +669,7 @@ def _rc_fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
     else:
         # we must cast the input to doubles and allocate the output,
         try:
-            requirement = cnp.NPY_BEHAVED
+            requirement = cnp.NPY_BEHAVED | cnp.NPY_ENSURECOPY
             if x_type is cnp.NPY_LONGDOUBLE:
                 requirement = requirement | cnp.NPY_FORCECAST
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
