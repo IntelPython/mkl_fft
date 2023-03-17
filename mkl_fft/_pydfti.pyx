@@ -981,7 +981,14 @@ def _direct_fftnd(x, overwrite_arg=False, direction=+1, double fsc=1.0):
        in_place = 1  # a copy was made, so we can work in place.
 
     x_type = cnp.PyArray_TYPE(x_arr)
-    assert( x_type == cnp.NPY_CDOUBLE or x_type == cnp.NPY_CFLOAT or x_type == cnp.NPY_DOUBLE or x_type == cnp.NPY_FLOAT);
+    if (x_type == cnp.NPY_CDOUBLE or x_type == cnp.NPY_CFLOAT or x_type == cnp.NPY_DOUBLE or x_type == cnp.NPY_FLOAT):
+        pass
+    else:
+        x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
+            x_arr, cnp.NPY_CDOUBLE, cnp.NPY_BEHAVED | cnp.NPY_ENSURECOPY)
+        x_type = cnp.PyArray_TYPE(x_arr)
+        assert x_type == cnp.NPY_CDOUBLE
+        in_place = 1
 
     if in_place:
         in_place = 1 if x_type == cnp.NPY_CDOUBLE or x_type == cnp.NPY_CFLOAT else 0
@@ -1076,7 +1083,7 @@ def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1, doubl
     if _direct:
         return _direct_fftnd(x, overwrite_arg=overwrite_x, direction=direction, fsc=fsc)
     else:
-        if (shape is None and x.dtype in [np.complex64, np.complex128, np.float32, np.float64]):
+        if (shape is None and x.dtype in [np.csingle, np.cdouble, np.single, np.double]):
             x = np.asarray(x)
             res = np.empty(x.shape, dtype=_output_dtype(x.dtype))
             return iter_complementary(
