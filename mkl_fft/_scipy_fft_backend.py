@@ -31,6 +31,7 @@ import mkl
 from numpy.core import (take, sqrt, prod)
 import contextvars
 import operator
+import os
 
 
 __doc__ = """
@@ -153,7 +154,7 @@ def _workers_to_num_threads(w):
     if (_w == 0):
         raise ValueError("Number of workers must not be zero")
     if (_w < 0):
-        ub = _cpu_max_threads_count().get_cpu_count()
+        ub = os.get_cpu_count()
         _w += ub + 1
         if _w <= 0:
             raise ValueError("workers value out of range; got {}, must not be"
