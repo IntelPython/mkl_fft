@@ -30,14 +30,14 @@ requirements:
 
 test:
     commands:
-      - pytest -v --args mkl_fft
+      - pytest -v --pyargs mkl_fft
     requires:
       - pytest
     imports:
       - mkl_fft
-      - mkl_fft.interface
-      - mkl_fft.interface.numpy_fft
-      - mkl_fft.interface.scipy_fft
+      - mkl_fft.interfaces
+      - mkl_fft.interfaces.numpy_fft
+      - mkl_fft.interfaces.scipy_fft
 
 about:
     home: http://github.com/IntelPython/mkl_fft
