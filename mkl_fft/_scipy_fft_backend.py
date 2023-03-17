@@ -30,6 +30,7 @@ import mkl
 
 from numpy.core import (take, sqrt, prod)
 import contextvars
+import contextlib
 import operator
 import os
 
@@ -90,14 +91,20 @@ def get_workers():
     return _workers_global_settings.get().workers
 
 
+@contextlib.contextmanager
 def set_workers(n_workers):
     "Set the value of workers used by default, returns the previous value"
     nw = operator.index(n_workers)
-    wd = _workers_global_settings.get()
-    saved_nw = wd.workers
-    wd.workers = nw
-    _workers_global_settings.set(wd)
-    return saved_nw
+    token = None
+    try:
+        new_wd = _workers_data(nw)
+        token = _workers_global_settings.set(new_wd)
+        yield
+    finally:
+        if token:
+            _workers_global_settings.reset(token)
+        else:
+            raise ValueError
 
 
 __all__ = ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn',
@@ -154,7 +161,7 @@ def _workers_to_num_threads(w):
     if (_w == 0):
         raise ValueError("Number of workers must not be zero")
     if (_w < 0):
-        ub = os.get_cpu_count()
+        ub = os.cpu_count()
         _w += ub + 1
         if _w <= 0:
             raise ValueError("workers value out of range; got {}, must not be"
