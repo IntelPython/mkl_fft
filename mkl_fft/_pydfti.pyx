@@ -44,7 +44,7 @@ _tls = threading_local()
 
 cdef const char *capsule_name = "dfti_cache"
 
-cdef void _capsule_destructor(object caps):
+cdef void _capsule_destructor(object caps) noexcept:
     cdef DftiCache *_cache = NULL
     cdef int status = 0
     if (caps is None):
