@@ -8,10 +8,10 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: [3.9]
+        python: ['3.10']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -38,7 +38,7 @@ jobs:
         run: conda install conda-build
       - name: Build conda package
         run: |
-          CHANNELS="-c intel -c main --override-channels"
+          CHANNELS="-c conda-forge -c intel --override-channels"
           VERSIONS="--python ${{ matrix.python }}"
           TEST="--no-test"
 
@@ -59,9 +59,9 @@ jobs:
 
     strategy:
       matrix:
-        python: [3.9]
+        python: ['3.10']
         experimental: [false]
-        runner: [ubuntu-20.04]
+        runner: [ubuntu-latest]
     continue-on-error: ${{ matrix.experimental }}
     env:
       CHANNELS: -c intel -c main --override-channels
