@@ -1,9 +1,10 @@
 #!/bin/bash -x
 
-# make sure that compiler has been sourced, if necessary
-
 if [ `uname` == Darwin ]; then
     export MACOSX_DEPLOYMENT_TARGET=10.9
 fi
 
-MKLROOT=$PREFIX CFLAGS="-I$PREFIX/include $CFLAGS" $PYTHON setup.py build --force install --old-and-unmanageable
+export MKLROOT=$PREFIX
+export CFLAGS="-I$PREFIX/include $CFLAGS"
+$PYTHON -m pip install --no-build-isolation --no-deps .
+
