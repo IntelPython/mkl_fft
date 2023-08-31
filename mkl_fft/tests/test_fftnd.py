@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2017-2019, Intel Corporation
+# Copyright (c) 2017-2023, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -26,7 +26,7 @@
 
 import numpy as np
 from numpy.testing import (
-        TestCase, run_module_suite, assert_, assert_raises, assert_equal,
+        TestCase, assert_, assert_raises, assert_equal,
         assert_warns, assert_allclose)
 from numpy import random as rnd
 import sys
