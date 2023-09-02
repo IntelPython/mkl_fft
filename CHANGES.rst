@@ -2,6 +2,14 @@
 mkl_fft changelog
 =================
 
+1.3.7
+=====
+
+Updated build system away from removed in NumPy 1.25 numpy.distutils module.
+
+Transitioned to Cython 3.0.
+
+
 1.3.0
 =====
 
