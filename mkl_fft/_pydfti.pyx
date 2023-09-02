@@ -27,6 +27,7 @@
 #cython: language_level=3
 
 # imports
+import sys
 import numpy as np
 from numpy.core._multiarray_tests import internal_overlap
 from threading import local as threading_local
@@ -48,13 +49,14 @@ cdef void _capsule_destructor(object caps) noexcept:
     cdef DftiCache *_cache = NULL
     cdef int status = 0
     if (caps is None):
-        print("Nothing to destroy")
+        print("CapsuleDestructorInternalError: Nothing to destroy", file=sys.stderr)
         return
     _cache = <DftiCache *>cpython.pycapsule.PyCapsule_GetPointer(caps, capsule_name)
     status = _free_dfti_cache(_cache)
     PyMem_Free(_cache)
     if (status != 0):
-        raise ValueError("Internal Error: Freeing DFTI Cache returned with error = {}".format(status))
+        print("CapsuleDestructorInternalError: Freeing DFTI Cache "
+              f"returned with error code = '{status}'", file=sys.stderr)
 
 
 def _tls_dfti_cache_capsule():

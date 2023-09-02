@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2017-2019, Intel Corporation
+# Copyright (c) 2017-2023, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -26,7 +26,7 @@
 
 import numpy as np
 from numpy.testing import (
-        TestCase, run_module_suite, assert_, assert_raises, assert_equal,
+        TestCase, assert_, assert_raises, assert_equal,
         assert_warns, assert_allclose)
 from numpy import random as rnd
 import sys
@@ -387,5 +387,3 @@ class Test_mklfft_rfft(TestCase):
                     f2 = mkl_fft.rfft(f1, axis=a, overwrite_x=ovwr_x)
                     assert_allclose(f2, self.t3.astype(dt), atol=atol)
 
-if __name__ == "__main__":
-    run_module_suite(argv = sys.argv)

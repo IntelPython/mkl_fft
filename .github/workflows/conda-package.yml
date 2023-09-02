@@ -8,10 +8,10 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: [3.9]
+        python: ['3.10']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -38,7 +38,7 @@ jobs:
         run: conda install conda-build
       - name: Build conda package
         run: |
-          CHANNELS="-c intel -c main --override-channels"
+          CHANNELS="-c conda-forge -c intel --override-channels"
           VERSIONS="--python ${{ matrix.python }}"
           TEST="--no-test"
 
@@ -59,9 +59,9 @@ jobs:
 
     strategy:
       matrix:
-        python: [3.9]
+        python: ['3.10']
         experimental: [false]
-        runner: [ubuntu-20.04]
+        runner: [ubuntu-latest]
     continue-on-error: ${{ matrix.experimental }}
     env:
       CHANNELS: -c intel -c main --override-channels
@@ -115,3 +115,137 @@ jobs:
           source $CONDA/etc/profile.d/conda.sh
           conda activate test_mkl_fft
           pytest -v --pyargs $MODULE_NAME
+
+  build_windows:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        python: ['3.10']
+    env:
+      conda-bld: C:\Miniconda\conda-bld\win-64\
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-activate-base: true
+          conda-build-version: "*"
+          activate-environment: true
+          python-version: ${{ matrix.python }}
+
+      - name: Cache conda packages
+        uses: actions/cache@v3
+        env:
+          CACHE_NUMBER: 3  # Increase to reset cache
+        with:
+          path: /home/runner/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python }}-${{hashFiles('**/meta.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python }}-
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
+      - name: Build conda package
+        run: conda build --no-test --python ${{ matrix.python }} -c intel -c conda-forge --override-channels conda-recipe
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
+          path: ${{ env.conda-bld }}${{ env.PACKAGE_NAME }}-*.tar.bz2
+
+  test_windows:
+    needs: build_windows
+    runs-on:  ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: cmd /C CALL {0}
+    strategy:
+      matrix:
+        python: ['3.10']
+        experimental: [false]
+        runner: [windows-latest]
+    continue-on-error: ${{ matrix.experimental }}
+    env:
+      workdir: '${{ github.workspace }}'
+      CHANNELS: -c intel -c conda-forge --override-channels
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          conda-build-version: '*'
+          miniconda-version: 'latest'
+          activate-environment: mkl_fft_test
+          python-version: ${{ matrix.python }}
+      - name: Create conda channel with the artifact bit
+        shell: cmd /C CALL {0}
+        run: |
+          echo ${{ env.workdir }}
+          mkdir ${{ env.workdir }}\channel\win-64
+          move ${{ env.PACKAGE_NAME }}-*.tar.bz2 ${{ env.workdir }}\channel\win-64
+          dir ${{ env.workdir }}\channel\win-64
+      - name: Index the channel
+        shell: cmd /C CALL {0}
+        run: conda index ${{ env.workdir }}\channel
+
+      - name: Dump mkl_fft version info from created channel into ver.json
+        shell: cmd /C CALL {0}
+        run: |
+          conda search ${{ env.PACKAGE_NAME }} -c ${{ env.workdir }}/channel --override-channels --info --json > ${{ env.workdir }}\ver.json
+      - name: Output content of produced ver.json
+        shell: pwsh
+        run: Get-Content -Path ${{ env.workdir }}\ver.json
+      - name: Collect dependencies
+        shell: cmd /C CALL {0}
+        run: |
+          IF NOT EXIST ver.json (
+              copy /Y ${{ env.workdir }}\ver.json .
+          )
+          SET "SCRIPT=%VER_SCRIPT1% %VER_SCRIPT2%"
+          FOR /F "tokens=* USEBACKQ" %%F IN (`python -c "%SCRIPT%"`) DO (
+             SET PACKAGE_VERSION=%%F
+          )
+          conda install -n mkl_fft_test ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% python=${{ matrix.python }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }} --only-deps --dry-run > lockfile
+      - name: Display lockfile content
+        shell: pwsh
+        run: Get-Content -Path .\lockfile
+      - name: Cache conda packages
+        uses: actions/cache@v3
+        env:
+          CACHE_NUMBER: 0  # Increase to reset cache
+        with:
+          path: /home/runner/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python }}-${{hashFiles('lockfile') }}
+          restore-keys: |
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python }}-
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
+      - name: Install mkl_fft
+        shell: cmd /C CALL {0}
+        run: |
+          @ECHO ON
+          IF NOT EXIST ver.json (
+              copy /Y ${{ env.workdir }}\ver.json .
+          )
+          set "SCRIPT=%VER_SCRIPT1% %VER_SCRIPT2%"
+          FOR /F "tokens=* USEBACKQ" %%F IN (`python -c "%SCRIPT%"`) DO (
+             SET PACKAGE_VERSION=%%F
+          )
+          SET "TEST_DEPENDENCIES=pytest pytest-cov"
+          conda install -n mkl_fft_test ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% %TEST_DEPENDENCIES% python=${{ matrix.python }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
+      - name: Report content of test environment
+        shell: cmd /C CALL {0}
+        run: |
+          echo "Value of CONDA enviroment variable was: " %CONDA%
+          echo "Value of CONDA_PREFIX enviroment variable was: " %CONDA_PREFIX%
+          conda info && conda list -n mkl_fft_test
+      - name: Run tests
+        shell: cmd /C CALL {0}
+        run: >-
+          conda activate mkl_fft_test && python -m pytest -v -s --pyargs ${{ env.MODULE_NAME }}
+
