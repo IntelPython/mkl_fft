@@ -31,7 +31,7 @@ from os.path import join
 import Cython.Build
 from setuptools import setup, Extension
 import numpy as np
-from numpy.distutils.conv_template import process_file as process_c_file
+from _vendored.conv_template import process_file as process_c_file
 
 with io.open('mkl_fft/_version.py', 'rt', encoding='utf8') as f:
     version = re.search(r'__version__ = \'(.*?)\'', f.read()).group(1)
