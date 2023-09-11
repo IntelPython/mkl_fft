@@ -2,6 +2,12 @@
 mkl_fft changelog
 =================
 
+1.3.8
+=====
+
+Added vendored `conv_template.py` from NumPy's distutils submodule to enable building of `mkl_fft` with
+NumPy >=1.25 and Python 3.12
+
 1.3.7
 =====
 
