@@ -48,7 +48,7 @@ jobs:
             $CHANNELS \
             conda-recipe
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
           path: /usr/share/miniconda/conda-bld/linux-64/${{ env.PACKAGE_NAME }}-*.tar.bz2
@@ -149,7 +149,7 @@ jobs:
       - name: Build conda package
         run: conda build --no-test --python ${{ matrix.python }} -c intel -c conda-forge --override-channels conda-recipe
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
           path: ${{ env.conda-bld }}${{ env.PACKAGE_NAME }}-*.tar.bz2
