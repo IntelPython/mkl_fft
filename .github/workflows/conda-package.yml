@@ -24,7 +24,7 @@ jobs:
         run: |
           echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
       - name: Cache conda packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
@@ -96,7 +96,7 @@ jobs:
         run: |
           echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
       - name: Cache conda packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
@@ -139,7 +139,7 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Cache conda packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         env:
           CACHE_NUMBER: 3  # Increase to reset cache
         with:
@@ -218,7 +218,7 @@ jobs:
         shell: pwsh
         run: Get-Content -Path .\lockfile
       - name: Cache conda packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
