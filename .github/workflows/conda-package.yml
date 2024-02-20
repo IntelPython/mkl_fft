@@ -2,9 +2,12 @@ name: Conda package
 
 on: push
 
+permissions: read-all
+
 env:
   PACKAGE_NAME: mkl_fft
   MODULE_NAME: mkl_fft
+  TEST_ENV_NAME: test_mkl_fft
 
 jobs:
   build:
@@ -86,7 +89,7 @@ jobs:
       - name: Collect dependencies
         run: |
           CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda create -n test_mkl_fft $PACKAGE_NAME python=${{ matrix.python }} $CHANNELS --only-deps --dry-run > lockfile
+          conda create -n ${{ env.TEST_ENV_NAME }} $PACKAGE_NAME python=${{ matrix.python }} $CHANNELS --only-deps --dry-run > lockfile
       - name: Display lockfile
         run: cat lockfile
       - name: Set pkgs_dirs
@@ -107,13 +110,13 @@ jobs:
       - name: Install mkl_fft
         run: |
           CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda create -n test_mkl_fft python=${{ matrix.python }} $PACKAGE_NAME pytest $CHANNELS
+          conda create -n ${{ env.TEST_ENV_NAME }} python=${{ matrix.python }} $PACKAGE_NAME pytest $CHANNELS
           # Test installed packages
-          conda list -n test_mkl_fft
+          conda list -n ${{ env.TEST_ENV_NAME }}
       - name: Run tests
         run: |
           source $CONDA/etc/profile.d/conda.sh
-          conda activate test_mkl_fft
+          conda activate ${{ env.TEST_ENV_NAME }}
           pytest -v --pyargs $MODULE_NAME
 
   build_windows:
