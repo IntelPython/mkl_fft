@@ -120,7 +120,7 @@ jobs:
           pytest -v --pyargs $MODULE_NAME
 
   build_windows:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     strategy:
       matrix:
@@ -167,7 +167,7 @@ jobs:
       matrix:
         python: ['3.9', '3.10', '3.11', '3.12']
         experimental: [false]
-        runner: [windows-latest]
+        runner: [windows-2019]
     continue-on-error: ${{ matrix.experimental }}
     env:
       workdir: '${{ github.workspace }}'
