@@ -56,7 +56,7 @@ behavior.)
 __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
-from numpy.core import (array, asarray, asanyarray, shape, conjugate, take, sqrt, prod)
+from numpy import (array, asarray, asanyarray, shape, conjugate, take, sqrt, prod)
 
 import numpy
 from . import _pydfti as mkl_fft

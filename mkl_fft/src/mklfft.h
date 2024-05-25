@@ -25,6 +25,7 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "mkl.h"
+#include "numpy/arrayobject.h"
 
 typedef struct DftiCache {
     DFTI_DESCRIPTOR_HANDLE hand;

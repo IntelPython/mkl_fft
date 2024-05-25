@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2017-2020, Intel Corporation
+ Copyright (c) 2017-2024, Intel Corporation
 
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
@@ -25,9 +25,9 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-
+#define PY_SSIZE_T_CLEAN
 #include "Python.h"
+#define NO_IMPORT_ARRAY
 #include "numpy/arrayobject.h"
 #include "mklfft.h"
 #include "multi_iter.h"
@@ -81,13 +81,17 @@ static NPY_INLINE void get_basic_array_data(
     npy_intp *x_size)
 {
     npy_intp asize = 0;
+    npy_intp elsz = 0;
+    int x_ndim = 0;
     assert(x != NULL);
 
-    *x_rank = PyArray_NDIM(x);
+    x_ndim = PyArray_NDIM(x);
+    *x_rank = x_ndim;
     *x_shape = PyArray_SHAPE(x);
     *x_strides = PyArray_STRIDES(x);
-    *x_itemsize = PyArray_ITEMSIZE(x);
-    asize = ar_size(*x_shape, *x_rank);
+    elsz = PyArray_ITEMSIZE(x);
+    *x_itemsize = elsz;
+    asize = ar_size(*x_shape, x_ndim);
     *x_size = asize;
 }
 
