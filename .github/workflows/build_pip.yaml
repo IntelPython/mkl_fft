@@ -34,22 +34,21 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v3
         with:
           use-mamba: true
-          mamba-version: "*"
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
           channels: conda-forge
           activate-environment: test
           python-version: ${{ matrix.python }}
 
       - name: Install MKL
         run: |
-          conda install -c conda-forge mkl-devel mkl-service --override-channels
-          conda activate test
+          conda install mkl-devel mkl-service
           python -c "import sys; print(sys.executable)"
           which python
           python -c "import mkl; print(mkl.__file__)"
 
       - name: Build conda package
         run: |
-          conda activate test
           pip install --no-cache-dir cython pytest hypothesis
           pip install --no-cache-dir numpy ${{ matrix.use_pre }}
           echo "CONDA_PREFFIX is '${CONDA_PREFIX}'"
