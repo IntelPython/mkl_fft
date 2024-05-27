@@ -29,7 +29,10 @@
 # imports
 import sys
 import numpy as np
-from numpy.core._multiarray_tests import internal_overlap
+if np.lib.NumpyVersion(np.__version__) >= "2.0.0a0":
+    from numpy._core._multiarray_tests import internal_overlap
+else:
+    from numpy.core._multiarray_tests import internal_overlap
 from threading import local as threading_local
 
 # cimports
@@ -133,11 +136,6 @@ cdef extern from "src/mklfft.h":
     int double_cdouble_mkl_ifftnd_out(cnp.ndarray, cnp.ndarray, double)
     char * mkl_dfti_error(int)
 
-# Initialize numpy
-cdef int numpy_import_status = cnp.import_array()
-if numpy_import_status < 0:
-    raise ImportError("Failed to import NumPy as dependency of mkl_fft")
-
 
 cdef int _datacopied(cnp.ndarray arr, object orig):
     """
@@ -217,7 +215,7 @@ cdef cnp.ndarray  __process_arguments(object x, object n, object axis,
           cnp.NPY_ELEMENTSTRIDES | cnp.NPY_ENSUREARRAY | cnp.NPY_NOTSWAPPED,
           NULL)
 
-    if <void *> x_arr is NULL:
+    if (<void *> x_arr) is NULL:
         raise ValueError("An input argument x is not an array-like object")
 
     if _datacopied(x_arr, x):

@@ -28,7 +28,7 @@ from . import _pydfti
 from . import _float_utils
 import mkl
 
-from numpy.core import (take, sqrt, prod)
+from numpy import (take, sqrt, prod)
 import contextvars
 import contextlib
 import operator

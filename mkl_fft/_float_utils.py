@@ -59,7 +59,7 @@ def __downcast_float128_array(x):
         xdt = x.dtype
         if xdt == np.longdouble and not xdt == np.float64:
             return np.asarray(x, dtype=np.float64)
-        elif xdt == np.longcomplex and not xdt == np.complex_:
+        elif xdt == np.clongdouble and not xdt == np.complex_:
             return np.asarray(x, dtype=np.complex_)
     if not isinstance(x, np.ndarray):
         __x = np.asarray(x)

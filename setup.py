@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2017-2023, Intel Corporation
+# Copyright (c) 2017-2024, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -49,10 +49,10 @@ License :: OSI Approved
 Programming Language :: C
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.7
-Programming Language :: Python :: 3.8
 Programming Language :: Python :: 3.9
 Programming Language :: Python :: 3.10
+Programming Language :: Python :: 3.11
+Programming Language :: Python :: 3.12
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
 Topic :: Scientific/Engineering
@@ -104,7 +104,8 @@ def extensions():
             extra_compile_args = [
                 '-DNDEBUG',
                 # '-ggdb', '-O0', '-Wall', '-Wextra', '-DDEBUG',
-            ]
+            ],
+            define_macros=[("NPY_NO_DEPRECATED_API", None), ("PY_ARRAY_UNIQUE_SYMBOL", "mkl_fft_ext")]
         )
     ]
 

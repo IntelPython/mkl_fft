@@ -1,0 +1,57 @@
+name: Editable build using pip and pre-release NumPy
+
+on: push
+
+permissions: read-all
+
+env:
+  PACKAGE_NAME: mkl_fft
+  MODULE_NAME: mkl_fft
+  TEST_ENV_NAME: test_mkl_fft
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+         shell: bash -el {0}
+
+    strategy:
+      matrix:
+        python: ['3.9', '3.10', '3.11', '3.12']
+        use_pre: ["", "--pre"]
+
+    steps:
+      - name: Install jq
+        shell: bash -l {0}
+        run: |
+          sudo apt-get install jq
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          use-mamba: true
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          channels: conda-forge
+          activate-environment: test
+          python-version: ${{ matrix.python }}
+
+      - name: Install MKL
+        run: |
+          conda install mkl-devel mkl-service
+          python -c "import sys; print(sys.executable)"
+          which python
+          python -c "import mkl; print(mkl.__file__)"
+
+      - name: Build conda package
+        run: |
+          pip install --no-cache-dir cython pytest hypothesis
+          pip install --no-cache-dir numpy ${{ matrix.use_pre }}
+          echo "CONDA_PREFFIX is '${CONDA_PREFIX}'"
+          export MKLROOT=${CONDA_PREFIX}
+          pip install -e . --no-build-isolation --verbose --no-deps
+          python -m pytest -v mkl_fft/tests
