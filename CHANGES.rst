@@ -2,6 +2,11 @@
 mkl_fft changelog
 =================
 
+1.3.9
+=====
+
+Updated code and build system to support NumPy 2.0
+
 1.3.8
 =====
 
