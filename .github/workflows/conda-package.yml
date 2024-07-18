@@ -41,7 +41,7 @@ jobs:
         run: conda install conda-build
       - name: Build conda package
         run: |
-          CHANNELS="-c conda-forge -c intel --override-channels"
+          CHANNELS="-c conda-forge -c https://software.repos.intel.com/python/conda --override-channels"
           VERSIONS="--python ${{ matrix.python }}"
           TEST="--no-test"
 
@@ -67,7 +67,7 @@ jobs:
         runner: [ubuntu-latest]
     continue-on-error: ${{ matrix.experimental }}
     env:
-      CHANNELS: -c intel -c main --override-channels
+      CHANNELS: -c https://software.repos.intel.com/python/conda -c main --override-channels
 
     steps:
       - name: Download artifact
@@ -150,7 +150,7 @@ jobs:
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python }}-
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
       - name: Build conda package
-        run: conda build --no-test --python ${{ matrix.python }} -c intel -c conda-forge --override-channels conda-recipe
+        run: conda build --no-test --python ${{ matrix.python }} -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels conda-recipe
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -171,7 +171,7 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     env:
       workdir: '${{ github.workspace }}'
-      CHANNELS: -c intel -c conda-forge --override-channels
+      CHANNELS: -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels
 
     steps:
       - name: Download artifact
