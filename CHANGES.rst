@@ -2,6 +2,12 @@
 mkl_fft changelog
 =================
 
+1.3.10
+======
+
+Bugfix release, resolving leftover uses of NumPy attributes removed in NumPy 2.0 that break
+test suite run on Windows.
+
 1.3.9
 =====
 
