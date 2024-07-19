@@ -217,3 +217,14 @@ class Test_Scales(TestCase):
 
         r_tol, a_tol = _get_rtol_atol(X)
         assert_allclose(f, 5*f_scale, rtol=r_tol, atol=a_tol)
+
+
+def test_gh109():
+    b_int = np.array([[5, 7, 6, 5], [4, 6, 4, 8], [9, 3, 7, 5]], dtype=np.int64)
+    b = np.asarray(b_int, dtype=np.float32)
+
+    r1 = mkl_fft.fftn(b, shape=None, axes=(0,), overwrite_x=False, forward_scale=1/3)
+    r2 = mkl_fft.fftn(b_int, shape=None, axes=(0,), overwrite_x=False, forward_scale=1/3)
+
+    rtol, atol = _get_rtol_atol(b)
+    assert_allclose(r1, r2, rtol=rtol, atol=atol)

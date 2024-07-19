@@ -901,12 +901,12 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
     return s, axes
 
 
-def _iter_fftnd(a, s=None, axes=None, function=fft, overwrite_arg=False, scale_function=lambda n: 1.0):
+def _iter_fftnd(a, s=None, axes=None, function=fft, overwrite_arg=False, scale_function=lambda n, ind: 1.0):
     a = np.asarray(a)
     s, axes = _init_nd_shape_and_axes(a, s, axes)
     ovwr = overwrite_arg
     for ii in reversed(range(len(axes))):
-        a = function(a, n = s[ii], axis = axes[ii], overwrite_x=ovwr, forward_scale=scale_function(s[ii]))
+        a = function(a, n = s[ii], axis = axes[ii], overwrite_x=ovwr, forward_scale=scale_function(s[ii], ii))
         ovwr = True
     return a
 
@@ -1093,9 +1093,9 @@ def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1, doubl
                 res
                 )
         else:
-            sc = (<object> fsc)**(1/x.ndim)
+            sc = <object> fsc
             return _iter_fftnd(x, s=shape, axes=axes,
-                               overwrite_arg=overwrite_x, scale_function=lambda n: sc,
+                               overwrite_arg=overwrite_x, scale_function=lambda n, i: sc if i == 0 else 1.,
                                function=fft if direction == 1 else ifft)
 
 
