@@ -5,7 +5,13 @@
 as a stand-alone package. It can be installed into conda environment using
 
 ```
-   conda install -c intel mkl_fft
+   conda install -c https://software.repos.intel.com/python/conda mkl_fft
+```
+
+or from conda-forge channel:
+
+```
+   conda install -c conda-forge mkl_fft
 ```
 
 ---
