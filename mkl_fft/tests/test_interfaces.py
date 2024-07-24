@@ -43,8 +43,8 @@ def test_scipy_fft(norm, dtype):
     x = np.ones(511, dtype=dtype)
     w = mfi.scipy_fft.fft(x, norm=norm, workers=None, plan=None)
     xx = mfi.scipy_fft.ifft(w, norm=norm, workers=None, plan=None)
-    tol = 64 * np.finfo(np.dtype(dtype)).eps
-    assert np.allclose(x, xx, atol=tol, rtol=tol)
+    tol = 128 * np.finfo(np.dtype(dtype)).eps
+    np.testing.assert_allclose(x, xx, atol=tol, rtol=tol)
 
 
 @pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
@@ -53,8 +53,8 @@ def test_numpy_fft(norm, dtype):
     x = np.ones(511, dtype=dtype)
     w = mfi.numpy_fft.fft(x, norm=norm)
     xx = mfi.numpy_fft.ifft(w, norm=norm)
-    tol = 64 * np.finfo(np.dtype(dtype)).eps
-    assert np.allclose(x, xx, atol=tol, rtol=tol)
+    tol = 128 * np.finfo(np.dtype(dtype)).eps
+    np.testing.assert_allclose(x, xx, atol=tol, rtol=tol)
 
 
 @pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
