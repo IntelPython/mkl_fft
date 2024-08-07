@@ -67,7 +67,7 @@ jobs:
         runner: [ubuntu-latest]
     continue-on-error: ${{ matrix.experimental }}
     env:
-      CHANNELS: -c https://software.repos.intel.com/python/conda -c main --override-channels
+      CHANNELS: -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels
 
     steps:
       - name: Download artifact
