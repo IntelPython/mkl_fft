@@ -1,0 +1,46 @@
+{% set version = "1.3.10" %}
+{% set buildnumber = 0 %}
+
+package:
+    name: mkl_fft
+    version: {{ version }}
+
+source:
+    path: ../
+
+build:
+    number: {{ buildnumber }}
+    ignore_run_exports:
+      - blas
+
+requirements:
+    build:
+      - {{ compiler('c') }}
+    host:
+      - python
+      - setuptools
+      - mkl-devel
+      - cython
+      - numpy
+    run:
+      - python
+      - mkl
+      - mkl-service
+      - numpy
+
+test:
+    commands:
+      - pytest -v --pyargs mkl_fft
+    requires:
+      - pytest
+    imports:
+      - mkl_fft
+      - mkl_fft.interfaces
+      - mkl_fft.interfaces.numpy_fft
+      - mkl_fft.interfaces.scipy_fft
+
+about:
+    home: http://github.com/IntelPython/mkl_fft
+    license: BSD-3
+    license_file: LICENSE.txt
+    summary: NumPy-based implementation of Fast Fourier Transform using Intel (R) Math Kernel Library
