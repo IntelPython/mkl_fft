@@ -1,4 +1,4 @@
-name: Conda package
+name: Conda package with conda-forge channel only
 
 on: push
 
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: ['3.9', '3.10']
+        python: ['3.9', '3.10', '3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,17 +39,17 @@ jobs:
         run: echo $CONDA/bin >> $GITHUB_PATH
       - name: Install conda-build
         run: conda install conda-build
-      - name: Build conda package
+      - name: Build conda package with NumPy 2
         run: |
-          CHANNELS="-c conda-forge -c https://software.repos.intel.com/python/conda --override-channels"
-          VERSIONS="--python ${{ matrix.python }}"
+          CHANNELS="-c conda-forge --override-channels"
+          VERSIONS="--python ${{ matrix.python }} --numpy 2"
           TEST="--no-test"
 
           conda build \
             $TEST \
             $VERSIONS \
             $CHANNELS \
-            conda-recipe
+            conda-recipe-cf
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -62,18 +62,19 @@ jobs:
 
     strategy:
       matrix:
-        python: ['3.9', '3.10']
+        python_ver: ['3.9', '3.10', '3.11', '3.12']
+        numpy: ['numpy"<2"', 'numpy">=2"']
         experimental: [false]
         runner: [ubuntu-latest]
     continue-on-error: ${{ matrix.experimental }}
     env:
-      CHANNELS: -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels
+      CHANNELS: -c conda-forge --override-channels
 
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
+          name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python_ver }}
       - name: Add conda to system path
         run: echo $CONDA/bin >> $GITHUB_PATH
       - name: Install conda-build
@@ -89,7 +90,7 @@ jobs:
       - name: Collect dependencies
         run: |
           CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda create -n ${{ env.TEST_ENV_NAME }} $PACKAGE_NAME python=${{ matrix.python }} $CHANNELS --only-deps --dry-run > lockfile
+          conda create -n ${{ env.TEST_ENV_NAME }} $PACKAGE_NAME python=${{ matrix.python_ver }} ${{ matrix.numpy }} $CHANNELS --only-deps --dry-run > lockfile
       - name: Display lockfile
         run: cat lockfile
       - name: Set pkgs_dirs
@@ -102,15 +103,15 @@ jobs:
         with:
           path: ~/.conda/pkgs
           key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python }}-${{hashFiles('lockfile') }}
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_ver }}-${{hashFiles('lockfile') }}
           restore-keys: |
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python }}-
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_ver }}-
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
 
       - name: Install mkl_fft
         run: |
           CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda create -n ${{ env.TEST_ENV_NAME }} python=${{ matrix.python }} $PACKAGE_NAME pytest $CHANNELS
+          conda create -n ${{ env.TEST_ENV_NAME }} python=${{ matrix.python_ver }} ${{ matrix.numpy }} $PACKAGE_NAME pytest $CHANNELS
           # Test installed packages
           conda list -n ${{ env.TEST_ENV_NAME }}
       - name: Run tests
@@ -124,7 +125,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ['3.9', '3.10']
+        python: ['3.9', '3.10', '3.11', '3.12']
     env:
       conda-bld: C:\Miniconda\conda-bld\win-64\
     steps:
@@ -149,8 +150,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python }}-
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
-      - name: Build conda package
-        run: conda build --no-test --python ${{ matrix.python }} -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels conda-recipe
+      - name: Build conda package with NumPy 2.0
+        run: conda build --no-test --python ${{ matrix.python }} --numpy 2 -c conda-forge --override-channels conda-recipe-cf
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -165,26 +166,27 @@ jobs:
         shell: cmd /C CALL {0}
     strategy:
       matrix:
-        python: ['3.9', '3.10']
+        python_ver: ['3.9', '3.10', '3.11', '3.12']
+        numpy: ['numpy"<2"', 'numpy">=2"']
         experimental: [false]
         runner: [windows-2019]
     continue-on-error: ${{ matrix.experimental }}
     env:
       workdir: '${{ github.workspace }}'
-      CHANNELS: -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels
+      CHANNELS: -c conda-forge --override-channels
 
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
+          name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python_ver }}
       - uses: conda-incubator/setup-miniconda@v3
         with:
           auto-update-conda: true
           conda-build-version: '*'
           miniconda-version: 'latest'
           activate-environment: mkl_fft_test
-          python-version: ${{ matrix.python }}
+          python-version: ${{ matrix.python_ver }}
       - name: Create conda channel with the artifact bit
         shell: cmd /C CALL {0}
         run: |
@@ -213,7 +215,7 @@ jobs:
           FOR /F "tokens=* USEBACKQ" %%F IN (`python -c "%SCRIPT%"`) DO (
              SET PACKAGE_VERSION=%%F
           )
-          conda install -n mkl_fft_test ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% python=${{ matrix.python }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }} --only-deps --dry-run > lockfile
+          conda install -n mkl_fft_test ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% python=${{ matrix.python_ver }} ${{ matrix.numpy }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }} --only-deps --dry-run > lockfile
       - name: Display lockfile content
         shell: pwsh
         run: Get-Content -Path .\lockfile
@@ -224,9 +226,9 @@ jobs:
         with:
           path: /home/runner/conda_pkgs_dir
           key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python }}-${{hashFiles('lockfile') }}
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_ver }}-${{hashFiles('lockfile') }}
           restore-keys: |
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python }}-
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_ver }}-
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
       - name: Install mkl_fft
         shell: cmd /C CALL {0}
@@ -240,7 +242,7 @@ jobs:
              SET PACKAGE_VERSION=%%F
           )
           SET "TEST_DEPENDENCIES=pytest pytest-cov"
-          conda install -n mkl_fft_test ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% %TEST_DEPENDENCIES% python=${{ matrix.python }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
+          conda install -n mkl_fft_test ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% %TEST_DEPENDENCIES% python=${{ matrix.python }} ${{ matrix.numpy }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
       - name: Report content of test environment
         shell: cmd /C CALL {0}
         run: |
