@@ -125,18 +125,24 @@ jobs:
     strategy:
       matrix:
         python: ['3.9', '3.10']
-    env:
-      conda-bld: C:\Miniconda\conda-bld\win-64\
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.0
         with:
           fetch-depth: 0
       - uses: conda-incubator/setup-miniconda@v3
         with:
-          auto-activate-base: true
-          conda-build-version: "*"
-          activate-environment: true
+          miniforge-version: latest
+          activate-environment: build
           python-version: ${{ matrix.python }}
+          channels: conda-forge
+
+      - name: Remove defaults channel
+        run: conda config --remove channels defaults
+
+      - name: Install conda-build
+        run: |
+           conda activate
+           conda install -n base conda-build
 
       - name: Cache conda packages
         uses: actions/cache@v4
@@ -149,13 +155,22 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python }}-
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
+
       - name: Build conda package
-        run: conda build --no-test --python ${{ matrix.python }} -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels conda-recipe
+        run: |
+          conda activate
+          conda build --no-test --python ${{ matrix.python }} -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels conda-recipe
+
+      - name: Store conda paths as envs
+        shell: bash -l {0}
+        run: |
+          echo "CONDA_BLD=$CONDA/conda-bld/win-64/" | tr "\\\\" '/' >> $GITHUB_ENV
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
-          path: ${{ env.conda-bld }}${{ env.PACKAGE_NAME }}-*.tar.bz2
+          path: ${{ env.CONDA_BLD }}${{ env.PACKAGE_NAME }}-*.tar.bz2
 
   test_windows:
     needs: build_windows
@@ -180,18 +195,27 @@ jobs:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
       - uses: conda-incubator/setup-miniconda@v3
         with:
-          auto-update-conda: true
-          conda-build-version: '*'
-          miniconda-version: 'latest'
-          activate-environment: mkl_fft_test
+          miniforge-version: latest
+          activate-environment: ${{ env.TEST_ENV_NAME }}
           python-version: ${{ matrix.python }}
+          channels: conda-forge
+
+      - name: Remove defaults channel
+        run: conda config --remove channels defaults
+
       - name: Create conda channel with the artifact bit
         shell: cmd /C CALL {0}
         run: |
           echo ${{ env.workdir }}
+          mkdir ${{ env.workdir }}\channel\
           mkdir ${{ env.workdir }}\channel\win-64
           move ${{ env.PACKAGE_NAME }}-*.tar.bz2 ${{ env.workdir }}\channel\win-64
           dir ${{ env.workdir }}\channel\win-64
+
+      - name: Install conda index
+        shell: cmd /C CALL {0}
+        run: conda install -n base conda-index
+
       - name: Index the channel
         shell: cmd /C CALL {0}
         run: conda index ${{ env.workdir }}\channel
@@ -213,7 +237,7 @@ jobs:
           FOR /F "tokens=* USEBACKQ" %%F IN (`python -c "%SCRIPT%"`) DO (
              SET PACKAGE_VERSION=%%F
           )
-          conda install -n mkl_fft_test ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% python=${{ matrix.python }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }} --only-deps --dry-run > lockfile
+          conda install -n ${{ env.TEST_ENV_NAME }} ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% python=${{ matrix.python }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }} --only-deps --dry-run > lockfile
       - name: Display lockfile content
         shell: pwsh
         run: Get-Content -Path .\lockfile
@@ -240,15 +264,15 @@ jobs:
              SET PACKAGE_VERSION=%%F
           )
           SET "TEST_DEPENDENCIES=pytest pytest-cov"
-          conda install -n mkl_fft_test ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% %TEST_DEPENDENCIES% python=${{ matrix.python }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
+          conda install -n ${{ env.TEST_ENV_NAME }} ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% %TEST_DEPENDENCIES% python=${{ matrix.python }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
       - name: Report content of test environment
         shell: cmd /C CALL {0}
         run: |
           echo "Value of CONDA enviroment variable was: " %CONDA%
           echo "Value of CONDA_PREFIX enviroment variable was: " %CONDA_PREFIX%
-          conda info && conda list -n mkl_fft_test
+          conda info && conda list -n ${{ env.TEST_ENV_NAME }}
       - name: Run tests
         shell: cmd /C CALL {0}
         run: >-
-          conda activate mkl_fft_test && python -m pytest -v -s --pyargs ${{ env.MODULE_NAME }}
+          conda activate ${{ env.TEST_ENV_NAME }} && python -m pytest -v -s --pyargs ${{ env.MODULE_NAME }}
 
