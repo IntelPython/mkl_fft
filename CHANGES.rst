@@ -2,6 +2,12 @@
 mkl_fft changelog
 =================
 
+1.3.11
+======
+
+Bugfix release, resolving gh-109 and updating installation instructions
+
+
 1.3.10
 ======
 
