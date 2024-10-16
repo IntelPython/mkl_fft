@@ -137,6 +137,12 @@ cdef extern from "src/mklfft.h":
     char * mkl_dfti_error(int)
 
 
+# Initialize numpy
+cdef int numpy_import_status = cnp.import_array()
+if numpy_import_status < 0:
+    raise ImportError("Failed to import NumPy as dependency of mkl_fft")
+
+
 cdef int _datacopied(cnp.ndarray arr, object orig):
     """
     Strict check for `arr` not sharing any data with `original`,
