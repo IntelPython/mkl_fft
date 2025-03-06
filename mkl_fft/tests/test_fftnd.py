@@ -228,3 +228,16 @@ def test_gh109():
 
     rtol, atol = _get_rtol_atol(b)
     assert_allclose(r1, r2, rtol=rtol, atol=atol)
+
+def test_rfftn_numpy():
+    x = np.ones((37, 83))
+
+    w = mkl_fft.rfftn_numpy(x)
+    xx = mkl_fft.irfftn_numpy(w, s=x.shape)
+    tol = 64 * np.finfo(np.dtype(x.dtype)).eps
+    assert np.allclose(x, xx, atol=tol, rtol=tol)
+
+    w = mkl_fft.rfft2_numpy(x)
+    xx = mkl_fft.irfft2_numpy(w, s=x.shape)
+    tol = 64 * np.finfo(np.dtype(x.dtype)).eps
+    assert np.allclose(x, xx, atol=tol, rtol=tol)  

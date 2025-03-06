@@ -1122,11 +1122,11 @@ def ifftn(x, shape=None, axes=None, overwrite_x=False, forward_scale=1.0):
 
 
 def rfft2_numpy(x, s=None, axes=(-2,-1), forward_scale=1.0):
-    return rfftn_numpy(x, s=s, axes=axes, fsc=forward_scale)
+    return rfftn_numpy(x, s=s, axes=axes, forward_scale=forward_scale)
 
 
 def irfft2_numpy(x, s=None, axes=(-2,-1), forward_scale=1.0):
-    return irfftn_numpy(x, s=s, axes=axes, fsc=forward_scale)
+    return irfftn_numpy(x, s=s, axes=axes, forward_scale=forward_scale)
 
 
 def _remove_axis(s, axes, axis_to_remove):

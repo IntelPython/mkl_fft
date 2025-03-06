@@ -25,10 +25,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from ._pydfti import (fft, ifft, fft2, ifft2, fftn, ifftn, rfft, irfft,
-                      rfft_numpy, irfft_numpy, rfftn_numpy, irfftn_numpy)
+                      rfft_numpy, irfft_numpy, rfft2_numpy, irfft2_numpy,
+                      rfftn_numpy, irfftn_numpy)
 
 from ._version import __version__
 import mkl_fft.interfaces
 
 __all__ = ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn', 'rfft', 'irfft',
-           'rfft_numpy', 'irfft_numpy', 'rfftn_numpy', 'irfftn_numpy', 'interfaces']
+           'rfft_numpy', 'irfft_numpy', 'rfft2_numpy', 'irfft2_numpy',
+           'rfftn_numpy', 'irfftn_numpy', 'interfaces']
