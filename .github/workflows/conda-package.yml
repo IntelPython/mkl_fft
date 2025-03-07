@@ -54,7 +54,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
-          path: /usr/share/miniconda/conda-bld/linux-64/${{ env.PACKAGE_NAME }}-*.tar.bz2
+          path: /usr/share/miniconda/conda-bld/linux-64/${{ env.PACKAGE_NAME }}-*.conda
 
   test:
     needs: build
@@ -81,7 +81,7 @@ jobs:
       - name: Create conda channel
         run: |
           mkdir -p $GITHUB_WORKSPACE/channel/linux-64
-          mv ${PACKAGE_NAME}-*.tar.bz2 $GITHUB_WORKSPACE/channel/linux-64
+          mv ${PACKAGE_NAME}-*.conda $GITHUB_WORKSPACE/channel/linux-64
           conda index $GITHUB_WORKSPACE/channel
           # Test channel
           conda search $PACKAGE_NAME -c $GITHUB_WORKSPACE/channel --override-channels
@@ -135,9 +135,7 @@ jobs:
           activate-environment: build
           python-version: ${{ matrix.python }}
           channels: conda-forge
-
-      - name: Remove defaults channel
-        run: conda config --remove channels defaults
+          conda-remove-defaults: 'true'
 
       - name: Install conda-build
         run: |
@@ -170,7 +168,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
-          path: ${{ env.CONDA_BLD }}${{ env.PACKAGE_NAME }}-*.tar.bz2
+          path: ${{ env.CONDA_BLD }}${{ env.PACKAGE_NAME }}-*.conda
 
   test_windows:
     needs: build_windows
@@ -199,9 +197,7 @@ jobs:
           activate-environment: ${{ env.TEST_ENV_NAME }}
           python-version: ${{ matrix.python }}
           channels: conda-forge
-
-      - name: Remove defaults channel
-        run: conda config --remove channels defaults
+          conda-remove-defaults: 'true'
 
       - name: Create conda channel with the artifact bit
         shell: cmd /C CALL {0}
@@ -209,7 +205,7 @@ jobs:
           echo ${{ env.workdir }}
           mkdir ${{ env.workdir }}\channel\
           mkdir ${{ env.workdir }}\channel\win-64
-          move ${{ env.PACKAGE_NAME }}-*.tar.bz2 ${{ env.workdir }}\channel\win-64
+          move ${{ env.PACKAGE_NAME }}-*.conda ${{ env.workdir }}\channel\win-64
           dir ${{ env.workdir }}\channel\win-64
 
       - name: Install conda index
