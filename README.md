@@ -71,7 +71,7 @@ It implements the following functions:
 
 `rfft2_numpy(x, s=None, axes=(-2,-1))` - real 2D Fourier transform, like `numpy.fft.rfft2`
 
-`rfftn_numpy(x, s=None, axes=None)` - real 2D Fourier transform, like `numpy.fft.rfftn`
+`rfftn_numpy(x, s=None, axes=None)` - real ND Fourier transform, like `numpy.fft.rfftn`
 
 ... and similar `irfft*` functions.
 

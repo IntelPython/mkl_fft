@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2017-2024, Intel Corporation
+# Copyright (c) 2017-2025, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -207,7 +207,7 @@ def fft(a, n=None, axis=-1, norm=None):
     else:
         output = trycall(
             mkl_fft.fft,
-            (x, ),
+            (x,),
             {'n': n, 'axis': axis,
              'forward_scale': ortho_sc_1d(n, x.shape[axis])})
     return output
@@ -306,7 +306,7 @@ def ifft(a, n=None, axis=-1, norm=None):
             mkl_fft.ifft, (x,), {'n': n, 'axis':axis})
     elif norm == "forward":
         output = trycall(
-            mkl_fft.ifft, (x, ),
+            mkl_fft.ifft, (x,),
             {'n': n, 'axis': axis,
              'forward_scale': frwd_sc_1d(n, x.shape[axis])})
     else:
@@ -614,17 +614,17 @@ def hfft(a, n=None, axis=-1, norm=None):
     if (norm in (None, "backward")):
         res = trycall(
             irfft,
-            (x, ),
+            (x,),
             {'n': n, 'axis': axis, 'norm': 'forward'})
     elif norm == "forward":
         res = trycall(
             irfft,
-            (x, ),
+            (x,),
             {'n': n, 'axis': axis, 'norm': 'backward'})
     else:
         res = trycall(
             irfft,
-            (x, ),
+            (x,),
             {'n': n, 'axis': axis, 'norm': 'ortho'})
     return res
 
