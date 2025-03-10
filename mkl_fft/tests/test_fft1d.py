@@ -386,4 +386,3 @@ class Test_mklfft_rfftpack(TestCase):
                     f1 = mkl_fft.irfftpack(x, axis=a, overwrite_x=ovwr_x)
                     f2 = mkl_fft.rfftpack(f1, axis=a, overwrite_x=ovwr_x)
                     assert_allclose(f2, self.t3.astype(dt), atol=atol)
-

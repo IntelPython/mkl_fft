@@ -88,7 +88,6 @@ class TestFFT1D:
         assert_allclose(fft1(x) / 30.,
                         mkl_fft.fft(x, norm="forward"), atol=1e-6)
 
-    @pytest.mark.skip("out is not supported")
     @pytest.mark.parametrize("axis", (0, 1))
     @pytest.mark.parametrize("dtype", (complex, float))
     @pytest.mark.parametrize("transpose", (True, False))
@@ -119,7 +118,6 @@ class TestFFT1D:
         assert result2 is out2
         assert_array_equal(result2, expected2)
 
-    @pytest.mark.skip("out is not supported")
     @pytest.mark.parametrize("axis", [0, 1])
     def test_fft_inplace_out(self, axis):
         # Test some weirder in-place combinations
@@ -180,7 +178,6 @@ class TestFFT1D:
         assert result6 is out6
         assert_array_equal(result6, expected1)
 
-    @pytest.mark.skip("out is not supported")
     def test_fft_bad_out(self):
         x = np.arange(30.)
         with pytest.raises(TypeError, match="must be of ArrayType"):
@@ -414,7 +411,6 @@ class TestFFT1D:
                     assert_allclose(x_norm,
                                     np.linalg.norm(tmp), atol=1e-6)
 
-    @pytest.mark.skip("out is not supported")
     @pytest.mark.parametrize("axes", [(0, 1), (0, 2), None])
     @pytest.mark.parametrize("dtype", (complex, float))
     @pytest.mark.parametrize("transpose", (True, False))
@@ -445,7 +441,6 @@ class TestFFT1D:
         assert result2 is out2
         assert_array_equal(result2, expected2)
 
-    @pytest.mark.skip("out is not supported")
     @pytest.mark.parametrize("fft", [mkl_fft.fftn, mkl_fft.ifftn, mkl_fft.rfftn])
     def test_fftn_out_and_s_interaction(self, fft):
         # With s, shape varies, so generally one cannot pass in out.
@@ -463,7 +458,6 @@ class TestFFT1D:
         assert result is out
         assert_array_equal(result, expected)
 
-    @pytest.mark.skip("out is not supported")
     @pytest.mark.parametrize("s", [(9, 5, 5), (3, 3, 3)])
     def test_irfftn_out_and_s_interaction(self, s):
         # Since for irfftn, the output is real and thus cannot be used for
