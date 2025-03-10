@@ -37,7 +37,6 @@ class TestFFT1D:
             assert_allclose(mkl_fft.irfft(mkl_fft.rfft(xr[0:i]), i),
                             xr[0:i], atol=1e-12)
 
-    @pytest.mark.skip()
     @pytest.mark.parametrize("dtype", [np.single, np.double, np.longdouble])
     def test_identity_long_short(self, dtype):
         # Test with explicitly given number of points, both for n
@@ -56,7 +55,6 @@ class TestFFT1D:
             assert check_r.dtype == dtype
             assert_allclose(check_r, xxr[0:i], atol=atol, rtol=0)
 
-    @pytest.mark.skip()
     @pytest.mark.parametrize("dtype", [np.single, np.double, np.longdouble])
     def test_identity_long_short_reversed(self, dtype):
         # Also test explicitly given number of points in reversed order.
@@ -90,7 +88,6 @@ class TestFFT1D:
         assert_allclose(fft1(x) / 30.,
                         mkl_fft.fft(x, norm="forward"), atol=1e-6)
 
-    @pytest.mark.skip("out is not supported")
     @pytest.mark.parametrize("axis", (0, 1))
     @pytest.mark.parametrize("dtype", (complex, float))
     @pytest.mark.parametrize("transpose", (True, False))
@@ -121,7 +118,6 @@ class TestFFT1D:
         assert result2 is out2
         assert_array_equal(result2, expected2)
 
-    @pytest.mark.skip("out is not supported")
     @pytest.mark.parametrize("axis", [0, 1])
     def test_fft_inplace_out(self, axis):
         # Test some weirder in-place combinations
@@ -182,7 +178,6 @@ class TestFFT1D:
         assert result6 is out6
         assert_array_equal(result6, expected1)
 
-    @pytest.mark.skip("out is not supported")
     def test_fft_bad_out(self):
         x = np.arange(30.)
         with pytest.raises(TypeError, match="must be of ArrayType"):
@@ -307,7 +302,6 @@ class TestFFT1D:
         assert_allclose(x, mkl_fft.irfft2(mkl_fft.rfft2(x, norm="forward"),
                         norm="forward"), atol=1e-6)
 
-    @pytest.mark.skip("repeated axes")
     def test_rfftn(self):
         x = random((30, 20, 10))
         assert_allclose(mkl_fft.fftn(x)[:, :, :6], mkl_fft.rfftn(x), atol=1e-6)
@@ -360,7 +354,6 @@ class TestFFT1D:
         assert_allclose(x_herm, mkl_fft.ihfft(mkl_fft.hfft(x_herm,
                         norm="forward"), norm="forward"), atol=1e-6)
 
-    @pytest.mark.skip("Casting complex values to real")
     @pytest.mark.parametrize("op", [mkl_fft.fftn, mkl_fft.ifftn,
                                     mkl_fft.rfftn, mkl_fft.irfftn])
     def test_axes(self, op):
@@ -378,7 +371,6 @@ class TestFFT1D:
         # should use the whole input array along the first axis
         assert op(x, s=(-1, 5), axes=(0, 1)).shape == (10, 5)
 
-    @pytest.mark.skip("no warning is raised in mkl_ftt")
     @pytest.mark.parametrize("op", [mkl_fft.fftn, mkl_fft.ifftn,
                                     mkl_fft.rfftn, mkl_fft.irfftn])
     def test_s_axes_none(self, op):
@@ -386,14 +378,12 @@ class TestFFT1D:
         with pytest.warns(match='`axes` should not be `None` if `s`'):
             op(x, s=(-1, 5))
 
-    @pytest.mark.skip("no warning is raised in mkl_ftt")
     @pytest.mark.parametrize("op", [mkl_fft.fft2, mkl_fft.ifft2])
     def test_s_axes_none_2D(self, op):
         x = np.arange(100).reshape(10, 10)
         with pytest.warns(match='`axes` should not be `None` if `s`'):
             op(x, s=(-1, 5), axes=None)
 
-    @pytest.mark.skip("no warning is raised in mkl_ftt")
     @pytest.mark.parametrize("op", [mkl_fft.fftn, mkl_fft.ifftn,
                                     mkl_fft.rfftn, mkl_fft.irfftn,
                                     mkl_fft.fft2, mkl_fft.ifft2])
@@ -421,7 +411,6 @@ class TestFFT1D:
                     assert_allclose(x_norm,
                                     np.linalg.norm(tmp), atol=1e-6)
 
-    @pytest.mark.skip("out is not supported")
     @pytest.mark.parametrize("axes", [(0, 1), (0, 2), None])
     @pytest.mark.parametrize("dtype", (complex, float))
     @pytest.mark.parametrize("transpose", (True, False))
@@ -452,7 +441,6 @@ class TestFFT1D:
         assert result2 is out2
         assert_array_equal(result2, expected2)
 
-    @pytest.mark.skip("out is not supported")
     @pytest.mark.parametrize("fft", [mkl_fft.fftn, mkl_fft.ifftn, mkl_fft.rfftn])
     def test_fftn_out_and_s_interaction(self, fft):
         # With s, shape varies, so generally one cannot pass in out.
@@ -470,7 +458,6 @@ class TestFFT1D:
         assert result is out
         assert_array_equal(result, expected)
 
-    @pytest.mark.skip("out is not supported")
     @pytest.mark.parametrize("s", [(9, 5, 5), (3, 3, 3)])
     def test_irfftn_out_and_s_interaction(self, s):
         # Since for irfftn, the output is real and thus cannot be used for
@@ -483,7 +470,6 @@ class TestFFT1D:
         assert_array_equal(result, expected)
 
 
-@pytest.mark.skip()
 @pytest.mark.parametrize(
         "dtype",
         [np.float32, np.float64, np.complex64, np.complex128])
@@ -591,7 +577,6 @@ def test_irfft_with_n_large_regression():
     assert_allclose(result, expected)
 
 
-@pytest.mark.skip()
 @pytest.mark.parametrize("fft", [
     mkl_fft.fft, mkl_fft.ifft, mkl_fft.rfft, mkl_fft.irfft
 ])

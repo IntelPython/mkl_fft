@@ -156,12 +156,12 @@ cdef int _datacopied(cnp.ndarray arr, object orig):
     return 1 if (arr_obj.base is None) else 0
 
 
-def fft(x, n=None, axis=-1, overwrite_x=False, fwd_scale=1.0):
-    return _fft1d_impl(x, n=n, axis=axis, overwrite_arg=overwrite_x, direction=+1, fsc=fwd_scale)
+def fft(x, n=None, axis=-1, overwrite_x=False, fwd_scale=1.0, out=None):
+    return _fft1d_impl(x, n=n, axis=axis, overwrite_arg=overwrite_x, direction=+1, fsc=fwd_scale, out_arr=out)
 
 
-def ifft(x, n=None, axis=-1, overwrite_x=False, fwd_scale=1.0):
-    return _fft1d_impl(x, n=n, axis=axis, overwrite_arg=overwrite_x, direction=-1, fsc=fwd_scale)
+def ifft(x, n=None, axis=-1, overwrite_x=False, fwd_scale=1.0, out=None):
+    return _fft1d_impl(x, n=n, axis=axis, overwrite_arg=overwrite_x, direction=-1, fsc=fwd_scale, out_arr=out)
 
 
 cdef cnp.ndarray pad_array(cnp.ndarray x_arr, cnp.npy_intp n, int axis, int realQ):
@@ -294,7 +294,7 @@ cdef cnp.ndarray __allocate_result(cnp.ndarray x_arr, long n_, long axis_, int f
 # Float/double inputs are not cast to complex, but are effectively
 # treated as complexes with zero imaginary parts.
 # All other types are cast to complex double.
-def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1, double fsc=1.0):
+def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1, double fsc=1.0, out_arr=None):
     """
     Uses MKL to perform 1D FFT on the input array x along the given axis.
     """
@@ -322,6 +322,8 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1, double fs
         # to work in place we need to cast the input to complex,
         # which may be more expensive than creating the output using MKL
         in_place = 0
+    #elif out_arr is not None:
+    #    in_place = 0
     else:
         # we must cast the input and allocate the output,
         # so we cast to complex double and operate in place
@@ -332,6 +334,9 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1, double fs
             raise ValueError("First argument must be a complex or real sequence of single or double precision")
         x_type = cnp.PyArray_TYPE(x_arr)
         in_place = 1
+
+    if out_arr is not None:
+        in_place = 0
 
     if in_place:
         _cache_capsule = _tls_dfti_cache_capsule()
@@ -364,7 +369,23 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1, double fs
     else:
         f_type = cnp.NPY_CFLOAT if (x_type is cnp.NPY_FLOAT or
                                     x_type is cnp.NPY_CFLOAT) else cnp.NPY_CDOUBLE
-        f_arr = __allocate_result(x_arr, n_, axis_, f_type);
+
+        if out_arr is None:
+            f_arr = __allocate_result(x_arr, n_, axis_, f_type); 
+        else:       
+            if type(out_arr) is not np.ndarray:
+                raise TypeError("return arrays must be of ArrayType")      
+            x_shape = list(x.shape)
+            x_shape[axis_] = n_
+            if out_arr.shape != tuple(x_shape):
+                raise ValueError("output array has wrong shape.")        
+            out_dtype = np.dtype(cnp.PyArray_DescrFromType(f_type))
+            if out_arr.dtype != out_dtype:
+                raise TypeError("Cannot cast 'fft' output from dtype(%s) to dtype(%s)." 
+                        % (out_arr.dtype, out_dtype))
+
+            f_arr = <cnp.ndarray> out_arr
+
 
         # call out-of-place FFT
         _cache_capsule = _tls_dfti_cache_capsule()
@@ -645,7 +666,7 @@ def _rr_ifft1d_impl2(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
 
 
 # this routine is functionally equivalent to numpy.fft.rfft
-def _rc_fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
+def _rc_fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0, out_arr=None):
     """
     Uses MKL to perform 1D FFT on the real input array x along the given axis,
     producing complex output, but giving only half of the harmonics.
@@ -688,7 +709,21 @@ def _rc_fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
     # it can be done only if 2*(n_ // 2 + 1)  <= x_arr.shape[axis_] which is not
     # the common usage
     f_type = cnp.NPY_CFLOAT if x_type is cnp.NPY_FLOAT else cnp.NPY_CDOUBLE
-    f_arr = __allocate_result(x_arr, n_ // 2 + 1, axis_, f_type);
+    f_shape =  n_ // 2 + 1
+    if out_arr is None:
+        f_arr = __allocate_result(x_arr, f_shape, axis_, f_type);
+    else:
+        if type(out_arr) is not np.ndarray:
+            raise TypeError("return arrays must be of ArrayType")  
+        x_shape = list(x.shape)
+        x_shape[axis_] = f_shape
+        if out_arr.shape != tuple(x_shape):
+            raise ValueError("output array has wrong shape.")     
+        out_dtype = np.dtype(cnp.PyArray_DescrFromType(f_type))
+        if out_arr.dtype != out_dtype:
+            raise TypeError("Cannot cast 'fft' output from dtype(%s) to dtype(%s)." 
+                    % (out_arr.dtype, out_dtype))                           
+        f_arr = <cnp.ndarray> out_arr   
 
     # call out-of-place FFT
     if x_type is cnp.NPY_FLOAT:
@@ -723,7 +758,7 @@ cdef int _is_integral(object num):
 
 
 # this routine is functionally equivalent to numpy.fft.irfft
-def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
+def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0, out_arr=None):
     """
     Uses MKL to perform 1D FFT on the real input array x along the given axis,
     producing complex output, but giving only half of the harmonics.
@@ -772,8 +807,11 @@ def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
         # TODO: Provide in-place functionality
         pass
     else:
-        f_type = cnp.NPY_FLOAT if x_type is cnp.NPY_CFLOAT else cnp.NPY_DOUBLE
-        f_arr = __allocate_result(x_arr, n_, axis_, f_type);
+        if out_arr is None:
+            f_type = cnp.NPY_FLOAT if x_type is cnp.NPY_CFLOAT else cnp.NPY_DOUBLE
+            f_arr = __allocate_result(x_arr, n_, axis_, f_type);
+        else:
+            f_arr = <cnp.ndarray> out_arr
 
         # call out-of-place FFT
         if x_type is cnp.NPY_CFLOAT:
@@ -793,12 +831,12 @@ def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
         return f_arr
 
 
-def rfft(x, n=None, axis=-1, fwd_scale=1.0):
-    return _rc_fft1d_impl(x, n=n, axis=axis, fsc=fwd_scale)
+def rfft(x, n=None, axis=-1, fwd_scale=1.0, out=None):
+    return _rc_fft1d_impl(x, n=n, axis=axis, fsc=fwd_scale, out_arr=out)
 
 
-def irfft(x, n=None, axis=-1, fwd_scale=1.0):
-    return _rc_ifft1d_impl(x, n=n, axis=axis, fsc=fwd_scale)
+def irfft(x, n=None, axis=-1, fwd_scale=1.0, out=None):
+    return _rc_ifft1d_impl(x, n=n, axis=axis, fsc=fwd_scale, out_arr=out)
 
 
 # ============================== ND ====================================== #
@@ -883,9 +921,9 @@ def _init_nd_shape_and_axes(x, shape, axes):
     return shape, axes
 
 
-def _cook_nd_args(a, s=None, axes=None, invreal=0):
+def _cook_nd_args(a, s=None, axes=None, invreal=False):
     if s is None:
-        shapeless = 1
+        shapeless = True
         if axes is None:
             s = list(a.shape)
         else:
@@ -896,9 +934,9 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
                 s = range(len(axes) + 1)
                 pass
     else:
-        shapeless = 0
+        shapeless = False
     s = list(s)
-    if axes is None:
+    if axes is None: 
         axes = list(range(-len(s), 0))
     if len(s) != len(axes):
         raise ValueError("Shape and axes have different lengths.")
@@ -907,12 +945,12 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
     return s, axes
 
 
-def _iter_fftnd(a, s=None, axes=None, function=fft, overwrite_arg=False, scale_function=lambda n, ind: 1.0):
+def _iter_fftnd(a, s=None, axes=None, function=fft, overwrite_arg=False, scale_function=lambda n, ind: 1.0, out=None):
     a = np.asarray(a)
-    s, axes = _init_nd_shape_and_axes(a, s, axes)
+    s, axes = _init_nd_shape_and_axes(a, s, axes) # is it needed?
     ovwr = overwrite_arg
     for ii in reversed(range(len(axes))):
-        a = function(a, n = s[ii], axis = axes[ii], overwrite_x=ovwr, fwd_scale=scale_function(s[ii], ii))
+        a = function(a, n = s[ii], axis = axes[ii], overwrite_x=ovwr, fwd_scale=scale_function(s[ii], ii), out=out)
         ovwr = True
     return a
 
@@ -959,7 +997,7 @@ def iter_complementary(x, axes, func, kwargs, result):
     return result
 
 
-def _direct_fftnd(x, overwrite_arg=False, direction=+1, double fsc=1.0):
+def _direct_fftnd(x, overwrite_arg=False, direction=+1, double fsc=1.0, out_arr=None):
     """Perform n-dimensional FFT over all axes"""
     cdef int err
     cdef long n_max = 0
@@ -995,6 +1033,9 @@ def _direct_fftnd(x, overwrite_arg=False, direction=+1, double fsc=1.0):
         x_type = cnp.PyArray_TYPE(x_arr)
         assert x_type == cnp.NPY_CDOUBLE
         in_place = 1
+    
+    if out_arr is None:
+        in_place = 0
 
     if in_place:
         in_place = 1 if x_type == cnp.NPY_CDOUBLE or x_type == cnp.NPY_CFLOAT else 0
@@ -1016,7 +1057,19 @@ def _direct_fftnd(x, overwrite_arg=False, direction=+1, double fsc=1.0):
         return x_arr
     else:
         f_type = cnp.NPY_CDOUBLE if x_type == cnp.NPY_CDOUBLE or x_type == cnp.NPY_DOUBLE else cnp.NPY_CFLOAT
-        f_arr = __allocate_result(x_arr, -1, 0, f_type);
+        if out_arr is None:    
+            f_arr = __allocate_result(x_arr, -1, 0, f_type);
+        else:
+            if type(out_arr) is not np.ndarray:
+                raise TypeError("return arrays must be of ArrayType")  
+            if out_arr.shape != x.shape:
+                raise ValueError("output array has wrong shape.")     
+            out_dtype = np.dtype(cnp.PyArray_DescrFromType(f_type))
+            if out_arr.dtype != out_dtype:
+                raise TypeError("Cannot cast 'fft' output from dtype(%s) to dtype(%s)." 
+                        % (out_arr.dtype, out_dtype))         
+            f_arr = <cnp.ndarray> out_arr
+
         if x_type == cnp.NPY_CDOUBLE:
             if dir_ == 1:
                 err = cdouble_cdouble_mkl_fftnd_out(x_arr, f_arr, fsc)
@@ -1069,7 +1122,7 @@ def _output_dtype(dt):
     return dt
 
 
-def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1, double fsc=1.0):
+def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1, double fsc=1.0, out=None):  
     if direction not in [-1, +1]:
         raise ValueError("Direction of FFT should +1 or -1")
 
@@ -1087,11 +1140,21 @@ def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1, doubl
         _direct = False
 
     if _direct:
-        return _direct_fftnd(x, overwrite_arg=overwrite_x, direction=direction, fsc=fsc)
+        return _direct_fftnd(x, overwrite_arg=overwrite_x, direction=direction, fsc=fsc, out_arr=out)
     else:
         if (shape is None and x.dtype in [np.csingle, np.cdouble, np.single, np.double]):
             x = np.asarray(x)
-            res = np.empty(x.shape, dtype=_output_dtype(x.dtype))
+            if out is not None:
+                if type(out) is not np.ndarray:
+                    raise TypeError("return arrays must be of ArrayType")      
+                if out.shape != x.shape:
+                    raise ValueError("output array has wrong shape.")     
+                if out.dtype != _output_dtype(x.dtype):
+                    raise TypeError("Cannot cast 'fft' output from dtype(%s) to dtype(%s)." 
+                            % (out.dtype, _output_dtype(x.dtype)))                           
+                res = out
+            else:
+                res = np.empty(x.shape, dtype=_output_dtype(x.dtype))
             return iter_complementary(
                 x, axes,
                 _direct_fftnd,
@@ -1102,31 +1165,31 @@ def _fftnd_impl(x, shape=None, axes=None, overwrite_x=False, direction=+1, doubl
             sc = <object> fsc
             return _iter_fftnd(x, s=shape, axes=axes,
                                overwrite_arg=overwrite_x, scale_function=lambda n, i: sc if i == 0 else 1.,
-                               function=fft if direction == 1 else ifft)
+                               function=fft if direction == 1 else ifft, out=out)
 
 
-def fft2(x, shape=None, axes=(-2,-1), overwrite_x=False, fwd_scale=1.0):
-    return _fftnd_impl(x, shape=shape, axes=axes, overwrite_x=overwrite_x, direction=+1, fsc=fwd_scale)
+def fft2(x, shape=None, axes=(-2,-1), overwrite_x=False, fwd_scale=1.0, out=None):
+    return _fftnd_impl(x, shape=shape, axes=axes, overwrite_x=overwrite_x, direction=+1, fsc=fwd_scale, out=out)
 
 
-def ifft2(x, shape=None, axes=(-2,-1), overwrite_x=False, fwd_scale=1.0):
-    return _fftnd_impl(x, shape=shape, axes=axes, overwrite_x=overwrite_x, direction=-1, fsc=fwd_scale)
+def ifft2(x, shape=None, axes=(-2,-1), overwrite_x=False, fwd_scale=1.0, out=None):
+    return _fftnd_impl(x, shape=shape, axes=axes, overwrite_x=overwrite_x, direction=-1, fsc=fwd_scale, out=out)
 
 
-def fftn(x, shape=None, axes=None, overwrite_x=False, fwd_scale=1.0):
-    return _fftnd_impl(x, shape=shape, axes=axes, overwrite_x=overwrite_x, direction=+1, fsc=fwd_scale)
+def fftn(x, shape=None, axes=None, overwrite_x=False, fwd_scale=1.0, out=None):
+    return _fftnd_impl(x, shape=shape, axes=axes, overwrite_x=overwrite_x, direction=+1, fsc=fwd_scale, out=out)
 
 
-def ifftn(x, shape=None, axes=None, overwrite_x=False, fwd_scale=1.0):
-    return _fftnd_impl(x, shape=shape, axes=axes, overwrite_x=overwrite_x, direction=-1, fsc=fwd_scale)
+def ifftn(x, shape=None, axes=None, overwrite_x=False, fwd_scale=1.0, out=None):
+    return _fftnd_impl(x, shape=shape, axes=axes, overwrite_x=overwrite_x, direction=-1, fsc=fwd_scale, out=out)
 
 
-def rfft2(x, s=None, axes=(-2,-1), fwd_scale=1.0):
-    return rfftn(x, s=s, axes=axes, fsc=fwd_scale)
+def rfft2(x, s=None, axes=(-2,-1), fwd_scale=1.0, out=None):
+    return rfftn(x, s=s, axes=axes, fsc=fwd_scale, out=out)
 
 
-def irfft2(x, s=None, axes=(-2,-1), fwd_scale=1.0):
-    return irfftn(x, s=s, axes=axes, fsc=fwd_scale)
+def irfft2(x, s=None, axes=(-2,-1), fwd_scale=1.0, out=None):
+    return irfftn(x, s=s, axes=axes, fsc=fwd_scale, out=out)
 
 
 def _remove_axis(s, axes, axis_to_remove):
@@ -1181,7 +1244,7 @@ def _fix_dimensions(cnp.ndarray arr, object s, object axes):
     return np.pad(arr, tuple(pad_widths), 'constant')
 
 
-def rfftn(x, s=None, axes=None, fwd_scale=1.0):
+def rfftn(x, s=None, axes=None, fwd_scale=1.0, out=None):
     a = np.asarray(x)
     no_trim = (s is None) and (axes is None)
     s, axes = _cook_nd_args(a, s, axes)
@@ -1189,7 +1252,7 @@ def rfftn(x, s=None, axes=None, fwd_scale=1.0):
     # trim array, so that rfft avoids doing unnecessary computations
     if not no_trim:
         a = _trim_array(a, s, axes)
-    a = rfft(a, n = s[-1], axis=la, fwd_scale=fwd_scale)
+    a = rfft(a, n = s[-1], axis=la, fwd_scale=fwd_scale, out=out)
     if len(s) > 1:
         if not no_trim:
             ss = list(s)
@@ -1197,23 +1260,23 @@ def rfftn(x, s=None, axes=None, fwd_scale=1.0):
             a = _fix_dimensions(a, tuple(ss), axes)
         if len(set(axes)) == len(axes) and len(axes) == a.ndim and len(axes) > 2:
             ss, aa = _remove_axis(s, axes, -1)
-            ind = [slice(None,None,1),] * len(s)
+            ind = [slice(None, None, 1),] * len(s)
             for ii in range(a.shape[la]):
                 ind[la] = ii
                 tind = tuple(ind)
                 a_inp = a[tind]
                 a_res = _fftnd_impl(
                     a_inp, shape=ss, axes=aa,
-                    overwrite_x=True, direction=1)
+                    overwrite_x=True, direction=1, out=out)
                 if a_res is not a_inp:
                     a[tind] = a_res # copy in place
         else:
-            for ii in range(len(axes)-1):
-                a = fft(a, s[ii], axes[ii], overwrite_x=True)
+            for ii in range(len(axes)-2, -1, -1):
+                a = fft(a, s[ii], axes[ii], overwrite_x=True, out=out)
     return a
 
 
-def irfftn(x, s=None, axes=None, fwd_scale=1.0):
+def irfftn(x, s=None, axes=None, fwd_scale=1.0, out=None):
     a = np.asarray(x)
     no_trim = (s is None) and (axes is None)
     s, axes = _cook_nd_args(a, s, axes, invreal=True)
@@ -1235,12 +1298,14 @@ def irfftn(x, s=None, axes=None, fwd_scale=1.0):
                 a_inp = a[tind]
                 a_res = _fftnd_impl(
                     a_inp, shape=ss, axes=aa,
-                    overwrite_x=True, direction=-1)
+                    overwrite_x=True, direction=-1, out=out)
                 if a_res is not a_inp:
                     a[tind] = a_res # copy in place
         else:
             for ii in range(len(axes)-1):
+                # cannot use out here, since here we are performing c2c
+                # but out, if defined, is real since overall it is c2r
                 a = ifft(a, s[ii], axes[ii], overwrite_x=ovr_x)
                 ovr_x = True
-    a = irfft(a, n = s[-1], axis=la, fwd_scale=fwd_scale)
+    a = irfft(a, n = s[-1], axis=la, fwd_scale=fwd_scale, out=out)
     return a
