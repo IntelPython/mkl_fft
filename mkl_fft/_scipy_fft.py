@@ -279,7 +279,7 @@ def fft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None, pl
     fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.fftn(x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
@@ -293,7 +293,7 @@ def ifft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None, p
     fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.ifftn(x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
@@ -307,7 +307,7 @@ def fftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan=
     fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.fftn(x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
@@ -321,7 +321,7 @@ def ifftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan
     fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.ifftn(x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
