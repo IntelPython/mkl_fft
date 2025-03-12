@@ -217,7 +217,7 @@ def _ortho_sc_1d(n, s):
     return sqrt(_frwd_sc_1d(n, s))
 
 
-def _compute_1d_forward_scale(norm, n, s):
+def _compute_1d_fwd_scale(norm, n, s):
     if norm in (None, "backward"):
         fsc = 1.0
     elif norm == "forward":
@@ -229,7 +229,7 @@ def _compute_1d_forward_scale(norm, n, s):
     return fsc
 
 
-def _compute_nd_forward_scale(norm, s, axes, x_shape):
+def _compute_nd_fwd_scale(norm, s, axes, x_shape):
     if norm in (None, "backward"):
         fsc = 1.0
     elif norm == "forward":
@@ -248,10 +248,10 @@ def fft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, plan=Non
         return NotImplemented
     if x is NotImplemented:
         return x
-    fsc = _compute_1d_forward_scale(norm, n, x.shape[axis])
+    fsc = _compute_1d_fwd_scale(norm, n, x.shape[axis])
     _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.fft(x, n=n, axis=axis, overwrite_x=overwrite_x, forward_scale=fsc)
+        output = _pydfti.fft(x, n=n, axis=axis, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
@@ -262,10 +262,10 @@ def ifft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, plan=No
         return NotImplemented
     if x is NotImplemented:
         return x
-    fsc = _compute_1d_forward_scale(norm, n, x.shape[axis])
+    fsc = _compute_1d_fwd_scale(norm, n, x.shape[axis])
     _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.ifft(x, n=n, axis=axis, overwrite_x=overwrite_x, forward_scale=fsc)
+        output = _pydfti.ifft(x, n=n, axis=axis, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
@@ -276,10 +276,10 @@ def fft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None, pl
         return NotImplemented
     if x is NotImplemented:
         return x
-    fsc = _compute_nd_forward_scale(norm, s, axes, x.shape)
+    fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, forward_scale=fsc)
+        output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
@@ -290,10 +290,10 @@ def ifft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None, p
         return NotImplemented
     if x is NotImplemented:
         return x
-    fsc = _compute_nd_forward_scale(norm, s, axes, x.shape)
+    fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, forward_scale=fsc)
+        output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
@@ -304,10 +304,10 @@ def fftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan=
         return NotImplemented
     if x is NotImplemented:
         return x
-    fsc = _compute_nd_forward_scale(norm, s, axes, x.shape)
+    fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, forward_scale=fsc)
+        output = _pydfti.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
@@ -318,10 +318,10 @@ def ifftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan
         return NotImplemented
     if x is NotImplemented:
         return x
-    fsc = _compute_nd_forward_scale(norm, s, axes, x.shape)
+    fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, forward_scale=fsc)
+        output = _pydfti.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
@@ -332,10 +332,10 @@ def rfft(a, n=None, axis=-1, norm=None, workers=None, plan=None):
         return NotImplemented
     if x is NotImplemented:
         return x
-    fsc = _compute_1d_forward_scale(norm, n, x.shape[axis])
+    fsc = _compute_1d_fwd_scale(norm, n, x.shape[axis])
     _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.rfft_numpy(x, n=n, axis=axis, forward_scale=fsc)
+        output = _pydfti.rfft_numpy(x, n=n, axis=axis, fwd_scale=fsc)
     return output
 
 
@@ -347,14 +347,14 @@ def irfft(a, n=None, axis=-1, norm=None, workers=None, plan=None):
     if x is NotImplemented:
         return x
     nn = n if n else 2*(x.shape[axis]-1)
-    fsc = _compute_1d_forward_scale(norm, nn, x.shape[axis])
+    fsc = _compute_1d_fwd_scale(norm, nn, x.shape[axis])
     _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.irfft_numpy(x, n=n, axis=axis, forward_scale=fsc)
+        output = _pydfti.irfft_numpy(x, n=n, axis=axis, fwd_scale=fsc)
     return output
 
 
-def _compute_nd_forward_scale_for_rfft(norm, s, axes, x, invreal=False):
+def _compute_nd_fwd_scale_for_rfft(norm, s, axes, x, invreal=False):
     if norm in (None, "backward"):
         fsc = 1.0
     elif norm == "forward":
@@ -375,10 +375,10 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, plan=None):
         return NotImplemented
     if x is NotImplemented:
         return x
-    s, axes, fsc = _compute_nd_forward_scale_for_rfft(norm, s, axes, x)
+    s, axes, fsc = _compute_nd_fwd_scale_for_rfft(norm, s, axes, x)
     _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.rfftn_numpy(x, s, axes, forward_scale=fsc)
+        output = _pydfti.rfftn_numpy(x, s, axes, fwd_scale=fsc)
     return output
 
 
@@ -389,10 +389,10 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, plan=None):
         return NotImplemented
     if x is NotImplemented:
         return x
-    s, axes, fsc = _compute_nd_forward_scale_for_rfft(norm, s, axes, x, invreal=True)
+    s, axes, fsc = _compute_nd_fwd_scale_for_rfft(norm, s, axes, x, invreal=True)
     _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.irfftn_numpy(x, s, axes, forward_scale=fsc)
+        output = _pydfti.irfftn_numpy(x, s, axes, fwd_scale=fsc)
     return output
 
 
@@ -403,10 +403,10 @@ def rfftn(a, s=None, axes=None, norm=None, workers=None, plan=None):
         return NotImplemented
     if x is NotImplemented:
         return x
-    s, axes, fsc = _compute_nd_forward_scale_for_rfft(norm, s, axes, x)
+    s, axes, fsc = _compute_nd_fwd_scale_for_rfft(norm, s, axes, x)
     _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.rfftn_numpy(x, s, axes, forward_scale=fsc)
+        output = _pydfti.rfftn_numpy(x, s, axes, fwd_scale=fsc)
     return output
 
 
@@ -417,8 +417,8 @@ def irfftn(a, s=None, axes=None, norm=None, workers=None, plan=None):
         return NotImplemented
     if x is NotImplemented:
         return x
-    s, axes, fsc = _compute_nd_forward_scale_for_rfft(norm, s, axes, x, invreal=True)
+    s, axes, fsc = _compute_nd_fwd_scale_for_rfft(norm, s, axes, x, invreal=True)
     _check_plan(plan)
     with Workers(workers):
-        output = _pydfti.irfftn_numpy(x, s, axes, forward_scale=fsc)
+        output = _pydfti.irfftn_numpy(x, s, axes, fwd_scale=fsc)
     return output
