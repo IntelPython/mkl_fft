@@ -32,7 +32,7 @@ name = "mkl_fft"
 dynamic = ["version"]
 description = "MKL-based FFT transforms for NumPy arrays"
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.7"
+requires-python = ">=3.9,<3.13"
 license = { text = "BSD" }
 authors = [
     { name = "Intel Corporation", email = "scripting@intel.com" }
