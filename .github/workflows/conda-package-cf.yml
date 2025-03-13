@@ -8,7 +8,9 @@ env:
   PACKAGE_NAME: mkl_fft
   MODULE_NAME: mkl_fft
   TEST_ENV_NAME: test_mkl_fft
-
+  VER_SCRIPT1: "import json; f = open('ver.json', 'r'); j = json.load(f); f.close(); d = j['mkl_fft'][0];"
+  VER_SCRIPT2: "print('='.join((d[s] for s in ('version', 'build'))))" 
+  
 jobs:
   build:
     runs-on: ubuntu-latest
