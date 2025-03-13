@@ -58,7 +58,7 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS"
 ]
-dependencies = ["numpy >=1.16", "mkl", "mkl-service"]
+dependencies = ["numpy >=1.26.4", "mkl", "mkl-service"]
 
 [project.optional-dependencies]
 test = ["pytest"]
