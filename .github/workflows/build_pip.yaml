@@ -1,6 +1,10 @@
 name: Editable build using pip and pre-release NumPy
 
-on: push
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 permissions: read-all
 
