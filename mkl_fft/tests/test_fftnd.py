@@ -147,14 +147,14 @@ class Test_Regressions(TestCase):
                 f2 = mkl_fft.fft(d_fcont, axis=a)
                 assert_allclose(f1, f2, rtol=r_tol, atol=a_tol)
 
-    def test_rfftn_numpy(self):
-        """Test that rfftn_numpy works as expected"""
+    def test_rfftn(self):
+        """Test that rfftn works as expected"""
         axes = [(0, 1, 2), (0, 2, 1), (1, 0, 2), (1, 2, 0), (2, 0, 1), (2, 1, 0)]
         for x in [self.ad, self.af]:
             for a in axes:
                 r_tol, a_tol = _get_rtol_atol(x)
-                rfft_tr = mkl_fft.rfftn_numpy(np.transpose(x, a))
-                tr_rfft = np.transpose(mkl_fft.rfftn_numpy(x, axes=a), a)
+                rfft_tr = mkl_fft.rfftn(np.transpose(x, a))
+                tr_rfft = np.transpose(mkl_fft.rfftn(x, axes=a), a)
                 assert_allclose(rfft_tr, tr_rfft, rtol=r_tol, atol=a_tol)
 
     def test_gh64(self):

@@ -408,12 +408,12 @@ def _fft1d_impl(x, n=None, axis=-1, overwrite_arg=False, direction=+1, double fs
         return f_arr
 
 
-def rfft(x, n=None, axis=-1, overwrite_x=False, fwd_scale=1.0):
+def rfftpack(x, n=None, axis=-1, overwrite_x=False, fwd_scale=1.0):
     """Packed real-valued harmonics of FFT of a real sequence x"""
     return _rr_fft1d_impl2(x, n=n, axis=axis, overwrite_arg=overwrite_x, fsc=fwd_scale)
 
 
-def irfft(x, n=None, axis=-1, overwrite_x=False, fwd_scale=1.0):
+def irfftpack(x, n=None, axis=-1, overwrite_x=False, fwd_scale=1.0):
     """Inverse FFT of a real sequence, takes packed real-valued harmonics of FFT"""
     return _rr_ifft1d_impl2(x, n=n, axis=axis, overwrite_arg=overwrite_x, fsc=fwd_scale)
 
@@ -524,7 +524,7 @@ def _rr_fft1d_impl2(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
     """
     Uses MKL to perform real packed 1D FFT on the input array x along the given axis.
 
-    This done by using rfft_numpy and post-processing the result.
+    This done by using rfft and post-processing the result.
     Thus overwrite_arg is effectively discarded.
 
     Functionally equivalent to scipy.fftpack.rfft
@@ -580,7 +580,7 @@ def _rr_ifft1d_impl2(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
     """
     Uses MKL to perform real packed 1D FFT on the input array x along the given axis.
 
-    This done by using rfft_numpy and post-processing the result.
+    This done by using rfft and post-processing the result.
     Thus overwrite_arg is effectively discarded.
 
     Functionally equivalent to scipy.fftpack.irfft
@@ -793,11 +793,11 @@ def _rc_ifft1d_impl(x, n=None, axis=-1, overwrite_arg=False, double fsc=1.0):
         return f_arr
 
 
-def rfft_numpy(x, n=None, axis=-1, fwd_scale=1.0):
+def rfft(x, n=None, axis=-1, fwd_scale=1.0):
     return _rc_fft1d_impl(x, n=n, axis=axis, fsc=fwd_scale)
 
 
-def irfft_numpy(x, n=None, axis=-1, fwd_scale=1.0):
+def irfft(x, n=None, axis=-1, fwd_scale=1.0):
     return _rc_ifft1d_impl(x, n=n, axis=axis, fsc=fwd_scale)
 
 
@@ -1121,12 +1121,12 @@ def ifftn(x, shape=None, axes=None, overwrite_x=False, fwd_scale=1.0):
     return _fftnd_impl(x, shape=shape, axes=axes, overwrite_x=overwrite_x, direction=-1, fsc=fwd_scale)
 
 
-def rfft2_numpy(x, s=None, axes=(-2,-1), fwd_scale=1.0):
-    return rfftn_numpy(x, s=s, axes=axes, fsc=fwd_scale)
+def rfft2(x, s=None, axes=(-2,-1), fwd_scale=1.0):
+    return rfftn(x, s=s, axes=axes, fsc=fwd_scale)
 
 
-def irfft2_numpy(x, s=None, axes=(-2,-1), fwd_scale=1.0):
-    return irfftn_numpy(x, s=s, axes=axes, fsc=fwd_scale)
+def irfft2(x, s=None, axes=(-2,-1), fwd_scale=1.0):
+    return irfftn(x, s=s, axes=axes, fsc=fwd_scale)
 
 
 def _remove_axis(s, axes, axis_to_remove):
@@ -1181,16 +1181,15 @@ def _fix_dimensions(cnp.ndarray arr, object s, object axes):
     return np.pad(arr, tuple(pad_widths), 'constant')
 
 
-def rfftn_numpy(x, s=None, axes=None, fwd_scale=1.0):
+def rfftn(x, s=None, axes=None, fwd_scale=1.0):
     a = np.asarray(x)
     no_trim = (s is None) and (axes is None)
     s, axes = _cook_nd_args(a, s, axes)
     la = axes[-1]
-    # trim array, so that rfft_numpy avoids doing
-    # unnecessary computations
+    # trim array, so that rfft avoids doing unnecessary computations
     if not no_trim:
         a = _trim_array(a, s, axes)
-    a = rfft_numpy(a, n = s[-1], axis=la, fwd_scale=fwd_scale)
+    a = rfft(a, n = s[-1], axis=la, fwd_scale=fwd_scale)
     if len(s) > 1:
         if not no_trim:
             ss = list(s)
@@ -1214,7 +1213,7 @@ def rfftn_numpy(x, s=None, axes=None, fwd_scale=1.0):
     return a
 
 
-def irfftn_numpy(x, s=None, axes=None, fwd_scale=1.0):
+def irfftn(x, s=None, axes=None, fwd_scale=1.0):
     a = np.asarray(x)
     no_trim = (s is None) and (axes is None)
     s, axes = _cook_nd_args(a, s, axes, invreal=True)
@@ -1243,5 +1242,5 @@ def irfftn_numpy(x, s=None, axes=None, fwd_scale=1.0):
             for ii in range(len(axes)-1):
                 a = ifft(a, s[ii], axes[ii], overwrite_x=ovr_x)
                 ovr_x = True
-    a = irfft_numpy(a, n = s[-1], axis=la, fwd_scale=fwd_scale)
+    a = irfft(a, n = s[-1], axis=la, fwd_scale=fwd_scale)
     return a

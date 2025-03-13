@@ -406,7 +406,7 @@ def rfft(a, n=None, axis=-1, norm=None):
         fsc = ortho_sc_1d(n, x.shape[axis])
 
     return trycall(
-        mkl_fft.rfft_numpy,
+        mkl_fft.rfft,
         (x,),
         {'n': n, 'axis': axis,
          'fwd_scale': fsc})
@@ -510,7 +510,7 @@ def irfft(a, n=None, axis=-1, norm=None):
         fsc = ortho_sc_1d(nn, nn)
 
     return trycall(
-        mkl_fft.irfft_numpy,
+        mkl_fft.irfft,
         (x,),
         {'n': n, 'axis': axis,
          'fwd_scale': fsc})
@@ -606,7 +606,7 @@ def hfft(a, n=None, axis=-1, norm=None):
         fsc = ortho_sc_1d(nn, nn)
 
     return trycall(
-        mkl_fft.irfft_numpy,
+        mkl_fft.irfft,
         (x,),
         {'n': n, 'axis': axis,
          'fwd_scale': fsc})
@@ -682,7 +682,7 @@ def ihfft(a, n=None, axis=-1, norm=None):
         fsc = ortho_sc_1d(n, x.shape[axis])
 
     output = trycall(
-        mkl_fft.rfft_numpy,
+        mkl_fft.rfft,
         (x,),
         {'n': n, 'axis': axis,
          'fwd_scale': fsc})
@@ -1237,7 +1237,7 @@ def rfftn(a, s=None, axes=None, norm=None):
         fsc = sqrt(frwd_sc_nd(s, axes, x.shape))
 
     return trycall(
-        mkl_fft.rfftn_numpy,
+        mkl_fft.rfftn,
         (x,),
         {'s': s, 'axes': axes,
          'fwd_scale': fsc})
@@ -1394,7 +1394,7 @@ def irfftn(a, s=None, axes=None, norm=None):
         fsc = sqrt(frwd_sc_nd(s, axes, x.shape))
 
     return trycall(
-        mkl_fft.irfftn_numpy,
+        mkl_fft.irfftn,
         (x,),
         {'s': s, 'axes': axes,
          'fwd_scale': fsc})

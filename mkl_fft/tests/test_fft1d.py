@@ -341,7 +341,7 @@ class Test_mklfft_rank3(TestCase):
         assert_allclose(y1, y2, atol=2e-15)
 
 
-class Test_mklfft_rfft(TestCase):
+class Test_mklfft_rfftpack(TestCase):
     def setUp(self):
         rnd.seed(1234567)
         self.v1 = rnd.randn(16)
@@ -350,14 +350,14 @@ class Test_mklfft_rfft(TestCase):
 
     def test1(self):
         x = self.v1.copy()
-        f1 = mkl_fft.rfft(x)
-        f2 = mkl_fft.irfft(f1)
+        f1 = mkl_fft.rfftpack(x)
+        f2 = mkl_fft.irfftpack(f1)
         assert_allclose(f2,x)
 
     def test2(self):
         x = self.v1.copy()
-        f1 = mkl_fft.irfft(x)
-        f2 = mkl_fft.rfft(f1)
+        f1 = mkl_fft.irfftpack(x)
+        f2 = mkl_fft.rfftpack(f1)
         assert_allclose(f2,x)
 
     def test3(self):
@@ -365,8 +365,8 @@ class Test_mklfft_rfft(TestCase):
             for ovwr_x in [True, False]:
                 for dt, atol in zip([np.float32, np.float64], [2e-7, 2e-15]):
                     x = self.m2.copy().astype(dt)
-                    f1 = mkl_fft.rfft(x, axis=a, overwrite_x=ovwr_x)
-                    f2 = mkl_fft.irfft(f1, axis=a, overwrite_x=ovwr_x)
+                    f1 = mkl_fft.rfftpack(x, axis=a, overwrite_x=ovwr_x)
+                    f2 = mkl_fft.irfftpack(f1, axis=a, overwrite_x=ovwr_x)
                     assert_allclose(f2, self.m2.astype(dt), atol=atol, err_msg=(a, ovwr_x))
 
     def test4(self):
@@ -374,8 +374,8 @@ class Test_mklfft_rfft(TestCase):
             for ovwr_x in [True, False]:
                 for dt, atol in zip([np.float32, np.float64], [2e-7, 2e-15]):
                     x = self.m2.copy().astype(dt)
-                    f1 = mkl_fft.irfft(x, axis=a, overwrite_x=ovwr_x)
-                    f2 = mkl_fft.rfft(f1, axis=a, overwrite_x=ovwr_x)
+                    f1 = mkl_fft.irfftpack(x, axis=a, overwrite_x=ovwr_x)
+                    f2 = mkl_fft.rfftpack(f1, axis=a, overwrite_x=ovwr_x)
                     assert_allclose(f2, self.m2.astype(dt), atol=atol)
 
     def test5(self):
@@ -383,7 +383,7 @@ class Test_mklfft_rfft(TestCase):
             for ovwr_x in [True, False]:
                 for dt, atol in zip([np.float32, np.float64], [4e-7, 4e-15]):
                     x = self.t3.copy().astype(dt)
-                    f1 = mkl_fft.irfft(x, axis=a, overwrite_x=ovwr_x)
-                    f2 = mkl_fft.rfft(f1, axis=a, overwrite_x=ovwr_x)
+                    f1 = mkl_fft.irfftpack(x, axis=a, overwrite_x=ovwr_x)
+                    f2 = mkl_fft.rfftpack(f1, axis=a, overwrite_x=ovwr_x)
                     assert_allclose(f2, self.t3.astype(dt), atol=atol)
 
