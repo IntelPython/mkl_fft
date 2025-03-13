@@ -228,6 +228,7 @@ jobs:
       - name: Collect dependencies
         shell: cmd /C CALL {0}
         run: |
+          @ECHO ON
           IF NOT EXIST ver.json (
               copy /Y ${{ env.workdir }}\ver.json .
           )
