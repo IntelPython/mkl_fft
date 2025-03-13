@@ -174,37 +174,37 @@ class Test_Scales(TestCase):
 
     def test_scale_1d_vector(self):
         X = np.ones(128, dtype='d')
-        f1 = mkl_fft.fft(X, forward_scale=0.25)
+        f1 = mkl_fft.fft(X, fwd_scale=0.25)
         f2 = mkl_fft.fft(X)
         r_tol, a_tol = _get_rtol_atol(X)
         assert_allclose(4*f1, f2, rtol=r_tol, atol=a_tol)
 
-        X1 = mkl_fft.ifft(f1, forward_scale=0.25)
+        X1 = mkl_fft.ifft(f1, fwd_scale=0.25)
         assert_allclose(X, X1, rtol=r_tol, atol=a_tol)
 
-        f3 = mkl_fft.rfft(X, forward_scale=0.5)
-        X2 = mkl_fft.irfft(f3, forward_scale=0.5)
+        f3 = mkl_fft.rfft(X, fwd_scale=0.5)
+        X2 = mkl_fft.irfft(f3, fwd_scale=0.5)
         assert_allclose(X, X2, rtol=r_tol, atol=a_tol)
 
     def test_scale_1d_array(self):
         X = np.ones((8, 4, 4,), dtype='d')
-        f1 = mkl_fft.fft(X, axis=1, forward_scale=0.25)
+        f1 = mkl_fft.fft(X, axis=1, fwd_scale=0.25)
         f2 = mkl_fft.fft(X, axis=1)
         r_tol, a_tol = _get_rtol_atol(X)
         assert_allclose(4*f1, f2, rtol=r_tol, atol=a_tol)
 
-        X1 = mkl_fft.ifft(f1, axis=1, forward_scale=0.25)
+        X1 = mkl_fft.ifft(f1, axis=1, fwd_scale=0.25)
         assert_allclose(X, X1, rtol=r_tol, atol=a_tol)
 
-        f3 = mkl_fft.rfft(X, axis=0, forward_scale=0.5)
-        X2 = mkl_fft.irfft(f3, axis=0, forward_scale=0.5)
+        f3 = mkl_fft.rfft(X, axis=0, fwd_scale=0.5)
+        X2 = mkl_fft.irfft(f3, axis=0, fwd_scale=0.5)
         assert_allclose(X, X2, rtol=r_tol, atol=a_tol)
 
     def test_scale_nd(self):
         X = np.empty((2, 4, 8, 16), dtype='d')
         X.flat[:] = np.cbrt(np.arange(0, X.size, dtype=X.dtype))
         f = mkl_fft.fftn(X)
-        f_scale = mkl_fft.fftn(X, forward_scale=0.2)
+        f_scale = mkl_fft.fftn(X, fwd_scale=0.2)
 
         r_tol, a_tol = _get_rtol_atol(X)
         assert_allclose(f, 5*f_scale, rtol=r_tol, atol=a_tol)
@@ -213,7 +213,7 @@ class Test_Scales(TestCase):
         X = np.empty((4, 2, 16, 8), dtype='d')
         X.flat[:] = np.cbrt(np.arange(X.size, dtype=X.dtype))
         f = mkl_fft.fftn(X, axes=(0, 1, 2, 3))
-        f_scale = mkl_fft.fftn(X, axes=(0, 1, 2, 3), forward_scale=0.2)
+        f_scale = mkl_fft.fftn(X, axes=(0, 1, 2, 3), fwd_scale=0.2)
 
         r_tol, a_tol = _get_rtol_atol(X)
         assert_allclose(f, 5*f_scale, rtol=r_tol, atol=a_tol)
@@ -223,8 +223,8 @@ def test_gh109():
     b_int = np.array([[5, 7, 6, 5], [4, 6, 4, 8], [9, 3, 7, 5]], dtype=np.int64)
     b = np.asarray(b_int, dtype=np.float32)
 
-    r1 = mkl_fft.fftn(b, shape=None, axes=(0,), overwrite_x=False, forward_scale=1/3)
-    r2 = mkl_fft.fftn(b_int, shape=None, axes=(0,), overwrite_x=False, forward_scale=1/3)
+    r1 = mkl_fft.fftn(b, shape=None, axes=(0,), overwrite_x=False, fwd_scale=1/3)
+    r2 = mkl_fft.fftn(b_int, shape=None, axes=(0,), overwrite_x=False, fwd_scale=1/3)
 
     rtol, atol = _get_rtol_atol(b)
     assert_allclose(r1, r2, rtol=rtol, atol=atol)

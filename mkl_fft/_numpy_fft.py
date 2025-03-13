@@ -28,20 +28,20 @@ Discrete Fourier Transforms
 
 Routines in this module:
 
-fft(a, n=None, axis=-1)
-ifft(a, n=None, axis=-1)
-rfft(a, n=None, axis=-1)
-irfft(a, n=None, axis=-1)
-hfft(a, n=None, axis=-1)
-ihfft(a, n=None, axis=-1)
-fftn(a, s=None, axes=None)
-ifftn(a, s=None, axes=None)
-rfftn(a, s=None, axes=None)
-irfftn(a, s=None, axes=None)
-fft2(a, s=None, axes=(-2,-1))
-ifft2(a, s=None, axes=(-2, -1))
-rfft2(a, s=None, axes=(-2,-1))
-irfft2(a, s=None, axes=(-2, -1))
+fft(a, n=None, axis=-1, norm=None)
+ifft(a, n=None, axis=-1, norm=None)
+rfft(a, n=None, axis=-1, norm=None)
+irfft(a, n=None, axis=-1, norm=None)
+hfft(a, n=None, axis=-1, norm=None)
+ihfft(a, n=None, axis=-1, norm=None)
+fftn(a, s=None, axes=None, norm=None)
+ifftn(a, s=None, axes=None, norm=None)
+rfftn(a, s=None, axes=None, norm=None)
+irfftn(a, s=None, axes=None, norm=None)
+fft2(a, s=None, axes=(-2,-1), norm=None)
+ifft2(a, s=None, axes=(-2, -1), norm=None)
+rfft2(a, s=None, axes=(-2,-1), norm=None)
+irfft2(a, s=None, axes=(-2, -1), norm=None)
 
 i = inverse transform
 r = transform of purely real data
@@ -63,7 +63,7 @@ from . import _pydfti as mkl_fft
 from . import _float_utils
 import re
 
-def check_norm(norm):
+def _check_norm(norm):
     if norm not in (None, "ortho", "forward", "backward"):
         raise ValueError(
             ("Invalid norm value {} should be None, "
@@ -114,10 +114,10 @@ def fft(a, n=None, axis=-1, norm=None):
     n : int, optional
         Length of the transformed axis of the output.
         If `n` is smaller than the length of the input, the input is cropped.
-        If it is larger, the input is padded with zeros.  If `n` is not given,
+        If it is larger, the input is padded with zeros. If `n` is not given,
         the length of the input along the axis specified by `axis` is used.
     axis : int, optional
-        Axis over which to compute the FFT.  If not given, the last axis is
+        Axis over which to compute the FFT. If not given, the last axis is
         used.
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
@@ -154,7 +154,7 @@ def fft(a, n=None, axis=-1, norm=None):
     -----
     FFT (Fast Fourier Transform) refers to a way the discrete Fourier
     Transform (DFT) can be calculated efficiently, by using symmetries in the
-    calculated terms.  The symmetry is highest when `n` is a power of 2, and
+    calculated terms. The symmetry is highest when `n` is a power of 2, and
     the transform is therefore most efficient for these sizes.
 
     The DFT is defined, with the conventions used in this implementation, in
@@ -191,26 +191,21 @@ def fft(a, n=None, axis=-1, norm=None):
     the `numpy.fft` documentation.
 
     """
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
+
     if norm in (None, "backward"):
-        output = trycall(
-            mkl_fft.fft,
-            (x,),
-            {'n':n, 'axis': axis})
+        fsc = 1.0
     elif norm == "forward":
-        output = trycall(
-            mkl_fft.fft,
-            (x,),
-            {'n': n, 'axis': axis,
-             'forward_scale': frwd_sc_1d(n, x.shape[axis])})
+        fsc = frwd_sc_1d(n, x.shape[axis])
     else:
-        output = trycall(
-            mkl_fft.fft,
-            (x,),
-            {'n': n, 'axis': axis,
-             'forward_scale': ortho_sc_1d(n, x.shape[axis])})
-    return output
+        fsc = ortho_sc_1d(n, x.shape[axis])
+
+    return trycall(
+        mkl_fft.fft,
+        (x,),
+        {'n': n, 'axis': axis,
+         'fwd_scale': fsc})
 
 
 def ifft(a, n=None, axis=-1, norm=None):
@@ -218,7 +213,7 @@ def ifft(a, n=None, axis=-1, norm=None):
     Compute the one-dimensional inverse discrete Fourier Transform.
 
     This function computes the inverse of the one-dimensional *n*-point
-    discrete Fourier transform computed by `fft`.  In other words,
+    discrete Fourier transform computed by `fft`. In other words,
     ``ifft(fft(a)) == a`` to within numerical accuracy.
     For a general description of the algorithm and definitions,
     see `numpy.fft`.
@@ -238,11 +233,11 @@ def ifft(a, n=None, axis=-1, norm=None):
     n : int, optional
         Length of the transformed axis of the output.
         If `n` is smaller than the length of the input, the input is cropped.
-        If it is larger, the input is padded with zeros.  If `n` is not given,
+        If it is larger, the input is padded with zeros. If `n` is not given,
         the length of the input along the axis specified by `axis` is used.
         See notes about padding issues.
     axis : int, optional
-        Axis over which to compute the inverse DFT.  If not given, the last
+        Axis over which to compute the inverse DFT. If not given, the last
         axis is used.
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
@@ -276,8 +271,8 @@ def ifft(a, n=None, axis=-1, norm=None):
     Notes
     -----
     If the input parameter `n` is larger than the size of the input, the input
-    is padded by appending zeros at the end.  Even though this is the common
-    approach, it might lead to surprising results.  If a different padding is
+    is padded by appending zeros at the end. Even though this is the common
+    approach, it might lead to surprising results. If a different padding is
     desired, it must be performed before calling `ifft`.
 
     Examples
@@ -299,22 +294,21 @@ def ifft(a, n=None, axis=-1, norm=None):
     >>> plt.show()
 
     """
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
+
     if norm in (None, "backward"):
-        output = trycall(
-            mkl_fft.ifft, (x,), {'n': n, 'axis':axis})
+        fsc = 1.0
     elif norm == "forward":
-        output = trycall(
-            mkl_fft.ifft, (x,),
-            {'n': n, 'axis': axis,
-             'forward_scale': frwd_sc_1d(n, x.shape[axis])})
+        fsc = frwd_sc_1d(n, x.shape[axis])
     else:
-        output = trycall(
-            mkl_fft.ifft, (x,),
-            {'n': n, 'axis': axis,
-             'forward_scale': ortho_sc_1d(n, x.shape[axis])})
-    return output
+        fsc = ortho_sc_1d(n, x.shape[axis])
+
+    return trycall(
+        mkl_fft.ifft,
+        (x,),
+        {'n': n, 'axis': axis,
+         'fwd_scale': fsc})
 
 
 def rfft(a, n=None, axis=-1, norm=None):
@@ -374,7 +368,7 @@ def rfft(a, n=None, axis=-1, norm=None):
     When the DFT is computed for purely real input, the output is
     Hermitian-symmetric, i.e. the negative frequency terms are just the complex
     conjugates of the corresponding positive-frequency terms, and the
-    negative-frequency terms are therefore redundant.  This function does not
+    negative-frequency terms are therefore redundant. This function does not
     compute the negative frequency terms, and the length of the transformed
     axis of the output is therefore ``n//2 + 1``.
 
@@ -401,25 +395,21 @@ def rfft(a, n=None, axis=-1, norm=None):
     exploited to compute only the non-negative frequency terms.
 
     """
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
+
     if norm in (None, "backward"):
-        output = trycall(
-            mkl_fft.rfft_numpy,
-            (x,), {'n': n, 'axis': axis})
+        fsc = 1.0
     elif norm == "forward":
-        x = asanyarray(x)
-        output = trycall(
-            mkl_fft.rfft_numpy,
-            (x,),
-            {'n': n, 'axis': axis, 'forward_scale': frwd_sc_1d(n, x.shape[axis])})
+        fsc = frwd_sc_1d(n, x.shape[axis])
     else:
-        x = asanyarray(x)
-        output = trycall(
-            mkl_fft.rfft_numpy,
-            (x,),
-            {'n': n, 'axis': axis, 'forward_scale': ortho_sc_1d(n, x.shape[axis])})
-    return output
+        fsc = ortho_sc_1d(n, x.shape[axis])
+
+    return trycall(
+        mkl_fft.rfft_numpy,
+        (x,),
+        {'n': n, 'axis': axis,
+         'fwd_scale': fsc})
 
 
 def irfft(a, n=None, axis=-1, norm=None):
@@ -433,7 +423,7 @@ def irfft(a, n=None, axis=-1, norm=None):
 
     The input is expected to be in the form returned by `rfft`, i.e. the
     real zero-frequency term followed by the complex positive frequency terms
-    in order of increasing frequency.  Since the discrete Fourier Transform of
+    in order of increasing frequency. Since the discrete Fourier Transform of
     real input is Hermitian-symmetric, the negative frequency terms are taken
     to be the complex conjugates of the corresponding positive frequency terms.
 
@@ -443,9 +433,9 @@ def irfft(a, n=None, axis=-1, norm=None):
         The input array.
     n : int, optional
         Length of the transformed axis of the output.
-        For `n` output points, ``n//2+1`` input points are necessary.  If the
-        input is longer than this, it is cropped.  If it is shorter than this,
-        it is padded with zeros.  If `n` is not given, it is determined from
+        For `n` output points, ``n//2+1`` input points are necessary. If the
+        input is longer than this, it is cropped. If it is shorter than this,
+        it is padded with zeros. If `n` is not given, it is determined from
         the length of the input along the axis specified by `axis`.
     axis : int, optional
         Axis over which to compute the inverse FFT. If not given, the last
@@ -504,29 +494,26 @@ def irfft(a, n=None, axis=-1, norm=None):
 
     Notice how the last term in the input to the ordinary `ifft` is the
     complex conjugate of the second term, and the output has zero imaginary
-    part everywhere.  When calling `irfft`, the negative frequencies are not
+    part everywhere. When calling `irfft`, the negative frequencies are not
     specified, and the output array is purely real.
 
     """
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
+
+    nn = n if n else 2*(x.shape[axis]-1)
     if norm in (None, "backward"):
-        output = trycall(
-            mkl_fft.irfft_numpy,
-            (x,), {'n': n, 'axis': axis})
-    elif norm == 'forward':
-        nn = n if n else 2*(x.shape[axis]-1)
-        output = trycall(
-            mkl_fft.irfft_numpy,
-            (x,), {'n': n, 'axis': axis,
-                   'forward_scale': frwd_sc_1d(nn, nn)})
+        fsc = 1.0
+    elif norm == "forward":
+        fsc = frwd_sc_1d(nn, nn)
     else:
-        nn = n if n else 2*(x.shape[axis]-1)
-        output = trycall(
-            mkl_fft.irfft_numpy,
-            (x,), {'n': n, 'axis': axis,
-                   'forward_scale': ortho_sc_1d(nn, nn)})
-    return output
+        fsc = ortho_sc_1d(nn, nn)
+
+    return trycall(
+        mkl_fft.irfft_numpy,
+        (x,),
+        {'n': n, 'axis': axis,
+         'fwd_scale': fsc})
 
 
 def hfft(a, n=None, axis=-1, norm=None):
@@ -539,9 +526,9 @@ def hfft(a, n=None, axis=-1, norm=None):
         The input array.
     n : int, optional
         Length of the transformed axis of the output.
-        For `n` output points, ``n//2+1`` input points are necessary.  If the
-        input is longer than this, it is cropped.  If it is shorter than this,
-        it is padded with zeros.  If `n` is not given, it is determined from
+        For `n` output points, ``n//2+1`` input points are necessary. If the
+        input is longer than this, it is cropped. If it is shorter than this,
+        it is padded with zeros. If `n` is not given, it is determined from
         the length of the input along the axis specified by `axis`.
     axis : int, optional
         Axis over which to compute the FFT. If not given, the last
@@ -605,28 +592,24 @@ def hfft(a, n=None, axis=-1, norm=None):
            [ 2., -2.]])
 
     """
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
     x = array(x, copy=True, dtype=complex)
-    if n is None:
-        n = (x.shape[axis] - 1) * 2
     conjugate(x, out=x)
+    
+    nn = n if n else 2*(x.shape[axis]-1)
     if (norm in (None, "backward")):
-        res = trycall(
-            irfft,
-            (x,),
-            {'n': n, 'axis': axis, 'norm': 'forward'})
+        fsc = frwd_sc_1d(nn, nn)
     elif norm == "forward":
-        res = trycall(
-            irfft,
-            (x,),
-            {'n': n, 'axis': axis, 'norm': 'backward'})
+        fsc = 1.0
     else:
-        res = trycall(
-            irfft,
-            (x,),
-            {'n': n, 'axis': axis, 'norm': 'ortho'})
-    return res
+        fsc = ortho_sc_1d(nn, nn)
+
+    return trycall(
+        mkl_fft.irfft_numpy,
+        (x,),
+        {'n': n, 'axis': axis,
+         'fwd_scale': fsc})
 
 
 def ihfft(a, n=None, axis=-1, norm=None):
@@ -687,26 +670,23 @@ def ihfft(a, n=None, axis=-1, norm=None):
 
     """
     # The copy may be required for multithreading.
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
     x = array(x, copy=True, dtype=float)
-    if n is None:
-        n = x.shape[axis]
+
     if (norm in (None, 'backward')):
-        output = trycall(
-            rfft,
-            (x,),
-            {'n': n, 'axis': axis, 'norm': 'forward'})
+        fsc = frwd_sc_1d(n, x.shape[axis])
     elif norm == 'forward':
-        output = trycall(
-            rfft,
-            (x,),
-            {'n': n, 'axis': axis, 'norm': 'backward'})
+        fsc = 1.0
     else:
-        output = trycall(
-            rfft,
-            (x,),
-            {'n': n, 'axis': axis, 'norm': 'ortho'})
+        fsc = ortho_sc_1d(n, x.shape[axis])
+
+    output = trycall(
+        mkl_fft.rfft_numpy,
+        (x,),
+        {'n': n, 'axis': axis,
+         'fwd_scale': fsc})
+
     conjugate(output, out=output)
     return output
 
@@ -747,11 +727,11 @@ def fftn(a, s=None, axes=None, norm=None):
         (`s[0]` refers to axis 0, `s[1]` to axis 1, etc.).
         This corresponds to `n` for `fft(x, n)`.
         Along any axis, if the given shape is smaller than that of the input,
-        the input is cropped.  If it is larger, the input is padded with zeros.
+        the input is cropped. If it is larger, the input is padded with zeros.
         if `s` is not given, the shape of the input along the axes specified
         by `axes` is used.
     axes : sequence of ints, optional
-        Axes over which to compute the FFT.  If not given, the last ``len(s)``
+        Axes over which to compute the FFT. If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the transform over that axis is
         performed multiple times.
@@ -829,26 +809,21 @@ def fftn(a, s=None, axes=None, norm=None):
     >>> plt.show()
 
     """
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
-    if (norm in (None, "backward")):
-        output = trycall(
-            mkl_fft.fftn,
-            (x,),
-            {'shape': s, 'axes': axes})
+
+    if norm in (None, "backward"):
+        fsc = 1.0
     elif norm == "forward":
         fsc = frwd_sc_nd(s, axes, x.shape)
-        output = trycall(
-            mkl_fft.fftn,
-            (x,),
-            {'shape': s, 'axes': axes, 'forward_scale': fsc})
     else:
-        fsc = frwd_sc_nd(s, axes, x.shape)
-        output = trycall(
-            mkl_fft.fftn,
-            (x,),
-            {'shape': s, 'axes': axes, 'forward_scale': sqrt(fsc)})
-    return output
+        fsc = sqrt(frwd_sc_nd(s, axes, x.shape))
+
+    return trycall(
+        mkl_fft.fftn,
+        (x,),
+        {'shape': s, 'axes': axes,
+         'fwd_scale': fsc})
 
 
 def ifftn(a, s=None, axes=None, norm=None):
@@ -857,7 +832,7 @@ def ifftn(a, s=None, axes=None, norm=None):
 
     This function computes the inverse of the N-dimensional discrete
     Fourier Transform over any number of axes in an M-dimensional array by
-    means of the Fast Fourier Transform (FFT).  In other words,
+    means of the Fast Fourier Transform (FFT). In other words,
     ``ifftn(fftn(a)) == a`` to within numerical accuracy.
     For a description of the definitions and conventions used, see `numpy.fft`.
 
@@ -877,11 +852,11 @@ def ifftn(a, s=None, axes=None, norm=None):
         (``s[0]`` refers to axis 0, ``s[1]`` to axis 1, etc.).
         This corresponds to ``n`` for ``ifft(x, n)``.
         Along any axis, if the given shape is smaller than that of the input,
-        the input is cropped.  If it is larger, the input is padded with zeros.
+        the input is cropped. If it is larger, the input is padded with zeros.
         if `s` is not given, the shape of the input along the axes specified
-        by `axes` is used.  See notes for issue on `ifft` zero padding.
+        by `axes` is used. See notes for issue on `ifft` zero padding.
     axes : sequence of ints, optional
-        Axes over which to compute the IFFT.  If not given, the last ``len(s)``
+        Axes over which to compute the IFFT. If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the inverse transform over that
         axis is performed multiple times.
@@ -925,8 +900,8 @@ def ifftn(a, s=None, axes=None, norm=None):
     See `numpy.fft` for definitions and conventions used.
 
     Zero-padding, analogously with `ifft`, is performed by appending zeros to
-    the input along the specified dimension.  Although this is the common
-    approach, it might lead to surprising results.  If another form of zero
+    the input along the specified dimension. Although this is the common
+    approach, it might lead to surprising results. If another form of zero
     padding is desired, it must be performed before `ifftn` is called.
 
     Examples
@@ -950,26 +925,21 @@ def ifftn(a, s=None, axes=None, norm=None):
     >>> plt.show()
 
     """
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
-    if (norm in (None, "backward")):
-        output = trycall(
-            mkl_fft.ifftn,
-            (x,),
-            {'shape': s, 'axes': axes})
+
+    if norm in (None, "backward"):
+        fsc = 1.0
     elif norm == "forward":
         fsc = frwd_sc_nd(s, axes, x.shape)
-        output = trycall(
-            mkl_fft.ifftn,
-            (x,),
-            {'shape': s, 'axes': axes, 'forward_scale': fsc})
     else:
-        fsc = frwd_sc_nd(s, axes, x.shape)
-        output = trycall(
-            mkl_fft.ifftn,
-            (x,),
-            {'shape': s, 'axes': axes, 'forward_scale': sqrt(fsc)})
-    return output
+        fsc = sqrt(frwd_sc_nd(s, axes, x.shape))
+
+    return trycall(
+        mkl_fft.ifftn,
+        (x,),
+        {'shape': s, 'axes': axes,
+         'fwd_scale': fsc})
 
 
 def fft2(a, s=None, axes=(-2, -1), norm=None):
@@ -978,7 +948,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
 
     This function computes the *n*-dimensional discrete Fourier Transform
     over any axes in an *M*-dimensional array by means of the
-    Fast Fourier Transform (FFT).  By default, the transform is computed over
+    Fast Fourier Transform (FFT). By default, the transform is computed over
     the last two axes of the input array, i.e., a 2-dimensional FFT.
 
     Parameters
@@ -990,13 +960,13 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
         (`s[0]` refers to axis 0, `s[1]` to axis 1, etc.).
         This corresponds to `n` for `fft(x, n)`.
         Along each axis, if the given shape is smaller than that of the input,
-        the input is cropped.  If it is larger, the input is padded with zeros.
+        the input is cropped. If it is larger, the input is padded with zeros.
         if `s` is not given, the shape of the input along the axes specified
         by `axes` is used.
     axes : sequence of ints, optional
-        Axes over which to compute the FFT.  If not given, the last two
-        axes are used.  A repeated index in `axes` means the transform over
-        that axis is performed multiple times.  A one-element sequence means
+        Axes over which to compute the FFT. If not given, the last two
+        axes are used. A repeated index in `axes` means the transform over
+        that axis is performed multiple times. A one-element sequence means
         that a one-dimensional FFT is performed.
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
@@ -1064,7 +1034,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
               0.0 +0.j        ,   0.0 +0.j        ]])
 
     """
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
     return fftn(x, s=s, axes=axes, norm=norm)
 
@@ -1075,8 +1045,8 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
 
     This function computes the inverse of the 2-dimensional discrete Fourier
     Transform over any number of axes in an M-dimensional array by means of
-    the Fast Fourier Transform (FFT).  In other words, ``ifft2(fft2(a)) == a``
-    to within numerical accuracy.  By default, the inverse transform is
+    the Fast Fourier Transform (FFT). In other words, ``ifft2(fft2(a)) == a``
+    to within numerical accuracy. By default, the inverse transform is
     computed over the last two axes of the input array.
 
     The input, analogously to `ifft`, should be ordered in the same way as is
@@ -1092,15 +1062,15 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
         Input array, can be complex.
     s : sequence of ints, optional
         Shape (length of each axis) of the output (``s[0]`` refers to axis 0,
-        ``s[1]`` to axis 1, etc.).  This corresponds to `n` for ``ifft(x, n)``.
+        ``s[1]`` to axis 1, etc.). This corresponds to `n` for ``ifft(x, n)``.
         Along each axis, if the given shape is smaller than that of the input,
-        the input is cropped.  If it is larger, the input is padded with zeros.
+        the input is cropped. If it is larger, the input is padded with zeros.
         if `s` is not given, the shape of the input along the axes specified
-        by `axes` is used.  See notes for issue on `ifft` zero padding.
+        by `axes` is used. See notes for issue on `ifft` zero padding.
     axes : sequence of ints, optional
-        Axes over which to compute the FFT.  If not given, the last two
-        axes are used.  A repeated index in `axes` means the transform over
-        that axis is performed multiple times.  A one-element sequence means
+        Axes over which to compute the FFT. If not given, the last two
+        axes are used. A repeated index in `axes` means the transform over
+        that axis is performed multiple times. A one-element sequence means
         that a one-dimensional FFT is performed.
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
@@ -1144,8 +1114,8 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
     definition and conventions used.
 
     Zero-padding, analogously with `ifft`, is performed by appending zeros to
-    the input along the specified dimension.  Although this is the common
-    approach, it might lead to surprising results.  If another form of zero
+    the input along the specified dimension. Although this is the common
+    approach, it might lead to surprising results. If another form of zero
     padding is desired, it must be performed before `ifft2` is called.
 
     Examples
@@ -1158,7 +1128,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
            [ 0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
 
     """
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
     return ifftn(x, s=s, axes=axes, norm=norm)
 
@@ -1169,7 +1139,7 @@ def rfftn(a, s=None, axes=None, norm=None):
 
     This function computes the N-dimensional discrete Fourier Transform over
     any number of axes in an M-dimensional real array by means of the Fast
-    Fourier Transform (FFT).  By default, all axes are transformed, with the
+    Fourier Transform (FFT). By default, all axes are transformed, with the
     real transform performed over the last axis, while the remaining
     transforms are complex.
 
@@ -1183,11 +1153,11 @@ def rfftn(a, s=None, axes=None, norm=None):
         The final element of `s` corresponds to `n` for ``rfft(x, n)``, while
         for the remaining axes, it corresponds to `n` for ``fft(x, n)``.
         Along any axis, if the given shape is smaller than that of the input,
-        the input is cropped.  If it is larger, the input is padded with zeros.
+        the input is cropped. If it is larger, the input is padded with zeros.
         if `s` is not given, the shape of the input along the axes specified
         by `axes` is used.
     axes : sequence of ints, optional
-        Axes over which to compute the FFT.  If not given, the last ``len(s)``
+        Axes over which to compute the FFT. If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
     norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
@@ -1230,7 +1200,7 @@ def rfftn(a, s=None, axes=None, norm=None):
     -----
     The transform for real input is performed over the last transformation
     axis, as by `rfft`, then the transform over the remaining axes is
-    performed as by `fftn`.  The order of the output is as for `rfft` for the
+    performed as by `fftn`. The order of the output is as for `rfft` for the
     final transformation axis, and as for `fftn` for the remaining
     transformation axes.
 
@@ -1252,30 +1222,25 @@ def rfftn(a, s=None, axes=None, norm=None):
             [ 0.+0.j,  0.+0.j]]])
 
     """
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
+
     if (norm in (None, "backward")):
-        output = trycall(
-            mkl_fft.rfftn_numpy,
-            (x,),
-            {'s': s, 'axes': axes })
+        fsc = 1.0
     elif norm == "forward":
         x = asanyarray(x)
         s, axes = _cook_nd_args(x, s, axes)
         fsc = frwd_sc_nd(s, axes, x.shape)
-        output = trycall(
-            mkl_fft.rfftn_numpy,
-            (x,),
-            {'s': s, 'axes': axes, 'forward_scale': fsc})
     else:
         x = asanyarray(x)
         s, axes = _cook_nd_args(x, s, axes)
-        fsc = frwd_sc_nd(s, axes, x.shape)
-        output = trycall(
-            mkl_fft.rfftn_numpy,
-            (x,),
-            {'s': s, 'axes': axes, 'forward_scale': sqrt(fsc)})
-    return output
+        fsc = sqrt(frwd_sc_nd(s, axes, x.shape))
+
+    return trycall(
+        mkl_fft.rfftn_numpy,
+        (x,),
+        {'s': s, 'axes': axes,
+         'fwd_scale': fsc})
 
 
 def rfft2(a, s=None, axes=(-2, -1), norm=None):
@@ -1317,7 +1282,7 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
     For more details see `rfftn`.
 
     """
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
     return rfftn(x, s, axes, norm)
 
@@ -1328,7 +1293,7 @@ def irfftn(a, s=None, axes=None, norm=None):
 
     This function computes the inverse of the N-dimensional discrete
     Fourier Transform for real input over any number of axes in an
-    M-dimensional array by means of the Fast Fourier Transform (FFT).  In
+    M-dimensional array by means of the Fast Fourier Transform (FFT). In
     other words, ``irfftn(rfftn(a), a.shape) == a`` to within numerical
     accuracy. (The ``a.shape`` is necessary like ``len(a)`` is for `irfft`,
     and for the same reason.)
@@ -1347,7 +1312,7 @@ def irfftn(a, s=None, axes=None, norm=None):
         number of input points used along this axis, except for the last axis,
         where ``s[-1]//2+1`` points of the input are used.
         Along any axis, if the shape indicated by `s` is smaller than that of
-        the input, the input is cropped.  If it is larger, the input is padded
+        the input, the input is cropped. If it is larger, the input is padded
         with zeros. If `s` is not given, the shape of the input along the
         axes specified by `axes` is used.
     axes : sequence of ints, optional
@@ -1374,9 +1339,9 @@ def irfftn(a, s=None, axes=None, norm=None):
         as explained in the parameters section above.
         The length of each transformed axis is as given by the corresponding
         element of `s`, or the length of the input in every axis except for the
-        last one if `s` is not given.  In the final transformed axis the length
+        last one if `s` is not given. In the final transformed axis the length
         of the output when `s` is not given is ``2*(m-1)`` where ``m`` is the
-        length of the final transformed axis of the input.  To get an odd
+        length of the final transformed axis of the input. To get an odd
         number of output points in the final axis, `s` must be specified.
 
     Raises
@@ -1413,30 +1378,26 @@ def irfftn(a, s=None, axes=None, norm=None):
             [ 1.,  1.]]])
 
     """
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
+
+
     if (norm in (None, "backward")):
-        output = trycall(
-            mkl_fft.irfftn_numpy,
-            (x,),
-            {'s': s, 'axes': axes })
+        fsc = 1.0
     elif norm == "forward":
         x = asanyarray(x)
         s, axes = _cook_nd_args(x, s, axes, invreal=1)
         fsc = frwd_sc_nd(s, axes, x.shape)
-        output = trycall(
-            mkl_fft.irfftn_numpy,
-            (x,),
-            {'s': s, 'axes': axes, 'forward_scale': fsc})
     else:
         x = asanyarray(x)
         s, axes = _cook_nd_args(x, s, axes, invreal=1)
-        fsc = frwd_sc_nd(s, axes, x.shape)
-        output = trycall(
-            mkl_fft.irfftn_numpy,
-            (x,),
-            {'s': s, 'axes': axes, 'forward_scale': sqrt(fsc)})
-    return output
+        fsc = sqrt(frwd_sc_nd(s, axes, x.shape))
+
+    return trycall(
+        mkl_fft.irfftn_numpy,
+        (x,),
+        {'s': s, 'axes': axes,
+         'fwd_scale': fsc})
 
 
 def irfft2(a, s=None, axes=(-2, -1), norm=None):
@@ -1478,6 +1439,6 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
     For more details see `irfftn`.
 
     """
-    check_norm(norm)
+    _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
     return irfftn(x, s, axes, norm)
