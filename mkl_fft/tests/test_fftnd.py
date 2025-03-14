@@ -31,6 +31,8 @@ from numpy.testing import TestCase, assert_allclose
 
 import mkl_fft
 
+from .helper import requires_numpy_2
+
 reps_64 = (2**11) * np.finfo(np.float64).eps
 reps_32 = (2**11) * np.finfo(np.float32).eps
 atol_64 = (2**9) * np.finfo(np.float64).eps
@@ -322,3 +324,19 @@ def test_repeated_axes(dtype, axes, func):
 
     rtol, atol = _get_rtol_atol(x)
     assert_allclose(r1, r2, rtol=rtol, atol=atol)
+
+
+@requires_numpy_2
+@pytest.mark.parametrize("axes", [None, (0, 1), (0, 2), (1, 2)])
+@pytest.mark.parametrize("func", ["fftn", "ifftn"])
+def test_out_strided(axes, func):
+    shape = (20, 30, 40)
+    x = rnd.random(shape) + 1j * rnd.random(shape)
+    out = np.empty(shape, dtype=x.dtype)
+
+    x = x[::2, ::3, ::4]
+    out = out[::2, ::3, ::4]
+    result = getattr(mkl_fft, func)(x, axes=axes, out=out)
+    expected = getattr(np.fft, func)(x, axes=axes, out=out)
+
+    assert_allclose(result, expected)

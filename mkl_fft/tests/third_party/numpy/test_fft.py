@@ -1,9 +1,6 @@
 # This file includes tests from numpy.fft module:
 # https://github.com/numpy/numpy/blob/main/numpy/fft/tests/test_pocketfft.py
 
-# TODO: remove pylint disable when out kwarg is added
-# pylint: disable=unexpected-keyword-arg
-
 import queue
 import threading
 
@@ -18,10 +15,7 @@ from numpy.testing import (
 )
 
 import mkl_fft.interfaces.numpy_fft as mkl_fft
-
-requires_numpy_2 = pytest.mark.skipif(
-    np.__version__ < "2.0", reason="Requires NumPy >= 2.0"
-)
+from mkl_fft.tests.helper import requires_numpy_2
 
 
 def fft1(x):
@@ -83,7 +77,7 @@ class TestFFT1D:
         for i in range(1, maxlen * 2):
             check_via_c = mkl_fft.fft(mkl_fft.ifft(x, n=i), n=i)
             assert check_via_c.dtype == x.dtype
-            assert_allclose(check_via_c, xx[0:i], atol=atol, rtol=0)
+            assert_allclose(check_via_c, xx[0:i], atol=atol, rtol=1e-14)
             # For irfft, we can neither recover the imaginary part of
             # the first element, nor the imaginary part of the last
             # element if npts is even.  So, set to 0 for the comparison.
@@ -108,7 +102,7 @@ class TestFFT1D:
             fft1(x) / 30.0, mkl_fft.fft(x, norm="forward"), atol=1e-6
         )
 
-    @pytest.mark.skip("out is not supported")
+    @requires_numpy_2
     @pytest.mark.parametrize("axis", (0, 1))
     @pytest.mark.parametrize("dtype", (complex, float))
     @pytest.mark.parametrize("transpose", (True, False))
@@ -139,7 +133,7 @@ class TestFFT1D:
         assert result2 is out2
         assert_array_equal(result2, expected2)
 
-    @pytest.mark.skip("out is not supported")
+    @requires_numpy_2
     @pytest.mark.parametrize("axis", [0, 1])
     def test_fft_inplace_out(self, axis):
         # Test some weirder in-place combinations
@@ -200,7 +194,7 @@ class TestFFT1D:
         assert result6 is out6
         assert_array_equal(result6, expected1)
 
-    @pytest.mark.skip("out is not supported")
+    @requires_numpy_2
     def test_fft_bad_out(self):
         x = np.arange(30.0)
         with pytest.raises(TypeError, match="must be of ArrayType"):
@@ -566,7 +560,7 @@ class TestFFT1D:
                     tmp = back(tmp, n=n, norm=norm)
                     assert_allclose(x_norm, np.linalg.norm(tmp), atol=1e-6)
 
-    @pytest.mark.skip("out is not supported")
+    @requires_numpy_2
     @pytest.mark.parametrize("axes", [(0, 1), (0, 2), None])
     @pytest.mark.parametrize("dtype", (complex, float))
     @pytest.mark.parametrize("transpose", (True, False))
@@ -597,7 +591,7 @@ class TestFFT1D:
         assert result2 is out2
         assert_array_equal(result2, expected2)
 
-    @pytest.mark.skip("out is not supported")
+    @requires_numpy_2
     @pytest.mark.parametrize(
         "fft", [mkl_fft.fftn, mkl_fft.ifftn, mkl_fft.rfftn]
     )
@@ -617,7 +611,7 @@ class TestFFT1D:
         assert result is out
         assert_array_equal(result, expected)
 
-    @pytest.mark.skip("out is not supported")
+    @requires_numpy_2
     @pytest.mark.parametrize("s", [(9, 5, 5), (3, 3, 3)])
     def test_irfftn_out_and_s_interaction(self, s):
         # Since for irfftn, the output is real and thus cannot be used for

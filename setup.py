@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright (c) 2017-2025, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,7 +28,7 @@ import sys
 from os.path import join
 
 import Cython.Build
-import numpy as np
+import numpy
 from setuptools import Extension, setup
 
 sys.path.insert(0, os.path.dirname(__file__))  # Ensures local imports work
@@ -72,7 +71,7 @@ def extensions():
                 join("mkl_fft", "src", "mklfft.h"),
                 join("mkl_fft", "src", "multi_iter.h"),
             ],
-            include_dirs=[join("mkl_fft", "src"), np.get_include()]
+            include_dirs=[join("mkl_fft", "src"), numpy.get_include()]
             + mkl_include_dirs,
             libraries=mkl_libraries,
             library_dirs=mkl_library_dirs,

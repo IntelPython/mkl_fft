@@ -2,14 +2,20 @@
 :code:`mkl_fft` changelog
 =========================
 
-1.3.14 (04/10/2025)
+[dev] (MM/DD/YY)
+==================
+
+support for :code:`out` kwarg is added to all FFT functions in :code:`mkl_fft` and :code:`mkl_fft.interfaces.numpy_fft`
+
+numpy interface :code:`mkl_fft.interfaces.numpy_fft` is aligned with numpy-2.*
+
+1.3.14 (04/11/2025)
 ===================
 
 resolves gh-152 by adding an explicit :code:`mkl-service` dependency to :code:`mkl-fft` when building the wheel
 to ensure the :code:`mkl` Python module is always available at runtime
 
 resolves gh-115, gh-116, gh-119, gh-135
-
 
 1.3.13 (03/25/2025)
 ===================
@@ -35,7 +41,6 @@ file :code:`_scipy_fft_backend.py` is renamed to :code:`_scipy_fft.py` since it 
 ======
 
 Bugfix release, resolving gh-109 and updating installation instructions
-
 
 1.3.10
 ======
