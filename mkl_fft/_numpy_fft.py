@@ -28,20 +28,20 @@ Discrete Fourier Transforms
 
 Routines in this module:
 
-fft(a, n=None, axis=-1, norm=None)
-ifft(a, n=None, axis=-1, norm=None)
-rfft(a, n=None, axis=-1, norm=None)
-irfft(a, n=None, axis=-1, norm=None)
-hfft(a, n=None, axis=-1, norm=None)
-ihfft(a, n=None, axis=-1, norm=None)
-fftn(a, s=None, axes=None, norm=None)
-ifftn(a, s=None, axes=None, norm=None)
-rfftn(a, s=None, axes=None, norm=None)
-irfftn(a, s=None, axes=None, norm=None)
-fft2(a, s=None, axes=(-2,-1), norm=None)
-ifft2(a, s=None, axes=(-2, -1), norm=None)
-rfft2(a, s=None, axes=(-2,-1), norm=None)
-irfft2(a, s=None, axes=(-2, -1), norm=None)
+fft(a, n=None, axis=-1, norm=None, out=None)
+ifft(a, n=None, axis=-1, norm=None, out=None)
+rfft(a, n=None, axis=-1, norm=None, out=None)
+irfft(a, n=None, axis=-1, norm=None, out=None)
+hfft(a, n=None, axis=-1, norm=None, out=None)
+ihfft(a, n=None, axis=-1, norm=None, out=None)
+fftn(a, s=None, axes=None, norm=None, out=None)
+ifftn(a, s=None, axes=None, norm=None, out=None)
+rfftn(a, s=None, axes=None, norm=None, out=None)
+irfftn(a, s=None, axes=None, norm=None, out=None)
+fft2(a, s=None, axes=(-2,-1), norm=None, out=None)
+ifft2(a, s=None, axes=(-2, -1), norm=None, out=None)
+rfft2(a, s=None, axes=(-2,-1), norm=None, out=None)
+irfft2(a, s=None, axes=(-2, -1), norm=None, out=None)
 
 i = inverse transform
 r = transform of purely real data
@@ -125,7 +125,7 @@ def trycall(func, args, kwrds):
     return res
 
 
-def fft(a, n=None, axis=-1, norm=None):
+def fft(a, n=None, axis=-1, norm=None, out=None):
     """
     Compute the one-dimensional discrete Fourier Transform.
 
@@ -155,6 +155,11 @@ def fft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -221,10 +226,12 @@ def fft(a, n=None, axis=-1, norm=None):
     x = _float_utils.__downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
-    return trycall(mkl_fft.fft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
+    return trycall(
+        mkl_fft.fft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
+    )
 
 
-def ifft(a, n=None, axis=-1, norm=None):
+def ifft(a, n=None, axis=-1, norm=None, out=None):
     """
     Compute the one-dimensional inverse discrete Fourier Transform.
 
@@ -265,6 +272,11 @@ def ifft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -314,10 +326,12 @@ def ifft(a, n=None, axis=-1, norm=None):
     x = _float_utils.__downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
-    return trycall(mkl_fft.ifft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
+    return trycall(
+        mkl_fft.ifft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
+    )
 
 
-def rfft(a, n=None, axis=-1, norm=None):
+def rfft(a, n=None, axis=-1, norm=None, out=None):
     """
     Compute the one-dimensional discrete Fourier Transform for real input.
 
@@ -347,6 +361,11 @@ def rfft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -405,10 +424,12 @@ def rfft(a, n=None, axis=-1, norm=None):
     x = _float_utils.__downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
-    return trycall(mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
+    return trycall(
+        mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
+    )
 
 
-def irfft(a, n=None, axis=-1, norm=None):
+def irfft(a, n=None, axis=-1, norm=None, out=None):
     """
     Compute the inverse of the n-point DFT for real input.
 
@@ -446,6 +467,11 @@ def irfft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -499,11 +525,13 @@ def irfft(a, n=None, axis=-1, norm=None):
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     return trycall(
-        mkl_fft.irfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc}
+        mkl_fft.irfft,
+        (x,),
+        {"n": n, "axis": axis, "fwd_scale": fsc, "out": out},
     )
 
 
-def hfft(a, n=None, axis=-1, norm=None):
+def hfft(a, n=None, axis=-1, norm=None, out=None):
     """
     Compute the FFT of a signal which has Hermitian symmetry (real spectrum).
 
@@ -530,6 +558,11 @@ def hfft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -587,11 +620,13 @@ def hfft(a, n=None, axis=-1, norm=None):
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     return trycall(
-        mkl_fft.irfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc}
+        mkl_fft.irfft,
+        (x,),
+        {"n": n, "axis": axis, "fwd_scale": fsc, "out": out},
     )
 
 
-def ihfft(a, n=None, axis=-1, norm=None):
+def ihfft(a, n=None, axis=-1, norm=None, out=None):
     """
     Compute the inverse FFT of a signal which has Hermitian symmetry.
 
@@ -618,6 +653,11 @@ def ihfft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -656,7 +696,7 @@ def ihfft(a, n=None, axis=-1, norm=None):
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     output = trycall(
-        mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc}
+        mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
     )
 
     conjugate(output, out=output)
@@ -706,7 +746,7 @@ def _cook_nd_args(a, s=None, axes=None, invreal=False):
     return s, axes
 
 
-def fftn(a, s=None, axes=None, norm=None):
+def fftn(a, s=None, axes=None, norm=None, out=None):
     """
     Compute the N-dimensional discrete Fourier Transform.
 
@@ -741,6 +781,12 @@ def fftn(a, s=None, axes=None, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for all axes (and hence is
+        incompatible with passing in all but the trivial ``s``).
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -810,10 +856,12 @@ def fftn(a, s=None, axes=None, norm=None):
     s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
-    return trycall(mkl_fft.fftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc})
+    return trycall(
+        mkl_fft.fftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc, "out": out}
+    )
 
 
-def ifftn(a, s=None, axes=None, norm=None):
+def ifftn(a, s=None, axes=None, norm=None, out=None):
     """
     Compute the N-dimensional inverse discrete Fourier Transform.
 
@@ -857,6 +905,12 @@ def ifftn(a, s=None, axes=None, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for all axes (and hence is
+        incompatible with passing in all but the trivial ``s``).
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -918,11 +972,13 @@ def ifftn(a, s=None, axes=None, norm=None):
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
     return trycall(
-        mkl_fft.ifftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc}
+        mkl_fft.ifftn,
+        (x,),
+        {"s": s, "axes": axes, "fwd_scale": fsc, "out": out},
     )
 
 
-def fft2(a, s=None, axes=(-2, -1), norm=None):
+def fft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     """
     Compute the 2-dimensional discrete Fourier Transform
 
@@ -958,6 +1014,12 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for all axes (and hence is
+        incompatible with passing in all but the trivial ``s``).
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -1018,7 +1080,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
     return fftn(a, s=s, axes=axes, norm=norm)
 
 
-def ifft2(a, s=None, axes=(-2, -1), norm=None):
+def ifft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     """
     Compute the 2-dimensional inverse discrete Fourier Transform.
 
@@ -1061,6 +1123,12 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for all axes (and hence is
+        incompatible with passing in all but the trivial ``s``).
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -1111,7 +1179,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
     return ifftn(a, s=s, axes=axes, norm=norm)
 
 
-def rfftn(a, s=None, axes=None, norm=None):
+def rfftn(a, s=None, axes=None, norm=None, out=None):
     """
     Compute the N-dimensional discrete Fourier Transform for real input.
 
@@ -1147,6 +1215,12 @@ def rfftn(a, s=None, axes=None, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for all axes (and hence is
+        incompatible with passing in all but the trivial ``s``).
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -1206,11 +1280,13 @@ def rfftn(a, s=None, axes=None, norm=None):
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
     return trycall(
-        mkl_fft.rfftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc}
+        mkl_fft.rfftn,
+        (x,),
+        {"s": s, "axes": axes, "fwd_scale": fsc, "out": out},
     )
 
 
-def rfft2(a, s=None, axes=(-2, -1), norm=None):
+def rfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     """
     Compute the 2-dimensional FFT of a real array.
 
@@ -1232,6 +1308,12 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : complex ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for all axes (and hence is
+        incompatible with passing in all but the trivial ``s``).
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -1253,7 +1335,7 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
     return rfftn(a, s, axes, norm)
 
 
-def irfftn(a, s=None, axes=None, norm=None):
+def irfftn(a, s=None, axes=None, norm=None, out=None):
     """
     Compute the inverse of the N-dimensional FFT of real input.
 
@@ -1296,6 +1378,12 @@ def irfftn(a, s=None, axes=None, norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for all axes (and hence is
+        incompatible with passing in all but the trivial ``s``).
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -1350,11 +1438,13 @@ def irfftn(a, s=None, axes=None, norm=None):
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
     return trycall(
-        mkl_fft.irfftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc}
+        mkl_fft.irfftn,
+        (x,),
+        {"s": s, "axes": axes, "fwd_scale": fsc, "out": out},
     )
 
 
-def irfft2(a, s=None, axes=(-2, -1), norm=None):
+def irfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     """
     Compute the 2-dimensional inverse FFT of a real array.
 
@@ -1377,6 +1467,12 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
         .. versionadded:: 1.20.0
 
             The "backward", "forward" values were added.
+    out : ndarray, optional
+        If provided, the result will be placed in this array. It should be
+        of the appropriate shape and dtype for all axes (and hence is
+        incompatible with passing in all but the trivial ``s``).
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------

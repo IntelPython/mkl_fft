@@ -403,6 +403,8 @@ compute_strides_and_distances_inout(
     MKL_LONG *vec_dist_out
 )
 {
+
+
     int single_DftiCompute = NO;
 
     /* compute strides and distances*/
@@ -424,8 +426,11 @@ compute_strides_and_distances_inout(
             int any_contig = (PyArray_ISONESEGMENT(x)) ? 1 : 0;
             single_DftiCompute =
                 (any_contig && (axis == 0 || axis == x_rank-1)) ? YES : NO;
+            printf("The value is: %d\n", any_contig);
         }
+        printf("The value is: %d\n", x_rank);
         if (single_DftiCompute) {
+            printf("was here: %d\n", x_rank);
             int i0 = (axis == 0);
             int c_contig = PyArray_IS_C_CONTIGUOUS(x);
             int f_contig = PyArray_IS_F_CONTIGUOUS(x);
@@ -437,6 +442,7 @@ compute_strides_and_distances_inout(
             f_contig = PyArray_IS_F_CONTIGUOUS(y);
             *vec_dist_out = compute_distance(y_strides, y_shape, y_itemsize, x_rank, i0, i0 + x_rank - 2, c_contig, f_contig);
         } else {
+            printf("was there: %d\n", x_rank);
             /* input vectors need not be equidistant, checking if they are  *
              * may be expensive. Fall back on general iterations.           */
 
@@ -538,6 +544,7 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis, double fs
     status = __commit_descriptor_1d(dfti_cache);
     if (status != 0) goto failed;
 
+    printf("single_DftiCompute: %d\n", single_DftiCompute);
     if (single_DftiCompute){
         status = __cached_inplace_@DftiCompute_MODE@_@MKL_TYPE@(x_data, dfti_cache);
         if (status != 0) goto failed;
@@ -733,6 +740,7 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
     status = __commit_descriptor_1d(dfti_cache);
     if (status != 0) goto failed;
 
+    printf("single_DftiCompute: %d\n", single_DftiCompute);
     if (single_DftiCompute){
         status = __cached_notinplace_DftiComputeForward_@MKL_IN_TYPE@_@MKL_OUT_TYPE@(
             xin_data, xout_data, dfti_cache);
@@ -995,6 +1003,7 @@ int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
     status = __commit_descriptor_1d(dfti_cache);
     if (status != 0) goto failed;
 
+    printf("single_DftiCompute: %d\n", single_DftiCompute);
     if (single_DftiCompute){
         status = __cached_notinplace_@DftiCompute_MODE@_@MKL_TYPE@_@MKL_TYPE@(
             xin_data, xout_data, dfti_cache);
@@ -1182,6 +1191,7 @@ int
     status = __commit_descriptor_1d(dfti_cache);
     if (status != 0) goto failed;
 
+    printf("single_DftiCompute: %d\n", single_DftiCompute);
     if (single_DftiCompute){
         status = __cached_notinplace_DftiComputeBackward_@MKL_IN_TYPE@_@MKL_OUT_TYPE@(
             xin_data, xout_data, dfti_cache);
