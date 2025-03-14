@@ -71,16 +71,13 @@ def _check_norm(norm):
 
 
 def frwd_sc_1d(n, s):
-    nn = n if n else s
+    nn = n if n is not None else s
     return 1/nn if nn != 0 else 1
 
 
 def frwd_sc_nd(s, axes, x_shape):
     ss = s if s is not None else x_shape
-    if axes is not None:
-        nn = prod([ss[ai] for ai in axes])
-    else:
-        nn = prod(ss)
+    nn = prod(ss)
     return 1/nn if nn != 0 else 1
 
 
@@ -822,7 +819,7 @@ def fftn(a, s=None, axes=None, norm=None):
     return trycall(
         mkl_fft.fftn,
         (x,),
-        {'shape': s, 'axes': axes,
+        {'s': s, 'axes': axes,
          'fwd_scale': fsc})
 
 
@@ -938,7 +935,7 @@ def ifftn(a, s=None, axes=None, norm=None):
     return trycall(
         mkl_fft.ifftn,
         (x,),
-        {'shape': s, 'axes': axes,
+        {'s': s, 'axes': axes,
          'fwd_scale': fsc})
 
 
