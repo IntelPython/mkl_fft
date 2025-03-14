@@ -25,10 +25,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
+import pytest
 from numpy import random as rnd
 from numpy.testing import TestCase, assert_, assert_allclose
 
 import mkl_fft
+
+from .helper import requires_numpy_2
 
 
 def naive_fft1d(vec):
@@ -396,3 +399,61 @@ class Test_mklfft_rfftpack(TestCase):
                     f1 = mkl_fft.irfftpack(x, axis=a, overwrite_x=ovwr_x)
                     f2 = mkl_fft.rfftpack(f1, axis=a, overwrite_x=ovwr_x)
                     assert_allclose(f2, self.t3.astype(dt), atol=atol)
+
+
+@requires_numpy_2
+@pytest.mark.parametrize("axis", [0, 1, 2])
+@pytest.mark.parametrize("func", ["fft", "ifft"])
+def test_fft_out_strided(axis, func):
+    shape = (20, 33, 54)
+    x = rnd.random(shape) + 1j * rnd.random(shape)
+    out = np.empty(shape, dtype=x.dtype)
+
+    x = x[::2, ::3, ::4]
+    out = np.empty(x.shape, dtype=x.dtype)
+    result = getattr(mkl_fft, func)(x, axis=axis, out=out)
+    expected = getattr(np.fft, func)(x, axis=axis, out=out)
+
+    assert_allclose(result, expected)
+
+
+@requires_numpy_2
+@pytest.mark.parametrize("axis", [0, 1, 2])
+def test_rfft_out_strided(axis):
+    shape = (20, 33, 54)
+    x = rnd.random(shape)
+    if axis == 0:
+        out_sh = (12, 33, 54)
+    elif axis == 1:
+        out_sh = (20, 18, 54)
+    else:  # axis == 2
+        out_sh = (20, 33, 32)
+    out = np.empty(out_sh, dtype=np.complex128)
+
+    x = x[::2, ::3, ::4]
+    out = out[::2, ::3, ::4]
+    result = mkl_fft.rfft(x, axis=axis, out=out)
+    expected = np.fft.rfft(x, axis=axis, out=out)
+
+    assert_allclose(result, expected)
+
+
+@requires_numpy_2
+@pytest.mark.parametrize("axis", [0, 1, 2])
+def test_irfft_out_strided(axis):
+    shape = (20, 33, 54)
+    x = rnd.random(shape) + 1j * rnd.random(shape)
+    if axis == 0:
+        out_sh = (36, 33, 54)
+    elif axis == 1:
+        out_sh = (20, 60, 54)
+    else:  # axis == 2
+        out_sh = (20, 33, 104)
+    out = np.empty(out_sh, dtype=np.float64)
+
+    x = x[::2, ::3, ::4]
+    out = out[::2, ::3, ::4]
+    result = mkl_fft.irfft(x, axis=axis, out=out)
+    expected = np.fft.irfft(x, axis=axis, out=out)
+
+    assert_allclose(result, expected)

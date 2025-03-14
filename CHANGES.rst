@@ -3,9 +3,13 @@
 =========================
 
 [dev] (MM/DD/YY)
-==================
+================
 
-scipy interface :code:`mkl_fft.interfaces.scipy_fft` now includes Hermitian FFT functions:
+support for :code:`out` kwarg is added to all FFT functions in :code:`mkl_fft` and :code:`mkl_fft.interfaces.numpy_fft`
+
+NumPy interface :code:`mkl_fft.interfaces.numpy_fft` is aligned with numpy-2.*
+
+SciPy interface :code:`mkl_fft.interfaces.scipy_fft` now includes Hermitian FFT functions:
 :code:`hfft`, :code:`ihfft`, :code:`hfftn`, :code:`ihfftn`, :code:`hfft2`, and :code:`ihfft2`
 
 1.3.14 (04/11/2025)
@@ -15,7 +19,6 @@ resolves gh-152 by adding an explicit :code:`mkl-service` dependency to :code:`m
 to ensure the :code:`mkl` Python module is always available at runtime
 
 resolves gh-115, gh-116, gh-119, gh-135
-
 
 1.3.13 (03/25/2025)
 ===================
@@ -41,7 +44,6 @@ file :code:`_scipy_fft_backend.py` is renamed to :code:`_scipy_fft.py` since it 
 ======
 
 Bugfix release, resolving gh-109 and updating installation instructions
-
 
 1.3.10
 ======
