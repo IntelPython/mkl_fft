@@ -71,6 +71,7 @@ __all__ = [
 ]
 
 import re
+import warnings
 
 from numpy import array, asanyarray, conjugate, prod, sqrt, take
 
@@ -688,22 +689,46 @@ def ihfft(a, n=None, axis=-1, norm=None):
     return output
 
 
-def _cook_nd_args(a, s=None, axes=None, invreal=0):
+# copied from: https://github.com/numpy/numpy/blob/main/numpy/fft/_pocketfft.py
+def _cook_nd_args(a, s=None, axes=None, invreal=False):
     if s is None:
-        shapeless = 1
+        shapeless = True
         if axes is None:
             s = list(a.shape)
         else:
             s = take(a.shape, axes)
     else:
-        shapeless = 0
+        shapeless = False
     s = list(s)
     if axes is None:
+        if not shapeless:
+            msg = (
+                "`axes` should not be `None` if `s` is not `None` "
+                "(Deprecated in NumPy 2.0). In a future version of NumPy, "
+                "this will raise an error and `s[i]` will correspond to "
+                "the size along the transformed axis specified by "
+                "`axes[i]`. To retain current behaviour, pass a sequence "
+                "[0, ..., k-1] to `axes` for an array of dimension k."
+            )
+            warnings.warn(msg, DeprecationWarning, stacklevel=3)
         axes = list(range(-len(s), 0))
     if len(s) != len(axes):
         raise ValueError("Shape and axes have different lengths.")
     if invreal and shapeless:
         s[-1] = (a.shape[axes[-1]] - 1) * 2
+    if None in s:
+        msg = (
+            "Passing an array containing `None` values to `s` is "
+            "deprecated in NumPy 2.0 and will raise an error in "
+            "a future version of NumPy. To use the default behaviour "
+            "of the corresponding 1-D transform, pass the value matching "
+            "the default for its `n` parameter. To use the default "
+            "behaviour for every axis, the `s` argument can be omitted."
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=3)
+    # use the whole input array along axis `i` if `s[i] == -1 or None`
+    s = [a.shape[_a] if _s in [-1, None] else _s for _s, _a in zip(s, axes)]
+
     return s, axes
 
 
@@ -808,6 +833,7 @@ def fftn(a, s=None, axes=None, norm=None):
     """
     _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
+    s, axes = _cook_nd_args(x, s, axes)
 
     if norm in (None, "backward"):
         fsc = 1.0
@@ -920,6 +946,7 @@ def ifftn(a, s=None, axes=None, norm=None):
     """
     _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
+    s, axes = _cook_nd_args(x, s, axes)
 
     if norm in (None, "backward"):
         fsc = 1.0
@@ -1215,6 +1242,7 @@ def rfftn(a, s=None, axes=None, norm=None):
     """
     _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
+    s, axes = _cook_nd_args(x, s, axes)
 
     if norm in (None, "backward"):
         fsc = 1.0
@@ -1369,16 +1397,15 @@ def irfftn(a, s=None, axes=None, norm=None):
     """
     _check_norm(norm)
     x = _float_utils.__downcast_float128_array(a)
+    s, axes = _cook_nd_args(x, s, axes, invreal=True)
 
     if norm in (None, "backward"):
         fsc = 1.0
     elif norm == "forward":
         x = asanyarray(x)
-        s, axes = _cook_nd_args(x, s, axes, invreal=1)
         fsc = frwd_sc_nd(s, x.shape)
     else:
         x = asanyarray(x)
-        s, axes = _cook_nd_args(x, s, axes, invreal=1)
         fsc = sqrt(frwd_sc_nd(s, x.shape))
 
     return trycall(

@@ -121,6 +121,7 @@ def test_scipy_rfftn(norm, dtype):
     assert np.allclose(x, xx, atol=tol, rtol=tol)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 @pytest.mark.parametrize("norm", [None, "forward", "backward", "ortho"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_numpy_rfftn(norm, dtype):

@@ -82,5 +82,5 @@ The package also provides `mkl_fft._numpy_fft` and `mkl_fft._scipy_fft` interfac
 
 To build ``mkl_fft`` from sources on Linux:
   - install a recent version of MKL, if necessary;
-  - execute ``source /path_to_oneapi/mkl/latest/env/vars.sh`` ;
+  - execute ``source /path_to_oneapi/mkl/latest/env/vars.sh``;
   - execute ``python -m pip install .``
