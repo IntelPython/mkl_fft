@@ -378,7 +378,6 @@ class TestFFT1D:
         # should use the whole input array along the first axis
         assert op(x, s=(-1, 5), axes=(0, 1)).shape == (10, 5)
 
-    @pytest.mark.skip("no warning is raised in mkl_ftt")
     @pytest.mark.parametrize("op", [mkl_fft.fftn, mkl_fft.ifftn,
                                     mkl_fft.rfftn, mkl_fft.irfftn])
     def test_s_axes_none(self, op):
@@ -386,14 +385,12 @@ class TestFFT1D:
         with pytest.warns(match='`axes` should not be `None` if `s`'):
             op(x, s=(-1, 5))
 
-    @pytest.mark.skip("no warning is raised in mkl_ftt")
     @pytest.mark.parametrize("op", [mkl_fft.fft2, mkl_fft.ifft2])
     def test_s_axes_none_2D(self, op):
         x = np.arange(100).reshape(10, 10)
         with pytest.warns(match='`axes` should not be `None` if `s`'):
             op(x, s=(-1, 5), axes=None)
 
-    @pytest.mark.skip("no warning is raised in mkl_ftt")
     @pytest.mark.parametrize("op", [mkl_fft.fftn, mkl_fft.ifftn,
                                     mkl_fft.rfftn, mkl_fft.irfftn,
                                     mkl_fft.fft2, mkl_fft.ifft2])
