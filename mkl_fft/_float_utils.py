@@ -26,12 +26,18 @@
 
 import numpy as np
 
-__all__ = ['__upcast_float16_array', '__downcast_float128_array', '__supported_array_or_not_implemented']
+__all__ = [
+    "__upcast_float16_array",
+    "__downcast_float128_array",
+    "__supported_array_or_not_implemented",
+]
+
 
 def __upcast_float16_array(x):
     """
-    Used in _scipy_fft to upcast float16 to float32, 
-    instead of float64, as mkl_fft would do"""
+    Used in _scipy_fft to upcast float16 to float32,
+    instead of float64, as mkl_fft would do
+    """
     if hasattr(x, "dtype"):
         xdt = x.dtype
         if xdt == np.half:
@@ -53,8 +59,9 @@ def __upcast_float16_array(x):
 
 def __downcast_float128_array(x):
     """
-    Used in _numpy_fft to unsafely downcast float128/complex256 to 
-    complex128, instead of raising an error"""
+    Used in _numpy_fft to unsafely downcast float128/complex256 to
+    complex128, instead of raising an error
+    """
     if hasattr(x, "dtype"):
         xdt = x.dtype
         if xdt == np.longdouble and not xdt == np.float64:
@@ -79,9 +86,9 @@ def __supported_array_or_not_implemented(x):
     """
     __x = np.asarray(x)
     black_list = [np.half]
-    if hasattr(np, 'float128'):
+    if hasattr(np, "float128"):
         black_list.append(np.float128)
-    if hasattr(np, 'complex256'):
+    if hasattr(np, "complex256"):
         black_list.append(np.complex256)
     if __x.dtype in black_list:
         return NotImplemented
