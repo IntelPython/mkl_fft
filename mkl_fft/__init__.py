@@ -33,3 +33,5 @@ import mkl_fft.interfaces
 
 __all__ = ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn', 'rfftpack', 'irfftpack'
            'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn','interfaces']
+
+del _init_helper

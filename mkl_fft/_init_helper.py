@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Intel Corporation
+# Copyright 2025 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ is_venv_win32 = (
 )
 
 if is_venv_win32:
+    # In Windows venv: add Library/bin to PATH for proper DLL loading
     dll_dir = os.path.join(sys.exec_prefix, "Library", "bin")
     if os.path.isdir(dll_dir):
         os.add_dll_directory(dll_dir)
