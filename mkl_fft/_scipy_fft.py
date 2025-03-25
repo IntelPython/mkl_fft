@@ -200,16 +200,13 @@ def _check_plan(plan):
 
 
 def _frwd_sc_1d(n, s):
-    nn = n if n else s
+    nn = n if n is not None else s
     return 1/nn if nn != 0 else 1
 
 
-def _frwd_sc_nd(s, axes, x_shape):
+def _frwd_sc_nd(s, x_shape):
     ss = s if s is not None else x_shape
-    if axes is not None:
-        nn = prod([ss[ai] for ai in axes])
-    else:
-        nn = prod(ss)
+    nn = prod(ss)
     return 1/nn if nn != 0 else 1
 
 
@@ -233,9 +230,9 @@ def _compute_nd_fwd_scale(norm, s, axes, x_shape):
     if norm in (None, "backward"):
         fsc = 1.0
     elif norm == "forward":
-        fsc = _frwd_sc_nd(s, axes, x_shape)
+        fsc = _frwd_sc_nd(s, x_shape)
     elif norm == "ortho":
-        fsc = sqrt(_frwd_sc_nd(s, axes, x_shape))
+        fsc = sqrt(_frwd_sc_nd(s, x_shape))
     else:
         _check_norm(norm)
     return fsc
@@ -359,10 +356,10 @@ def _compute_nd_fwd_scale_for_rfft(norm, s, axes, x, invreal=False):
         fsc = 1.0
     elif norm == "forward":
         s, axes = _cook_nd_args(x, s, axes, invreal=invreal)
-        fsc = _frwd_sc_nd(s, axes, x.shape)
+        fsc = _frwd_sc_nd(s, x.shape)
     elif norm == "ortho":
         s, axes = _cook_nd_args(x, s, axes, invreal=invreal)
-        fsc = sqrt(_frwd_sc_nd(s, axes, x.shape))
+        fsc = sqrt(_frwd_sc_nd(s, x.shape))
     else:
         _check_norm(norm)
     return s, axes, fsc

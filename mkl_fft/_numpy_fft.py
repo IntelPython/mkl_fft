@@ -75,7 +75,7 @@ def frwd_sc_1d(n, s):
     return 1/nn if nn != 0 else 1
 
 
-def frwd_sc_nd(s, axes, x_shape):
+def frwd_sc_nd(s, x_shape):
     ss = s if s is not None else x_shape
     nn = prod(ss)
     return 1/nn if nn != 0 else 1
@@ -812,9 +812,9 @@ def fftn(a, s=None, axes=None, norm=None):
     if norm in (None, "backward"):
         fsc = 1.0
     elif norm == "forward":
-        fsc = frwd_sc_nd(s, axes, x.shape)
+        fsc = frwd_sc_nd(s, x.shape)
     else:
-        fsc = sqrt(frwd_sc_nd(s, axes, x.shape))
+        fsc = sqrt(frwd_sc_nd(s, x.shape))
 
     return trycall(
         mkl_fft.fftn,
@@ -928,9 +928,9 @@ def ifftn(a, s=None, axes=None, norm=None):
     if norm in (None, "backward"):
         fsc = 1.0
     elif norm == "forward":
-        fsc = frwd_sc_nd(s, axes, x.shape)
+        fsc = frwd_sc_nd(s, x.shape)
     else:
-        fsc = sqrt(frwd_sc_nd(s, axes, x.shape))
+        fsc = sqrt(frwd_sc_nd(s, x.shape))
 
     return trycall(
         mkl_fft.ifftn,
@@ -1227,11 +1227,11 @@ def rfftn(a, s=None, axes=None, norm=None):
     elif norm == "forward":
         x = asanyarray(x)
         s, axes = _cook_nd_args(x, s, axes)
-        fsc = frwd_sc_nd(s, axes, x.shape)
+        fsc = frwd_sc_nd(s, x.shape)
     else:
         x = asanyarray(x)
         s, axes = _cook_nd_args(x, s, axes)
-        fsc = sqrt(frwd_sc_nd(s, axes, x.shape))
+        fsc = sqrt(frwd_sc_nd(s, x.shape))
 
     return trycall(
         mkl_fft.rfftn,
@@ -1384,11 +1384,11 @@ def irfftn(a, s=None, axes=None, norm=None):
     elif norm == "forward":
         x = asanyarray(x)
         s, axes = _cook_nd_args(x, s, axes, invreal=1)
-        fsc = frwd_sc_nd(s, axes, x.shape)
+        fsc = frwd_sc_nd(s, x.shape)
     else:
         x = asanyarray(x)
         s, axes = _cook_nd_args(x, s, axes, invreal=1)
-        fsc = sqrt(frwd_sc_nd(s, axes, x.shape))
+        fsc = sqrt(frwd_sc_nd(s, x.shape))
 
     return trycall(
         mkl_fft.irfftn,
