@@ -1,0 +1,4 @@
+# $ git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Add pre-commit hooks
+e9362b264878bf849b1d6ab0994153cb3d497bad
