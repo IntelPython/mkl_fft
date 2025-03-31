@@ -28,7 +28,7 @@ from . import _pydfti as mkl_fft
 from . import _float_utils
 import mkl
 
-from numpy import (take, sqrt, prod)
+from numpy import take, sqrt, prod
 import contextvars
 import contextlib
 import operator
@@ -47,6 +47,7 @@ via `scipy.fft` namespace.
     # Set mkl_fft to be used as backend of SciPy's FFT functions.
     scipy.fft.set_global_backend(be)
 """
+
 
 class _cpu_max_threads_count:
     def __init__(self):
@@ -83,17 +84,19 @@ class _workers_data:
         self.workerks_ = operator.index(workers_val)
 
 
-_workers_global_settings = contextvars.ContextVar('scipy_backend_workers', default=_workers_data())
+_workers_global_settings = contextvars.ContextVar(
+    "scipy_backend_workers", default=_workers_data()
+)
 
 
 def get_workers():
-    "Gets the number of workers used by mkl_fft by default"
+    """Gets the number of workers used by mkl_fft by default"""
     return _workers_global_settings.get().workers
 
 
 @contextlib.contextmanager
 def set_workers(n_workers):
-    "Set the value of workers used by default, returns the previous value"
+    """Set the value of workers used by default, returns the previous value"""
     nw = operator.index(n_workers)
     token = None
     try:
@@ -107,11 +110,26 @@ def set_workers(n_workers):
             raise ValueError
 
 
-__all__ = ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn',
-           'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn',
-           'get_workers', 'set_workers', 'DftiBackend']
+__all__ = [
+    "fft",
+    "ifft",
+    "fft2",
+    "ifft2",
+    "fftn",
+    "ifftn",
+    "rfft",
+    "irfft",
+    "rfft2",
+    "irfft2",
+    "rfftn",
+    "irfftn",
+    "get_workers",
+    "set_workers",
+    "DftiBackend",
+]
 
 __ua_domain__ = "numpy.scipy.fft"
+
 
 def __ua_function__(method, args, kwargs):
     """Fetch registered UA function."""
@@ -123,6 +141,7 @@ def __ua_function__(method, args, kwargs):
 
 class DftiBackend:
     __ua_domain__ = "numpy.scipy.fft"
+
     @staticmethod
     def __ua_function__(method, args, kwargs):
         """Fetch registered UA function."""
@@ -158,14 +177,16 @@ def _workers_to_num_threads(w):
     if w is None:
         return _workers_global_settings.get().workers
     _w = operator.index(w)
-    if (_w == 0):
+    if _w == 0:
         raise ValueError("Number of workers must not be zero")
-    if (_w < 0):
+    if _w < 0:
         ub = os.cpu_count()
         _w += ub + 1
         if _w <= 0:
-            raise ValueError("workers value out of range; got {}, must not be"
-                             " less than {}".format(w, -ub))
+            raise ValueError(
+                "workers value out of range; got {}, must not be"
+                " less than {}".format(w, -ub)
+            )
     return _w
 
 
@@ -177,8 +198,12 @@ class Workers:
     def __enter__(self):
         try:
             self.prev_num_threads = mkl.set_num_threads_local(self.n_threads)
-        except:
-            raise ValueError("Class argument {} result in invalid number of threads {}".format(self.workers, self.n_threads))
+        except Exception as e:
+            raise ValueError(
+                "Class argument {} result in invalid number of threads {}".format(
+                    self.workers, self.n_threads
+                )
+            ) from e
 
     def __exit__(self, *args):
         # restore old value
@@ -188,8 +213,12 @@ class Workers:
 def _check_norm(norm):
     if norm not in (None, "ortho", "forward", "backward"):
         raise ValueError(
-            ("Invalid norm value {} should be None, "
-             "\"ortho\", \"forward\", or \"backward\".").format(norm))
+            (
+                "Invalid norm value {} should be None, "
+                '"ortho", "forward", or "backward".'
+            ).format(norm)
+        )
+
 
 def _check_plan(plan):
     if plan is None:
@@ -201,13 +230,13 @@ def _check_plan(plan):
 
 def _frwd_sc_1d(n, s):
     nn = n if n is not None else s
-    return 1/nn if nn != 0 else 1
+    return 1 / nn if nn != 0 else 1
 
 
 def _frwd_sc_nd(s, x_shape):
     ss = s if s is not None else x_shape
     nn = prod(ss)
-    return 1/nn if nn != 0 else 1
+    return 1 / nn if nn != 0 else 1
 
 
 def _ortho_sc_1d(n, s):
@@ -266,7 +295,9 @@ def ifft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, plan=No
     return output
 
 
-def fft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None, plan=None):
+def fft2(
+    a, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, plan=None
+):
     try:
         x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
@@ -280,7 +311,9 @@ def fft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None, pl
     return output
 
 
-def ifft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None, plan=None):
+def ifft2(
+    a, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, plan=None
+):
     try:
         x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
@@ -290,7 +323,9 @@ def ifft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None, p
     fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.ifftn(x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.ifftn(
+            x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc
+        )
     return output
 
 
@@ -318,7 +353,9 @@ def ifftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan
     fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.ifftn(x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.ifftn(
+            x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc
+        )
     return output
 
 
@@ -343,7 +380,7 @@ def irfft(a, n=None, axis=-1, norm=None, workers=None, plan=None):
         return NotImplemented
     if x is NotImplemented:
         return x
-    nn = n if n else 2*(x.shape[axis]-1)
+    nn = n if n else 2 * (x.shape[axis] - 1)
     fsc = _compute_1d_fwd_scale(norm, nn, x.shape[axis])
     _check_plan(plan)
     with Workers(workers):

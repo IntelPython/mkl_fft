@@ -25,13 +25,41 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from . import _init_helper
-from ._pydfti import (fft, ifft, fft2, ifft2, fftn, ifftn, rfftpack, irfftpack,
-                      rfft, irfft, rfft2, irfft2, rfftn, irfftn)
+from ._pydfti import (
+    fft,
+    ifft,
+    fft2,
+    ifft2,
+    fftn,
+    ifftn,
+    rfftpack,
+    irfftpack,
+    rfft,
+    irfft,
+    rfft2,
+    irfft2,
+    rfftn,
+    irfftn,
+)
 
 from ._version import __version__
 import mkl_fft.interfaces
 
-__all__ = ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn', 'rfftpack', 'irfftpack'
-           'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn','interfaces']
+__all__ = [
+    "fft",
+    "ifft",
+    "fft2",
+    "ifft2",
+    "fftn",
+    "ifftn",
+    "rfftpack",
+    "irfftpack" "rfft",
+    "irfft",
+    "rfft2",
+    "irfft2",
+    "rfftn",
+    "irfftn",
+    "interfaces",
+]
 
 del _init_helper
