@@ -303,7 +303,7 @@ compute_distance(npy_intp *x_strides, npy_intp *x_shape, npy_intp x_itemsize, in
         return (i1) ? _to_mkl_long(x_shape[0]) : 1;
     }
 
-    /* Right now, this is dead branch of code, since compute_distance is only called if array is ONESEGMENT, 
+    /* Right now, this is dead branch of code, since compute_distance is only called if array is ONESEGMENT,
      * i.e. either C or F contiguous.
      *     It is however preserved here, since in the future this may be called on a not any-contiguous array.
      */
@@ -435,7 +435,7 @@ compute_strides_and_distances_inout(
 
             c_contig = PyArray_IS_C_CONTIGUOUS(y);
             f_contig = PyArray_IS_F_CONTIGUOUS(y);
-            *vec_dist_out = compute_distance(y_strides, y_shape, y_itemsize, x_rank, i0, i0 + x_rank - 2, c_contig, f_contig); 
+            *vec_dist_out = compute_distance(y_strides, y_shape, y_itemsize, x_rank, i0, i0 + x_rank - 2, c_contig, f_contig);
         } else {
             /* input vectors need not be equidistant, checking if they are  *
              * may be expensive. Fall back on general iterations.           */
@@ -762,7 +762,7 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
                 tmp2 += xout_strides[i] * MultiIter_IndexElem(mit, i);
             }
 
-            status = __cached_notinplace_DftiComputeForward_@MKL_IN_TYPE@_@MKL_OUT_TYPE@( 
+            status = __cached_notinplace_DftiComputeForward_@MKL_IN_TYPE@_@MKL_OUT_TYPE@(
                 (@MKL_IN_TYPE@*) tmp1, (@MKL_OUT_TYPE@*) tmp2, dfti_cache);
             if (status != 0) break;
 
@@ -1648,7 +1648,7 @@ int
         multi_iter_free(&mit);
    }
 
- 
+
     if (@POST_CONJUGATE@) {
        Py_BEGIN_ALLOW_THREADS
        @vml_conj_func@(xout_size, xout_data, xout_data, VML_HA);

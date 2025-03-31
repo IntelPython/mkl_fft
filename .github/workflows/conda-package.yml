@@ -13,7 +13,7 @@ env:
   MODULE_NAME: mkl_fft
   TEST_ENV_NAME: test_mkl_fft
   VER_SCRIPT1: "import json; f = open('ver.json', 'r'); j = json.load(f); f.close(); d = j['mkl_fft'][0];"
-  VER_SCRIPT2: "print('='.join((d[s] for s in ('version', 'build'))))"  
+  VER_SCRIPT2: "print('='.join((d[s] for s in ('version', 'build'))))"
 
 jobs:
   build:
@@ -278,4 +278,3 @@ jobs:
         shell: cmd /C CALL {0}
         run: >-
           conda activate ${{ env.TEST_ENV_NAME }} && python -m pytest -v -s --pyargs ${{ env.MODULE_NAME }}
-
