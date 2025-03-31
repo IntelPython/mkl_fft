@@ -29,14 +29,6 @@ import pytest
 import numpy as np
 
 
-def test_interfaces_has_numpy():
-    assert hasattr(mfi, 'numpy_fft')
-
-
-def test_interfaces_has_scipy():
-    assert hasattr(mfi, 'scipy_fft')
-
-
 @pytest.mark.parametrize('norm', [None, "forward", "backward", "ortho"])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.complex64, np.complex128])
 def test_scipy_fft(norm, dtype):
@@ -151,3 +143,15 @@ def test_scipy_fft_arg_validate():
     with pytest.raises(NotImplementedError):
         mfi.scipy_fft.fft([1,2,3,4], plan="magic")
 
+
+@pytest.mark.parametrize(
+    "func", 
+    [mfi.scipy_fft.rfft2, mfi.numpy_fft.rfft2],
+    ids=["scipy", "numpy"],
+)
+def test_axes(func):
+    x = np.arange(24.).reshape(2, 3, 4)
+    res = func(x, axes=(1, 2))
+    exp = np.fft.rfft2(x, axes=(1, 2))
+    tol = 64 * np.finfo(np.float64).eps
+    assert np.allclose(res, exp, atol=tol, rtol=tol)

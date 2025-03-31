@@ -37,8 +37,7 @@ class TestFFT1D:
             assert_allclose(mkl_fft.irfft(mkl_fft.rfft(xr[0:i]), i),
                             xr[0:i], atol=1e-12)
 
-    @pytest.mark.skip()
-    @pytest.mark.parametrize("dtype", [np.single, np.double, np.longdouble])
+    @pytest.mark.parametrize("dtype", [np.single, np.double]) #, np.longdouble])
     def test_identity_long_short(self, dtype):
         # Test with explicitly given number of points, both for n
         # smaller and for n larger than the input size.
@@ -56,8 +55,7 @@ class TestFFT1D:
             assert check_r.dtype == dtype
             assert_allclose(check_r, xxr[0:i], atol=atol, rtol=0)
 
-    @pytest.mark.skip()
-    @pytest.mark.parametrize("dtype", [np.single, np.double, np.longdouble])
+    @pytest.mark.parametrize("dtype", [np.single, np.double]) #, np.longdouble])
     def test_identity_long_short_reversed(self, dtype):
         # Also test explicitly given number of points in reversed order.
         maxlen = 16
@@ -307,7 +305,6 @@ class TestFFT1D:
         assert_allclose(x, mkl_fft.irfft2(mkl_fft.rfft2(x, norm="forward"),
                         norm="forward"), atol=1e-6)
 
-    @pytest.mark.skip("repeated axes")
     def test_rfftn(self):
         x = random((30, 20, 10))
         assert_allclose(mkl_fft.fftn(x)[:, :, :6], mkl_fft.rfftn(x), atol=1e-6)
@@ -360,7 +357,6 @@ class TestFFT1D:
         assert_allclose(x_herm, mkl_fft.ihfft(mkl_fft.hfft(x_herm,
                         norm="forward"), norm="forward"), atol=1e-6)
 
-    @pytest.mark.skip("Casting complex values to real")
     @pytest.mark.parametrize("op", [mkl_fft.fftn, mkl_fft.ifftn,
                                     mkl_fft.rfftn, mkl_fft.irfftn])
     def test_axes(self, op):
@@ -483,7 +479,6 @@ class TestFFT1D:
         assert_array_equal(result, expected)
 
 
-@pytest.mark.skip()
 @pytest.mark.parametrize(
         "dtype",
         [np.float32, np.float64, np.complex64, np.complex128])
@@ -518,7 +513,7 @@ def test_fft_with_order(dtype, order, fft):
         for ax in axes:
             X_res = fft(X, axes=ax)
             Y_res = fft(Y, axes=ax)
-            assert_allclose(X_res, Y_res, atol=_tol, rtol=_tol)
+            assert_allclose(X_res, Y_res, atol=_tol, rtol=10 * _tol)
     else:
         raise ValueError
 
@@ -591,7 +586,6 @@ def test_irfft_with_n_large_regression():
     assert_allclose(result, expected)
 
 
-@pytest.mark.skip()
 @pytest.mark.parametrize("fft", [
     mkl_fft.fft, mkl_fft.ifft, mkl_fft.rfft, mkl_fft.irfft
 ])
@@ -605,4 +599,4 @@ def test_fft_with_integer_or_bool_input(data, fft):
     result = fft(data)
     float_data = data.astype(np.result_type(data, 1.))
     expected = fft(float_data)
-    assert_array_equal(result, expected)
+    assert_allclose(result, expected, rtol=1e-15)

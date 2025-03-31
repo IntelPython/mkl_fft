@@ -200,16 +200,13 @@ def _check_plan(plan):
 
 
 def _frwd_sc_1d(n, s):
-    nn = n if n else s
+    nn = n if n is not None else s
     return 1/nn if nn != 0 else 1
 
 
-def _frwd_sc_nd(s, axes, x_shape):
+def _frwd_sc_nd(s, x_shape):
     ss = s if s is not None else x_shape
-    if axes is not None:
-        nn = prod([ss[ai] for ai in axes])
-    else:
-        nn = prod(ss)
+    nn = prod(ss)
     return 1/nn if nn != 0 else 1
 
 
@@ -233,9 +230,9 @@ def _compute_nd_fwd_scale(norm, s, axes, x_shape):
     if norm in (None, "backward"):
         fsc = 1.0
     elif norm == "forward":
-        fsc = _frwd_sc_nd(s, axes, x_shape)
+        fsc = _frwd_sc_nd(s, x_shape)
     elif norm == "ortho":
-        fsc = sqrt(_frwd_sc_nd(s, axes, x_shape))
+        fsc = sqrt(_frwd_sc_nd(s, x_shape))
     else:
         _check_norm(norm)
     return fsc
@@ -279,7 +276,7 @@ def fft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None, pl
     fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.fftn(x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
@@ -293,7 +290,7 @@ def ifft2(a, s=None, axes=(-2,-1), norm=None, overwrite_x=False, workers=None, p
     fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.ifftn(x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
@@ -307,7 +304,7 @@ def fftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan=
     fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.fftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.fftn(x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
@@ -321,7 +318,7 @@ def ifftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan
     fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.ifftn(x, shape=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.ifftn(x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
     return output
 
 
@@ -359,10 +356,10 @@ def _compute_nd_fwd_scale_for_rfft(norm, s, axes, x, invreal=False):
         fsc = 1.0
     elif norm == "forward":
         s, axes = _cook_nd_args(x, s, axes, invreal=invreal)
-        fsc = _frwd_sc_nd(s, axes, x.shape)
+        fsc = _frwd_sc_nd(s, x.shape)
     elif norm == "ortho":
         s, axes = _cook_nd_args(x, s, axes, invreal=invreal)
-        fsc = sqrt(_frwd_sc_nd(s, axes, x.shape))
+        fsc = sqrt(_frwd_sc_nd(s, x.shape))
     else:
         _check_norm(norm)
     return s, axes, fsc
