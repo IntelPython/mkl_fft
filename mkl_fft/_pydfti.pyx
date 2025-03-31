@@ -1208,7 +1208,7 @@ def rfftn(x, s=None, axes=None, fwd_scale=1.0):
                 if a_res is not a_inp:
                     a[tind] = a_res # copy in place
         else:
-            for ii in range(len(axes)-2, -1, -1):
+            for ii in range(len(axes) - 2, -1, -1):
                 a = fft(a, s[ii], axes[ii], overwrite_x=True)
     return a
 

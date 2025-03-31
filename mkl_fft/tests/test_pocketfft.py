@@ -513,7 +513,7 @@ def test_fft_with_order(dtype, order, fft):
         for ax in axes:
             X_res = fft(X, axes=ax)
             Y_res = fft(Y, axes=ax)
-            assert_allclose(X_res, Y_res, atol=_tol, rtol=10*_tol)
+            assert_allclose(X_res, Y_res, atol=_tol, rtol=10 * _tol)
     else:
         raise ValueError
 
