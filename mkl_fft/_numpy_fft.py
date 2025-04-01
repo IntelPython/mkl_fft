@@ -73,6 +73,7 @@ __all__ = [
 import re
 import warnings
 
+import numpy as np
 from numpy import array, asanyarray, conjugate, prod, sqrt, take
 
 from . import _float_utils
@@ -701,7 +702,7 @@ def _cook_nd_args(a, s=None, axes=None, invreal=False):
         shapeless = False
     s = list(s)
     if axes is None:
-        if not shapeless:
+        if not shapeless and np.__version__ >= "2.0":
             msg = (
                 "`axes` should not be `None` if `s` is not `None` "
                 "(Deprecated in NumPy 2.0). In a future version of NumPy, "
@@ -716,7 +717,7 @@ def _cook_nd_args(a, s=None, axes=None, invreal=False):
         raise ValueError("Shape and axes have different lengths.")
     if invreal and shapeless:
         s[-1] = (a.shape[axes[-1]] - 1) * 2
-    if None in s:
+    if None in s and np.__version__ >= "2.0":
         msg = (
             "Passing an array containing `None` values to `s` is "
             "deprecated in NumPy 2.0 and will raise an error in "
