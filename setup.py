@@ -41,7 +41,10 @@ def extensions():
     if mkl_root:
         mkl_info = {
             "include_dirs": [join(mkl_root, "include")],
-            "library_dirs": [join(mkl_root, "lib"), join(mkl_root, "lib", "intel64")],
+            "library_dirs": [
+                join(mkl_root, "lib"),
+                join(mkl_root, "lib", "intel64"),
+            ],
             "libraries": ["mkl_rt"],
         }
     else:
@@ -69,7 +72,8 @@ def extensions():
                 join("mkl_fft", "src", "mklfft.h"),
                 join("mkl_fft", "src", "multi_iter.h"),
             ],
-            include_dirs=[join("mkl_fft", "src"), np.get_include()] + mkl_include_dirs,
+            include_dirs=[join("mkl_fft", "src"), np.get_include()]
+            + mkl_include_dirs,
             libraries=mkl_libraries,
             library_dirs=mkl_library_dirs,
             extra_compile_args=[

@@ -512,7 +512,9 @@ def irfft(a, n=None, axis=-1, norm=None):
     else:
         fsc = ortho_sc_1d(nn, nn)
 
-    return trycall(mkl_fft.irfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
+    return trycall(
+        mkl_fft.irfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc}
+    )
 
 
 def hfft(a, n=None, axis=-1, norm=None):
@@ -604,7 +606,9 @@ def hfft(a, n=None, axis=-1, norm=None):
     else:
         fsc = ortho_sc_1d(nn, nn)
 
-    return trycall(mkl_fft.irfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
+    return trycall(
+        mkl_fft.irfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc}
+    )
 
 
 def ihfft(a, n=None, axis=-1, norm=None):
@@ -676,7 +680,9 @@ def ihfft(a, n=None, axis=-1, norm=None):
     else:
         fsc = ortho_sc_1d(n, x.shape[axis])
 
-    output = trycall(mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
+    output = trycall(
+        mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc}
+    )
 
     conjugate(output, out=output)
     return output
@@ -922,7 +928,9 @@ def ifftn(a, s=None, axes=None, norm=None):
     else:
         fsc = sqrt(frwd_sc_nd(s, x.shape))
 
-    return trycall(mkl_fft.ifftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc})
+    return trycall(
+        mkl_fft.ifftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc}
+    )
 
 
 def fft2(a, s=None, axes=(-2, -1), norm=None):
@@ -1219,7 +1227,9 @@ def rfftn(a, s=None, axes=None, norm=None):
         s, axes = _cook_nd_args(x, s, axes)
         fsc = sqrt(frwd_sc_nd(s, x.shape))
 
-    return trycall(mkl_fft.rfftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc})
+    return trycall(
+        mkl_fft.rfftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc}
+    )
 
 
 def rfft2(a, s=None, axes=(-2, -1), norm=None):
@@ -1371,7 +1381,9 @@ def irfftn(a, s=None, axes=None, norm=None):
         s, axes = _cook_nd_args(x, s, axes, invreal=1)
         fsc = sqrt(frwd_sc_nd(s, x.shape))
 
-    return trycall(mkl_fft.irfftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc})
+    return trycall(
+        mkl_fft.irfftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc}
+    )
 
 
 def irfft2(a, s=None, axes=(-2, -1), norm=None):

@@ -192,7 +192,14 @@ class Test_Regressions(TestCase):
 
     def test_rfftn(self):
         """Test that rfftn works as expected"""
-        axes = [(0, 1, 2), (0, 2, 1), (1, 0, 2), (1, 2, 0), (2, 0, 1), (2, 1, 0)]
+        axes = [
+            (0, 1, 2),
+            (0, 2, 1),
+            (1, 0, 2),
+            (1, 2, 0),
+            (2, 0, 1),
+            (2, 1, 0),
+        ]
         for x in [self.ad, self.af]:
             for a in axes:
                 r_tol, a_tol = _get_rtol_atol(x)
@@ -274,7 +281,9 @@ def test_gh109():
     b = np.asarray(b_int, dtype=np.float32)
 
     r1 = mkl_fft.fftn(b, s=None, axes=(0,), overwrite_x=False, fwd_scale=1 / 3)
-    r2 = mkl_fft.fftn(b_int, s=None, axes=(0,), overwrite_x=False, fwd_scale=1 / 3)
+    r2 = mkl_fft.fftn(
+        b_int, s=None, axes=(0,), overwrite_x=False, fwd_scale=1 / 3
+    )
 
     rtol, atol = _get_rtol_atol(b)
     assert_allclose(r1, r2, rtol=rtol, atol=atol)

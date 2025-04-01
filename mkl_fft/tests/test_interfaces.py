@@ -30,7 +30,9 @@ import mkl_fft.interfaces as mfi
 
 
 @pytest.mark.parametrize("norm", [None, "forward", "backward", "ortho"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.complex64, np.complex128])
+@pytest.mark.parametrize(
+    "dtype", [np.float32, np.float64, np.complex64, np.complex128]
+)
 def test_scipy_fft(norm, dtype):
     x = np.ones(511, dtype=dtype)
     w = mfi.scipy_fft.fft(x, norm=norm, workers=None, plan=None)
@@ -40,7 +42,9 @@ def test_scipy_fft(norm, dtype):
 
 
 @pytest.mark.parametrize("norm", [None, "forward", "backward", "ortho"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.complex64, np.complex128])
+@pytest.mark.parametrize(
+    "dtype", [np.float32, np.float64, np.complex64, np.complex128]
+)
 def test_numpy_fft(norm, dtype):
     x = np.ones(511, dtype=dtype)
     w = mfi.numpy_fft.fft(x, norm=norm)
@@ -54,7 +58,9 @@ def test_numpy_fft(norm, dtype):
 def test_scipy_rfft(norm, dtype):
     x = np.ones(511, dtype=dtype)
     w = mfi.scipy_fft.rfft(x, norm=norm, workers=None, plan=None)
-    xx = mfi.scipy_fft.irfft(w, n=x.shape[0], norm=norm, workers=None, plan=None)
+    xx = mfi.scipy_fft.irfft(
+        w, n=x.shape[0], norm=norm, workers=None, plan=None
+    )
     tol = 64 * np.finfo(np.dtype(dtype)).eps
     assert np.allclose(x, xx, atol=tol, rtol=tol)
 
@@ -76,7 +82,9 @@ def test_numpy_rfft(norm, dtype):
 
 
 @pytest.mark.parametrize("norm", [None, "forward", "backward", "ortho"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.complex64, np.complex128])
+@pytest.mark.parametrize(
+    "dtype", [np.float32, np.float64, np.complex64, np.complex128]
+)
 def test_scipy_fftn(norm, dtype):
     x = np.ones((37, 83), dtype=dtype)
     w = mfi.scipy_fft.fftn(x, norm=norm, workers=None, plan=None)
@@ -86,7 +94,9 @@ def test_scipy_fftn(norm, dtype):
 
 
 @pytest.mark.parametrize("norm", [None, "forward", "backward", "ortho"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.complex64, np.complex128])
+@pytest.mark.parametrize(
+    "dtype", [np.float32, np.float64, np.complex64, np.complex128]
+)
 def test_numpy_fftn(norm, dtype):
     x = np.ones((37, 83), dtype=dtype)
     w = mfi.numpy_fft.fftn(x, norm=norm)

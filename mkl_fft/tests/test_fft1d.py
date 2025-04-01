@@ -55,7 +55,9 @@ class Test_mklfft_vector(TestCase):
         rnd.seed(1234567)
         self.xd1 = rnd.standard_normal(128)
         self.xf1 = self.xd1.astype(np.float32)
-        self.xz1 = rnd.standard_normal((128, 2)).view(dtype=np.complex128).squeeze()
+        self.xz1 = (
+            rnd.standard_normal((128, 2)).view(dtype=np.complex128).squeeze()
+        )
         self.xc1 = self.xz1.astype(np.complex64)
 
     def test_vector1(self):

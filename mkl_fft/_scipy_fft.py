@@ -267,7 +267,9 @@ def _compute_nd_fwd_scale(norm, s, axes, x_shape):
     return fsc
 
 
-def fft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, plan=None):
+def fft(
+    a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, plan=None
+):
     try:
         x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
@@ -277,11 +279,15 @@ def fft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, plan=Non
     fsc = _compute_1d_fwd_scale(norm, n, x.shape[axis])
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.fft(x, n=n, axis=axis, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.fft(
+            x, n=n, axis=axis, overwrite_x=overwrite_x, fwd_scale=fsc
+        )
     return output
 
 
-def ifft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, plan=None):
+def ifft(
+    a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, plan=None
+):
     try:
         x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
@@ -291,12 +297,20 @@ def ifft(a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, plan=No
     fsc = _compute_1d_fwd_scale(norm, n, x.shape[axis])
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.ifft(x, n=n, axis=axis, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.ifft(
+            x, n=n, axis=axis, overwrite_x=overwrite_x, fwd_scale=fsc
+        )
     return output
 
 
 def fft2(
-    a, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, plan=None
+    a,
+    s=None,
+    axes=(-2, -1),
+    norm=None,
+    overwrite_x=False,
+    workers=None,
+    plan=None,
 ):
     try:
         x = _float_utils.__supported_array_or_not_implemented(a)
@@ -307,12 +321,20 @@ def fft2(
     fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.fftn(x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.fftn(
+            x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc
+        )
     return output
 
 
 def ifft2(
-    a, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, plan=None
+    a,
+    s=None,
+    axes=(-2, -1),
+    norm=None,
+    overwrite_x=False,
+    workers=None,
+    plan=None,
 ):
     try:
         x = _float_utils.__supported_array_or_not_implemented(a)
@@ -329,7 +351,9 @@ def ifft2(
     return output
 
 
-def fftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan=None):
+def fftn(
+    a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan=None
+):
     try:
         x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
@@ -339,11 +363,15 @@ def fftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan=
     fsc = _compute_nd_fwd_scale(norm, s, axes, x.shape)
     _check_plan(plan)
     with Workers(workers):
-        output = mkl_fft.fftn(x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc)
+        output = mkl_fft.fftn(
+            x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc
+        )
     return output
 
 
-def ifftn(a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan=None):
+def ifftn(
+    a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan=None
+):
     try:
         x = _float_utils.__supported_array_or_not_implemented(a)
     except ValueError:
@@ -423,7 +451,9 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, plan=None):
         return NotImplemented
     if x is NotImplemented:
         return x
-    s, axes, fsc = _compute_nd_fwd_scale_for_rfft(norm, s, axes, x, invreal=True)
+    s, axes, fsc = _compute_nd_fwd_scale_for_rfft(
+        norm, s, axes, x, invreal=True
+    )
     _check_plan(plan)
     with Workers(workers):
         output = mkl_fft.irfftn(x, s, axes, fwd_scale=fsc)
@@ -451,7 +481,9 @@ def irfftn(a, s=None, axes=None, norm=None, workers=None, plan=None):
         return NotImplemented
     if x is NotImplemented:
         return x
-    s, axes, fsc = _compute_nd_fwd_scale_for_rfft(norm, s, axes, x, invreal=True)
+    s, axes, fsc = _compute_nd_fwd_scale_for_rfft(
+        norm, s, axes, x, invreal=True
+    )
     _check_plan(plan)
     with Workers(workers):
         output = mkl_fft.irfftn(x, s, axes, fwd_scale=fsc)
