@@ -66,6 +66,10 @@ test = ["pytest"]
 Download = "http://github.com/IntelPython/mkl_fft"
 Homepage = "http://github.com/IntelPython/mkl_fft"
 
+[tool.black]
+line-length = 80
+exclude = "_vendored/conv_template.py"
+
 [tool.isort]
 ensure_newline_before_comments = true
 force_grid_wrap = 0

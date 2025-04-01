@@ -19,6 +19,7 @@ repos:
   rev: 25.1.0
   hooks:
   - id: black
+    exclude: "_vendored/conv_template.py"
 
 - repo: https://github.com/pycqa/flake8
   rev: 7.1.2
