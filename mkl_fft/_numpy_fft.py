@@ -1249,11 +1249,9 @@ def rfftn(a, s=None, axes=None, norm=None):
         fsc = 1.0
     elif norm == "forward":
         x = asanyarray(x)
-        s, axes = _cook_nd_args(x, s, axes)
         fsc = frwd_sc_nd(s, x.shape)
     else:
         x = asanyarray(x)
-        s, axes = _cook_nd_args(x, s, axes)
         fsc = sqrt(frwd_sc_nd(s, x.shape))
 
     return trycall(
