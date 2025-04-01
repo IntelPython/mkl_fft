@@ -2,3 +2,9 @@
 
 # Add pre-commit hooks
 e9362b264878bf849b1d6ab0994153cb3d497bad
+
+# Add isort
+cd508d5703a3d6088f5a6414057e70e9f20895c5
+
+# Run black
+c05764aaa61ca55109ebb5e214cc51737b11bb2d
