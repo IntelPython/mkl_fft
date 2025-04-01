@@ -24,65 +24,72 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import os
+import sys
 from os.path import join
+
 import Cython.Build
-from setuptools import setup, Extension
 import numpy as np
+from setuptools import Extension, setup
 
 sys.path.insert(0, os.path.dirname(__file__))  # Ensures local imports work
-from _vendored.conv_template import process_file as process_c_file
+from _vendored.conv_template import process_file as process_c_file  # noqa: E402
+
 
 def extensions():
-    mkl_root = os.environ.get('MKLROOT', None)
+    mkl_root = os.environ.get("MKLROOT", None)
     if mkl_root:
         mkl_info = {
-            'include_dirs': [join(mkl_root, 'include')],
-            'library_dirs': [join(mkl_root, 'lib'), join(mkl_root, 'lib', 'intel64')],
-            'libraries': ['mkl_rt']
+            "include_dirs": [join(mkl_root, "include")],
+            "library_dirs": [
+                join(mkl_root, "lib"),
+                join(mkl_root, "lib", "intel64"),
+            ],
+            "libraries": ["mkl_rt"],
         }
     else:
-        try:
-            mkl_info = get_info('mkl')
-        except:
-            mkl_info = dict()
+        raise ValueError("MKLROOT environment variable not set.")
 
-    mkl_include_dirs = mkl_info.get('include_dirs', [])
-    mkl_library_dirs = mkl_info.get('library_dirs', [])
-    mkl_libraries = mkl_info.get('libraries', ['mkl_rt'])
+    mkl_include_dirs = mkl_info.get("include_dirs", [])
+    mkl_library_dirs = mkl_info.get("library_dirs", [])
+    mkl_libraries = mkl_info.get("libraries", ["mkl_rt"])
 
     mklfft_templ = join("mkl_fft", "src", "mklfft.c.src")
     processed_mklfft_fn = join("mkl_fft", "src", "mklfft.c")
     src_processed = process_c_file(mklfft_templ)
 
-    with open(processed_mklfft_fn, 'w') as fid:
+    with open(processed_mklfft_fn, "w") as fid:
         fid.write(src_processed)
 
     return [
         Extension(
             "mkl_fft._pydfti",
-            sources = [
+            sources=[
                 join("mkl_fft", "_pydfti.pyx"),
                 join("mkl_fft", "src", "mklfft.c"),
             ],
-            depends = [
-                join("mkl_fft", "src", 'mklfft.h'),
-                join("mkl_fft", "src", "multi_iter.h")
+            depends=[
+                join("mkl_fft", "src", "mklfft.h"),
+                join("mkl_fft", "src", "multi_iter.h"),
             ],
-            include_dirs = [join("mkl_fft", "src"), np.get_include()] + mkl_include_dirs,
-            libraries = mkl_libraries,
-            library_dirs = mkl_library_dirs,
-            extra_compile_args = [
-                '-DNDEBUG',
+            include_dirs=[join("mkl_fft", "src"), np.get_include()]
+            + mkl_include_dirs,
+            libraries=mkl_libraries,
+            library_dirs=mkl_library_dirs,
+            extra_compile_args=[
+                "-DNDEBUG",
                 # '-ggdb', '-O0', '-Wall', '-Wextra', '-DDEBUG',
             ],
-            define_macros=[("NPY_NO_DEPRECATED_API", None), ("PY_ARRAY_UNIQUE_SYMBOL", "mkl_fft_ext")],
+            define_macros=[
+                ("NPY_NO_DEPRECATED_API", None),
+                ("PY_ARRAY_UNIQUE_SYMBOL", "mkl_fft_ext"),
+            ],
         )
     ]
 
+
 setup(
-    cmdclass={'build_ext': Cython.Build.build_ext},
+    cmdclass={"build_ext": Cython.Build.build_ext},
     ext_modules=extensions(),
     zip_safe=False,
 )

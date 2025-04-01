@@ -3,14 +3,14 @@
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
-#     * Redistributions of source code must retain the above copyright notice,
-#       this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above copyright
-#       notice, this list of conditions and the following disclaimer in the
-#       documentation and/or other materials provided with the distribution.
-#     * Neither the name of Intel Corporation nor the names of its contributors
-#       may be used to endorse or promote products derived from this software
-#       without specific prior written permission.
+# * Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution.
+# * Neither the name of Intel Corporation nor the names of its contributors
+# may be used to endorse or promote products derived from this software
+# without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -24,54 +24,67 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 [build-system]
-requires = ["setuptools>=64", "Cython", "numpy"]
 build-backend = "setuptools.build_meta"
+requires = ["setuptools>=64", "Cython", "numpy"]
 
 [project]
-name = "mkl_fft"
-dynamic = ["version"]
-description = "MKL-based FFT transforms for NumPy arrays"
-readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.9,<3.13"
-license = { text = "BSD" }
 authors = [
-    { name = "Intel Corporation", email = "scripting@intel.com" }
+  {name = "Intel Corporation", email = "scripting@intel.com"}
 ]
-keywords = ["DFTI", "FFT", "Fourier", "MKL"]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Science/Research",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved",
-    "Programming Language :: C",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Topic :: Software Development",
-    "Topic :: Scientific/Engineering",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: POSIX",
-    "Operating System :: Unix",
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved",
+  "Programming Language :: C",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Topic :: Software Development",
+  "Topic :: Scientific/Engineering",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Operating System :: Unix"
 ]
 dependencies = ["numpy >=1.26.4", "mkl", "mkl-service"]
+description = "MKL-based FFT transforms for NumPy arrays"
+dynamic = ["version"]
+keywords = ["DFTI", "FFT", "Fourier", "MKL"]
+license = {text = "BSD"}
+name = "mkl_fft"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.9,<3.13"
 
 [project.optional-dependencies]
 test = ["pytest"]
 
 [project.urls]
-Homepage = "http://github.com/IntelPython/mkl_fft"
 Download = "http://github.com/IntelPython/mkl_fft"
+Homepage = "http://github.com/IntelPython/mkl_fft"
+
+[tool.black]
+exclude = "_vendored/conv_template.py"
+line-length = 80
+
+[tool.isort]
+ensure_newline_before_comments = true
+force_grid_wrap = 0
+include_trailing_comma = true
+line_length = 80
+multi_line_output = 3
+skip = ["_vendored/conv_template.py"]
+use_parentheses = true
 
 [tool.setuptools]
-packages = ["mkl_fft", "mkl_fft.interfaces"]
 include-package-data = true
-
-[tool.setuptools.package-data]
-"mkl_fft" = ["tests/*.py"]
+packages = ["mkl_fft", "mkl_fft.interfaces"]
 
 [tool.setuptools.dynamic]
 version = {attr = "mkl_fft._version.__version__"}
+
+[tool.setuptools.package-data]
+"mkl_fft" = ["tests/*.py"]
