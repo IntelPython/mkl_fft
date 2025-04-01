@@ -24,26 +24,26 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import mkl_fft.interfaces
+
 from . import _init_helper
 from ._pydfti import (
     fft,
-    ifft,
     fft2,
-    ifft2,
     fftn,
+    ifft,
+    ifft2,
     ifftn,
-    rfftpack,
+    irfft,
+    irfft2,
+    irfftn,
     irfftpack,
     rfft,
-    irfft,
     rfft2,
-    irfft2,
     rfftn,
-    irfftn,
+    rfftpack,
 )
-
 from ._version import __version__
-import mkl_fft.interfaces
 
 __all__ = [
     "fft",

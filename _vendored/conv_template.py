@@ -77,8 +77,8 @@ Example:
 __all__ = ["process_str", "process_file"]
 
 import os
-import sys
 import re
+import sys
 
 # names for replacement that are already global.
 global_names = {}

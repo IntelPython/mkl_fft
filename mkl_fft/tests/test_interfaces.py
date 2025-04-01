@@ -23,9 +23,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import mkl_fft.interfaces as mfi
-import pytest
 import numpy as np
+import pytest
+
+import mkl_fft.interfaces as mfi
 
 
 @pytest.mark.parametrize("norm", [None, "forward", "backward", "ortho"])

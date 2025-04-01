@@ -25,8 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from numpy.testing import TestCase, assert_, assert_allclose
 from numpy import random as rnd
+from numpy.testing import TestCase, assert_, assert_allclose
+
 import mkl_fft
 
 

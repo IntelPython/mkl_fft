@@ -70,11 +70,12 @@ __all__ = [
     "ifftn",
 ]
 
-from numpy import array, asanyarray, conjugate, take, sqrt, prod
-
-from . import _pydfti as mkl_fft
-from . import _float_utils
 import re
+
+from numpy import array, asanyarray, conjugate, prod, sqrt, take
+
+from . import _float_utils
+from . import _pydfti as mkl_fft
 
 
 def _check_norm(norm):

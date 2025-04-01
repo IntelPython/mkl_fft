@@ -24,16 +24,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from . import _pydfti as mkl_fft
-from . import _float_utils
-import mkl
-
-from numpy import take, sqrt, prod
-import contextvars
 import contextlib
+import contextvars
 import operator
 import os
 
+import mkl
+from numpy import prod, sqrt, take
+
+from . import _float_utils
+from . import _pydfti as mkl_fft
 
 __doc__ = """
 This module implements interfaces mimicing `scipy.fft` module.

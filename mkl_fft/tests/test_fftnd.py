@@ -25,9 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from numpy.testing import TestCase, assert_allclose
-from numpy import random as rnd
 import pytest
+from numpy import random as rnd
+from numpy.testing import TestCase, assert_allclose
+
 import mkl_fft
 
 reps_64 = (2**11) * np.finfo(np.float64).eps

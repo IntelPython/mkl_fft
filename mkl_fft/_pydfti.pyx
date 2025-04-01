@@ -28,20 +28,23 @@
 
 # imports
 import sys
+
 import numpy as np
+
 if np.lib.NumpyVersion(np.__version__) >= "2.0.0a0":
     from numpy._core._multiarray_tests import internal_overlap
 else:
     from numpy.core._multiarray_tests import internal_overlap
+
 from threading import local as threading_local
 
 # cimports
-cimport numpy as cnp
-from libc.string cimport memcpy
-cimport cpython.pycapsule
-from cpython.exc cimport (PyErr_Occurred, PyErr_Clear)
-from cpython.mem cimport (PyMem_Malloc, PyMem_Free)
 
+cimport cpython.pycapsule
+cimport numpy as cnp
+from cpython.exc cimport PyErr_Clear, PyErr_Occurred
+from cpython.mem cimport PyMem_Free, PyMem_Malloc
+from libc.string cimport memcpy
 
 # thread-local storage
 _tls = threading_local()

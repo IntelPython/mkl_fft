@@ -1,12 +1,18 @@
 # This file includes tests from numpy.fft module:
 # https://github.com/numpy/numpy/blob/main/numpy/fft/tests/test_pocketfft.py
 
+import queue
+import threading
+
 import numpy as np
 import pytest
 from numpy.random import random
-from numpy.testing import assert_array_equal, assert_raises, assert_allclose, IS_WASM
-import threading
-import queue
+from numpy.testing import (
+    IS_WASM,
+    assert_allclose,
+    assert_array_equal,
+    assert_raises,
+)
 
 import mkl_fft.interfaces.numpy_fft as mkl_fft
 

@@ -24,12 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import os
+import sys
 from os.path import join
+
 import Cython.Build
-from setuptools import setup, Extension
 import numpy as np
+from setuptools import Extension, setup
 
 sys.path.insert(0, os.path.dirname(__file__))  # Ensures local imports work
 from _vendored.conv_template import process_file as process_c_file  # noqa: E402
