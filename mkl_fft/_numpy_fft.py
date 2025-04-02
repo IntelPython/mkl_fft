@@ -74,35 +74,44 @@ import re
 import warnings
 
 import numpy as np
-from numpy import array, asanyarray, conjugate, prod, sqrt, take
+from numpy import array, conjugate, prod, sqrt, take
 
 from . import _float_utils
 from . import _pydfti as mkl_fft  # pylint: disable=no-name-in-module
 
 
+def _compute_fwd_scale(norm, n, shape):
+    _check_norm(norm)
+    if norm in (None, "backward"):
+        return 1.0
+
+    ss = n if n is not None else shape
+    nn = prod(ss)
+    fsc = 1 / nn if nn != 0 else 1
+    if norm == "forward":
+        return fsc
+    else:  # norm == "ortho"
+        return sqrt(fsc)
+
+
 def _check_norm(norm):
     if norm not in (None, "ortho", "forward", "backward"):
         raise ValueError(
-            (
-                "Invalid norm value {} should be None, "
-                '"ortho", "forward", or "backward".'
-            ).format(norm)
+            f"Invalid norm value {norm} should be None, 'ortho', 'forward', "
+            "or 'backward'."
         )
 
 
-def frwd_sc_1d(n, s):
-    nn = n if n is not None else s
-    return 1 / nn if nn != 0 else 1
+def _swap_direction(norm):
+    _check_norm(norm)
+    _swap_direction_map = {
+        "backward": "forward",
+        None: "forward",
+        "ortho": "ortho",
+        "forward": "backward",
+    }
 
-
-def frwd_sc_nd(s, x_shape):
-    ss = s if s is not None else x_shape
-    nn = prod(ss)
-    return 1 / nn if nn != 0 else 1
-
-
-def ortho_sc_1d(n, s):
-    return sqrt(frwd_sc_1d(n, s))
+    return _swap_direction_map[norm]
 
 
 def trycall(func, args, kwrds):
@@ -208,15 +217,9 @@ def fft(a, n=None, axis=-1, norm=None):
     the `numpy.fft` documentation.
 
     """
-    _check_norm(norm)
-    x = _float_utils.__downcast_float128_array(a)
 
-    if norm in (None, "backward"):
-        fsc = 1.0
-    elif norm == "forward":
-        fsc = frwd_sc_1d(n, x.shape[axis])
-    else:
-        fsc = ortho_sc_1d(n, x.shape[axis])
+    x = _float_utils.__downcast_float128_array(a)
+    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     return trycall(mkl_fft.fft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
 
@@ -307,15 +310,9 @@ def ifft(a, n=None, axis=-1, norm=None):
     >>> plt.show()
 
     """
-    _check_norm(norm)
-    x = _float_utils.__downcast_float128_array(a)
 
-    if norm in (None, "backward"):
-        fsc = 1.0
-    elif norm == "forward":
-        fsc = frwd_sc_1d(n, x.shape[axis])
-    else:
-        fsc = ortho_sc_1d(n, x.shape[axis])
+    x = _float_utils.__downcast_float128_array(a)
+    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     return trycall(mkl_fft.ifft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
 
@@ -404,15 +401,9 @@ def rfft(a, n=None, axis=-1, norm=None):
     exploited to compute only the non-negative frequency terms.
 
     """
-    _check_norm(norm)
-    x = _float_utils.__downcast_float128_array(a)
 
-    if norm in (None, "backward"):
-        fsc = 1.0
-    elif norm == "forward":
-        fsc = frwd_sc_1d(n, x.shape[axis])
-    else:
-        fsc = ortho_sc_1d(n, x.shape[axis])
+    x = _float_utils.__downcast_float128_array(a)
+    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     return trycall(mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
 
@@ -503,16 +494,9 @@ def irfft(a, n=None, axis=-1, norm=None):
     specified, and the output array is purely real.
 
     """
-    _check_norm(norm)
-    x = _float_utils.__downcast_float128_array(a)
 
-    nn = n if n else 2 * (x.shape[axis] - 1)
-    if norm in (None, "backward"):
-        fsc = 1.0
-    elif norm == "forward":
-        fsc = frwd_sc_1d(nn, nn)
-    else:
-        fsc = ortho_sc_1d(nn, nn)
+    x = _float_utils.__downcast_float128_array(a)
+    fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     return trycall(
         mkl_fft.irfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc}
@@ -595,18 +579,12 @@ def hfft(a, n=None, axis=-1, norm=None):
            [ 2., -2.]])
 
     """
-    _check_norm(norm)
+
+    norm = _swap_direction(norm)
     x = _float_utils.__downcast_float128_array(a)
     x = array(x, copy=True, dtype=complex)
     conjugate(x, out=x)
-
-    nn = n if n else 2 * (x.shape[axis] - 1)
-    if norm in (None, "backward"):
-        fsc = frwd_sc_1d(nn, nn)
-    elif norm == "forward":
-        fsc = 1.0
-    else:
-        fsc = ortho_sc_1d(nn, nn)
+    fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     return trycall(
         mkl_fft.irfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc}
@@ -670,17 +648,12 @@ def ihfft(a, n=None, axis=-1, norm=None):
     array([ 1.-0.j,  2.-0.j,  3.-0.j,  4.-0.j])
 
     """
+
     # The copy may be required for multithreading.
-    _check_norm(norm)
+    norm = _swap_direction(norm)
     x = _float_utils.__downcast_float128_array(a)
     x = array(x, copy=True, dtype=float)
-
-    if norm in (None, "backward"):
-        fsc = frwd_sc_1d(n, x.shape[axis])
-    elif norm == "forward":
-        fsc = 1.0
-    else:
-        fsc = ortho_sc_1d(n, x.shape[axis])
+    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     output = trycall(
         mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc}
@@ -832,16 +805,10 @@ def fftn(a, s=None, axes=None, norm=None):
     >>> plt.show()
 
     """
-    _check_norm(norm)
+
     x = _float_utils.__downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes)
-
-    if norm in (None, "backward"):
-        fsc = 1.0
-    elif norm == "forward":
-        fsc = frwd_sc_nd(s, x.shape)
-    else:
-        fsc = sqrt(frwd_sc_nd(s, x.shape))
+    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     return trycall(mkl_fft.fftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc})
 
@@ -945,16 +912,10 @@ def ifftn(a, s=None, axes=None, norm=None):
     >>> plt.show()
 
     """
-    _check_norm(norm)
+
     x = _float_utils.__downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes)
-
-    if norm in (None, "backward"):
-        fsc = 1.0
-    elif norm == "forward":
-        fsc = frwd_sc_nd(s, x.shape)
-    else:
-        fsc = sqrt(frwd_sc_nd(s, x.shape))
+    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     return trycall(
         mkl_fft.ifftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc}
@@ -1053,9 +1014,8 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
               0.0 +0.j        ,   0.0 +0.j        ]])
 
     """
-    _check_norm(norm)
-    x = _float_utils.__downcast_float128_array(a)
-    return fftn(x, s=s, axes=axes, norm=norm)
+
+    return fftn(a, s=s, axes=axes, norm=norm)
 
 
 def ifft2(a, s=None, axes=(-2, -1), norm=None):
@@ -1147,9 +1107,8 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
            [ 0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
 
     """
-    _check_norm(norm)
-    x = _float_utils.__downcast_float128_array(a)
-    return ifftn(x, s=s, axes=axes, norm=norm)
+
+    return ifftn(a, s=s, axes=axes, norm=norm)
 
 
 def rfftn(a, s=None, axes=None, norm=None):
@@ -1241,18 +1200,10 @@ def rfftn(a, s=None, axes=None, norm=None):
             [ 0.+0.j,  0.+0.j]]])
 
     """
-    _check_norm(norm)
+
     x = _float_utils.__downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes)
-
-    if norm in (None, "backward"):
-        fsc = 1.0
-    elif norm == "forward":
-        x = asanyarray(x)
-        fsc = frwd_sc_nd(s, x.shape)
-    else:
-        x = asanyarray(x)
-        fsc = sqrt(frwd_sc_nd(s, x.shape))
+    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     return trycall(
         mkl_fft.rfftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc}
@@ -1298,9 +1249,8 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
     For more details see `rfftn`.
 
     """
-    _check_norm(norm)
-    x = _float_utils.__downcast_float128_array(a)
-    return rfftn(x, s, axes, norm)
+
+    return rfftn(a, s, axes, norm)
 
 
 def irfftn(a, s=None, axes=None, norm=None):
@@ -1394,18 +1344,10 @@ def irfftn(a, s=None, axes=None, norm=None):
             [ 1.,  1.]]])
 
     """
-    _check_norm(norm)
+
     x = _float_utils.__downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes, invreal=True)
-
-    if norm in (None, "backward"):
-        fsc = 1.0
-    elif norm == "forward":
-        x = asanyarray(x)
-        fsc = frwd_sc_nd(s, x.shape)
-    else:
-        x = asanyarray(x)
-        fsc = sqrt(frwd_sc_nd(s, x.shape))
+    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     return trycall(
         mkl_fft.irfftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc}
@@ -1451,6 +1393,5 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
     For more details see `irfftn`.
 
     """
-    _check_norm(norm)
-    x = _float_utils.__downcast_float128_array(a)
-    return irfftn(x, s, axes, norm)
+
+    return irfftn(a, s, axes, norm)

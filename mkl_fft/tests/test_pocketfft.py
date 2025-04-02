@@ -19,6 +19,10 @@ from numpy.testing import (
 
 import mkl_fft.interfaces.numpy_fft as mkl_fft
 
+requires_numpy_2 = pytest.mark.skipif(
+    np.__version__ < "2.0", reason="Requires NumPy >= 2.0"
+)
+
 
 def fft1(x):
     L = len(x)
@@ -510,7 +514,7 @@ class TestFFT1D:
         # should use the whole input array along the first axis
         assert op(x, s=(-1, 5), axes=(0, 1)).shape == (10, 5)
 
-    @pytest.mark.skipif(np.__version__ < "2.0", reason="Requires numpy >= 2.0")
+    @requires_numpy_2
     @pytest.mark.parametrize(
         "op", [mkl_fft.fftn, mkl_fft.ifftn, mkl_fft.rfftn, mkl_fft.irfftn]
     )
@@ -519,14 +523,14 @@ class TestFFT1D:
         with pytest.warns(match="`axes` should not be `None` if `s`"):
             op(x, s=(-1, 5))
 
-    @pytest.mark.skipif(np.__version__ < "2.0", reason="Requires numpy >= 2.0")
+    @requires_numpy_2
     @pytest.mark.parametrize("op", [mkl_fft.fft2, mkl_fft.ifft2])
     def test_s_axes_none_2D(self, op):
         x = np.arange(100).reshape(10, 10)
         with pytest.warns(match="`axes` should not be `None` if `s`"):
             op(x, s=(-1, 5), axes=None)
 
-    @pytest.mark.skipif(np.__version__ < "2.0", reason="Requires numpy >= 2.0")
+    @requires_numpy_2
     @pytest.mark.parametrize(
         "op",
         [
