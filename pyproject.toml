@@ -50,7 +50,7 @@ classifiers = [
   "Operating System :: POSIX",
   "Operating System :: Unix"
 ]
-dependencies = ["numpy >=1.26.4", "mkl", "mkl-service"]
+dependencies = ["numpy>=1.26.4", "mkl", "mkl-service"]
 description = "MKL-based FFT transforms for NumPy arrays"
 dynamic = ["version"]
 keywords = ["DFTI", "FFT", "Fourier", "MKL"]

@@ -25,6 +25,7 @@
 
 import numpy as np
 import pytest
+from numpy.testing import assert_raises
 
 import mkl_fft.interfaces as mfi
 
@@ -143,8 +144,7 @@ def _get_blacklisted_dtypes():
 @pytest.mark.parametrize("dtype", _get_blacklisted_dtypes())
 def test_scipy_no_support_for(dtype):
     x = np.ones(16, dtype=dtype)
-    w = mfi.scipy_fft.fft(x)
-    assert w is NotImplemented
+    assert_raises(NotImplementedError, mfi.scipy_fft.ifft, x)
 
 
 def test_scipy_fft_arg_validate():
