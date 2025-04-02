@@ -27,6 +27,12 @@ repos:
   - id: clang-format
     args: ["-i"]
 
+- repo: https://github.com/MarcoGorelli/cython-lint
+  rev: v0.16.6
+  hooks:
+  - id: cython-lint
+  - id: double-quote-cython-strings
+
 - repo: https://github.com/pycqa/flake8
   rev: 7.1.2
   hooks:

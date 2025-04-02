@@ -2,3 +2,6 @@
 
 # Add pre-commit hooks
 2e1b33fcf6b7f0c7c9d7d5d7f55d2d0ba35f393a
+
+# Add cython-lint to pre-commit config
+5df98187dda56f6d340f0824570fe5080d0b4f05
