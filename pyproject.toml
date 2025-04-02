@@ -70,6 +70,10 @@ Homepage = "http://github.com/IntelPython/mkl_fft"
 exclude = "_vendored/conv_template.py"
 line-length = 80
 
+[tool.cython-lint]
+ignore = ['E722']  # do not use bare 'except'
+max-line-length = 80
+
 [tool.isort]
 ensure_newline_before_comments = true
 force_grid_wrap = 0
