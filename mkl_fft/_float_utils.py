@@ -81,7 +81,7 @@ def __downcast_float128_array(x):
 
 def __supported_array_or_not_implemented(x):
     """
-    Used in _scipy_fft_backend to convert array to float32,
+    Used in _scipy_fft to convert array to float32,
     float64, complex64, or complex128 type or return NotImplemented
     """
     __x = np.asarray(x)

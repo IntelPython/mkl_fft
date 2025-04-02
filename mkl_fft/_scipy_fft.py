@@ -43,7 +43,7 @@ via `scipy.fft` namespace.
 
 :Example:
     import scipy.fft
-    import mkl_fft._scipy_fft_backend as be
+    import mkl_fft._scipy_fft as be
     # Set mkl_fft to be used as backend of SciPy's FFT functions.
     scipy.fft.set_global_backend(be)
 """
