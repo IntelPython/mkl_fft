@@ -1100,7 +1100,7 @@ def _fftnd_impl(x, s=None, axes=None, overwrite_x=False, direction=+1, double fs
                 _direct_fftnd,
                 {'overwrite_x': overwrite_x, 'direction': direction, 'fsc': fsc},
                 res
-                )
+            )
         else:
             sc = <object> fsc
             return _iter_fftnd(x, s=s, axes=axes,
@@ -1200,7 +1200,7 @@ def rfftn(x, s=None, axes=None, fwd_scale=1.0):
             a = _fix_dimensions(a, tuple(ss), axes)
         if len(set(axes)) == len(axes) and len(axes) == a.ndim and len(axes) > 2:
             ss, aa = _remove_axis(s, axes, -1)
-            ind = [slice(None,None,1),] * len(s)
+            ind = [slice(None, None, 1),] * len(s)
             for ii in range(a.shape[la]):
                 ind[la] = ii
                 tind = tuple(ind)
