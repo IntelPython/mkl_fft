@@ -25,9 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from . import _init_helper
-
-# pylint: disable=no-name-in-module
-from ._pydfti import (
+from ._mkl_fft import (
     fft,
     fft2,
     fftn,
@@ -37,12 +35,11 @@ from ._pydfti import (
     irfft,
     irfft2,
     irfftn,
-    irfftpack,
     rfft,
     rfft2,
     rfftn,
-    rfftpack,
 )
+from ._pydfti import irfftpack, rfftpack  # pylint: disable=no-name-in-module
 from ._version import __version__
 
 import mkl_fft.interfaces  # isort: skip
