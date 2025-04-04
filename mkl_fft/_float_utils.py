@@ -91,5 +91,5 @@ def __supported_array_or_not_implemented(x):
     if hasattr(np, "complex256"):
         black_list.append(np.complex256)
     if __x.dtype in black_list:
-        return NotImplemented
+        raise NotImplementedError
     return __x

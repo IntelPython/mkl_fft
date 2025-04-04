@@ -7,3 +7,4 @@ mkl_fft/_pydfti.cpython-310-x86_64-linux-gnu.so
 mkl_fft/interfaces/__pycache__/
 mkl_fft/src/mklfft.c
 mkl_fft/tests/__pycache__/
+mkl_fft/tests/from_scipy/__pycache__/
