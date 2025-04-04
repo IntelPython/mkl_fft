@@ -27,9 +27,7 @@
 import mkl_fft.interfaces
 
 from . import _init_helper
-
-# pylint: disable=no-name-in-module
-from ._pydfti import (
+from ._mkl_fft import (
     fft,
     fft2,
     fftn,
