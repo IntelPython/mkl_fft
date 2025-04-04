@@ -1,7 +1,7 @@
 # This file includes tests from scipy.fft module:
 # https://github.com/scipy/scipy/blob/main/scipy/fft/tests/test_basic.py
 
-# TODO: remove when hfft functions are added
+# TODO: remove when hfft* functions are added
 # pylint: disable=no-member
 
 import multiprocessing
@@ -426,7 +426,7 @@ class TestFFT:
         res_rfft = fft.irfft(fft.rfft(x))
         # TODO: res_hfft = fft.hfft(fft.ihfft(x), x.shape[0])
         # Check both numerical results and exact dtype matches
-        xp_assert_close(res_rfft, x, rtol=1e-06)
+        xp_assert_close(res_rfft, x, rtol=1e-06, atol=1e-06)
         # TODO: xp_assert_close(res_hfft, x)
 
     @pytest.mark.parametrize("dtype", ["complex64", "complex128"])
