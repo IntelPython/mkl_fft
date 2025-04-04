@@ -33,7 +33,7 @@ import mkl
 import numpy as np
 
 from . import _pydfti as mkl_fft  # pylint: disable=no-name-in-module
-from ._fft_utils import _compute_fwd_scale
+from ._fft_utils import compute_fwd_scale
 from ._float_utils import __supported_array_or_not_implemented
 
 __doc__ = """
@@ -235,7 +235,7 @@ def fft(
 ):
     _check_plan(plan)
     x = _validate_input(a)
-    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
+    fsc = compute_fwd_scale(norm, n, x.shape[axis])
 
     with Workers(workers):
         return mkl_fft.fft(
@@ -248,7 +248,7 @@ def ifft(
 ):
     _check_plan(plan)
     x = _validate_input(a)
-    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
+    fsc = compute_fwd_scale(norm, n, x.shape[axis])
 
     with Workers(workers):
         return mkl_fft.ifft(
@@ -303,7 +303,7 @@ def fftn(
 ):
     _check_plan(plan)
     x = _validate_input(a)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
+    fsc = compute_fwd_scale(norm, s, x.shape)
 
     with Workers(workers):
         return mkl_fft.fftn(
@@ -316,7 +316,7 @@ def ifftn(
 ):
     _check_plan(plan)
     x = _validate_input(a)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
+    fsc = compute_fwd_scale(norm, s, x.shape)
 
     with Workers(workers):
         return mkl_fft.ifftn(
@@ -327,7 +327,7 @@ def ifftn(
 def rfft(a, n=None, axis=-1, norm=None, workers=None, plan=None):
     _check_plan(plan)
     x = _validate_input(a)
-    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
+    fsc = compute_fwd_scale(norm, n, x.shape[axis])
 
     with Workers(workers):
         return mkl_fft.rfft(x, n=n, axis=axis, fwd_scale=fsc)
@@ -336,7 +336,7 @@ def rfft(a, n=None, axis=-1, norm=None, workers=None, plan=None):
 def irfft(a, n=None, axis=-1, norm=None, workers=None, plan=None):
     _check_plan(plan)
     x = _validate_input(a)
-    fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
+    fsc = compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     with Workers(workers):
         return mkl_fft.irfft(x, n=n, axis=axis, fwd_scale=fsc)
@@ -356,7 +356,7 @@ def rfftn(a, s=None, axes=None, norm=None, workers=None, plan=None):
     _check_plan(plan)
     x = _validate_input(a)
     s, axes = _cook_nd_args(x, s, axes)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
+    fsc = compute_fwd_scale(norm, s, x.shape)
 
     with Workers(workers):
         return mkl_fft.rfftn(x, s, axes, fwd_scale=fsc)
@@ -366,7 +366,7 @@ def irfftn(a, s=None, axes=None, norm=None, workers=None, plan=None):
     _check_plan(plan)
     x = _validate_input(a)
     s, axes = _cook_nd_args(x, s, axes, invreal=True)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
+    fsc = compute_fwd_scale(norm, s, x.shape)
 
     with Workers(workers):
         return mkl_fft.irfftn(x, s, axes, fwd_scale=fsc)

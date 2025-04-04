@@ -26,10 +26,10 @@
 
 import numpy as np
 
-__all__ = ["_check_norm", "_compute_fwd_scale"]
+__all__ = ["check_norm", "compute_fwd_scale"]
 
 
-def _check_norm(norm):
+def check_norm(norm):
     if norm not in (None, "ortho", "forward", "backward"):
         raise ValueError(
             f"Invalid norm value {norm} should be None, 'ortho', 'forward', "
@@ -37,8 +37,8 @@ def _check_norm(norm):
         )
 
 
-def _compute_fwd_scale(norm, n, shape):
-    _check_norm(norm)
+def compute_fwd_scale(norm, n, shape):
+    check_norm(norm)
     if norm in (None, "backward"):
         return 1.0
 
