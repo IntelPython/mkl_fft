@@ -25,9 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from . import _init_helper
-
-# pylint: disable=no-name-in-module
-from ._pydfti import (
+from ._mkl_fft import (
     fft,
     fft2,
     fftn,
