@@ -2,6 +2,23 @@
 mkl_fft changelog
 =================
 
+1.3.13
+======
+
+migrate from `setup.py` to `pyproject.toml`
+
+includes support in virtual environment out of the box
+
+the original `mkl_fft.rfft` and `mkl_fft.irfft` are renamed to `mkl_fft.rfftpack` and `mkl_fft.irfftpack`, since they
+replicate the behavior from the deprectaed `scipy.fftapck` module.
+
+`mkl_fft.rfft_numpy`, `mkl_fft.irfft_numpy`, `mkl_fft.rfft2_numpy`, `mkl_fft.irfft2_numpy`, `mkl_fft.rfftn_numpy`
+and `mkl_fft.irfftn_numpy` are renamed to `mkl_fft.rfft`, `mkl_fft.irfft`, `mkl_fft.rfft2`, `mkl_fft.irfft2`, `mkl_fft.rfftn`
+and `mkl_fft.irfftn`, respectively. (consistent with `numpy.fft` and `scipy.fft` modules)
+
+file `_scipy_fft_backend.py` is renamed to `_scipy_fft.py` since it replicates `scipy.fft` module (similar to file
+`_numpy_fft.py` which replicates `numpy.fft` module)
+
 1.3.11
 ======
 
