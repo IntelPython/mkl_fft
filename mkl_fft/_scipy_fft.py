@@ -32,7 +32,8 @@ import os
 import mkl
 import numpy as np
 
-from . import _pydfti as mkl_fft  # pylint: disable=no-name-in-module
+import mkl_fft
+
 from ._fft_utils import compute_fwd_scale
 from ._float_utils import __supported_array_or_not_implemented
 

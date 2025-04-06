@@ -75,7 +75,8 @@ import warnings
 
 import numpy as np
 
-from . import _pydfti as mkl_fft  # pylint: disable=no-name-in-module
+import mkl_fft
+
 from ._fft_utils import check_norm, compute_fwd_scale
 from ._float_utils import __downcast_float128_array
 
