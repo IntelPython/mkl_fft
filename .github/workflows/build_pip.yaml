@@ -54,8 +54,8 @@ jobs:
         run: |
           pip install --no-cache-dir cython pytest hypothesis
           pip install --no-cache-dir numpy ${{ matrix.use_pre }}
-          pip install --no-cache-dir scipy
           echo "CONDA_PREFFIX is '${CONDA_PREFIX}'"
           export MKLROOT=${CONDA_PREFIX}
           pip install -e . --no-build-isolation --verbose --no-deps
+          pip install --no-cache-dir scipy
           python -m pytest -v mkl_fft/tests
