@@ -2,8 +2,10 @@
 mkl_fft changelog
 =================
 
-1.3.13
-======
+1.3.13 (03/25/2025)
+===================
+
+Supported python versions are 3.9, 3.10, 3.11, 3.12
 
 migrate from :code:`setup.py` to :code:`pyproject.toml`
 

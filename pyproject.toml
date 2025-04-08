@@ -25,7 +25,7 @@
 
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools>=64", "Cython", "numpy"]
+requires = ["setuptools>=64", "Cython", "numpy", "mkl-devel"]
 
 [project]
 authors = [
