@@ -18,13 +18,12 @@ requirements:
       - {{ compiler('c') }}
     host:
       - python
-      - setuptools
+      - setuptools >=77
       - mkl-devel
       - cython
       - numpy-base
     run:
       - python
-      - mkl
       - mkl-service
       - {{ pin_compatible('numpy') }}
 
@@ -41,6 +40,6 @@ test:
 
 about:
     home: http://github.com/IntelPython/mkl_fft
-    license: BSD-3
+    license: BSD-3-Clause
     license_file: LICENSE.txt
     summary: NumPy-based implementation of Fast Fourier Transform using Intel (R) Math Kernel Library
