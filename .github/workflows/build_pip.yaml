@@ -40,6 +40,7 @@ jobs:
           use-mamba: true
           miniforge-version: latest
           channels: conda-forge
+          conda-remove-defaults: true
           activate-environment: test
           python-version: ${{ matrix.python }}
 
@@ -57,4 +58,5 @@ jobs:
           echo "CONDA_PREFFIX is '${CONDA_PREFIX}'"
           export MKLROOT=${CONDA_PREFIX}
           pip install -e .[test] --no-build-isolation --verbose
+          pip list
           python -m pytest -v mkl_fft/tests

@@ -1,4 +1,4 @@
-## ``mkl_fft`` --  a NumPy-based Python interface to Intel (R) MKL FFT functionality
+## `mkl_fft` --  a NumPy-based Python interface to Intel (R) MKL FFT functionality
 [![Conda package](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package.yml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package.yml)
 [![Editable build using pip and pre-release NumPy](https://github.com/IntelPython/mkl_fft/actions/workflows/build_pip.yaml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/build_pip.yaml)
 [![Conda package with conda-forge channel only](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package-cf.yml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package-cf.yml)
@@ -76,11 +76,11 @@ More details can be found in SciPy 2017 conference proceedings:
 ... and similar `irfft*` functions.
 
 
-The package also provides `mkl_fft._numpy_fft` and `mkl_fft._scipy_fft` interfaces which provide drop-in replacements for equivalent functions in NumPy and SciPy respectively.
+The package also provides `mkl_fft.interfaces.numpy_fft` and `mkl_fft.interfaces.scipy_fft` interfaces which provide drop-in replacements for equivalent functions in NumPy and SciPy respectively.
 
 ---
 
-To build ``mkl_fft`` from sources on Linux:
+To build `mkl_fft` from sources on Linux:
   - install a recent version of MKL, if necessary;
-  - execute ``source /path_to_oneapi/mkl/latest/env/vars.sh``;
-  - execute ``python -m pip install .``
+  - execute `source /path_to_oneapi/mkl/latest/env/vars.sh`;
+  - execute `python -m pip install .`

@@ -1,5 +1,5 @@
 =================
-mkl_fft changelog
+:code:`mkl_fft` changelog
 =================
 
 1.3.13 (03/25/2025)
@@ -12,7 +12,7 @@ migrate from :code:`setup.py` to :code:`pyproject.toml`
 includes support in virtual environment out of the box
 
 the original :code:`mkl_fft.rfft` and :code:`mkl_fft.irfft` are renamed to :code:`mkl_fft.rfftpack` and :code:`mkl_fft.irfftpack`,
-since they replicate the behavior from the deprectaed :code:`scipy.fftpack` module.
+since they replicate the behavior from the deprecated :code:`scipy.fftpack` module.
 
 :code:`mkl_fft.rfft_numpy`, :code:`mkl_fft.irfft_numpy`, :code:`mkl_fft.rfft2_numpy`, :code:`mkl_fft.irfft2_numpy`,
 :code:`mkl_fft.rfftn_numpy`, and :code:`mkl_fft.irfftn_numpy` are renamed to :code:`mkl_fft.rfft`, :code:`mkl_fft.irfft`,
