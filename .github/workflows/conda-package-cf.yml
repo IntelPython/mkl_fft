@@ -139,7 +139,6 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
-          auto-activate-base: true
           activate-environment: build
           python-version: ${{ matrix.python }}
           channels: conda-forge
