@@ -40,6 +40,7 @@ jobs:
           use-mamba: true
           miniforge-version: latest
           channels: conda-forge
+          conda-remove-defaults: true
           activate-environment: test
           python-version: ${{ matrix.python }}
 
@@ -52,9 +53,10 @@ jobs:
 
       - name: Build conda package
         run: |
-          pip install --no-cache-dir cython pytest hypothesis
+          pip install --no-cache-dir cython
           pip install --no-cache-dir numpy ${{ matrix.use_pre }}
           echo "CONDA_PREFFIX is '${CONDA_PREFIX}'"
           export MKLROOT=${CONDA_PREFIX}
-          pip install -e . --no-build-isolation --verbose --no-deps
+          pip install -e .[test] --no-build-isolation --verbose
+          pip list
           python -m pytest -v mkl_fft/tests
