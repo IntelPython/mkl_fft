@@ -16,7 +16,7 @@ env:
   VER_SCRIPT2: "print('='.join((d[s] for s in ('version', 'build'))))"
 
 jobs:
-  build:
+  build_linux:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -62,8 +62,8 @@ jobs:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
           path: /usr/share/miniconda/conda-bld/linux-64/${{ env.PACKAGE_NAME }}-*.conda
 
-  test:
-    needs: build
+  test_linux:
+    needs: build_linux
     runs-on:  ${{ matrix.runner }}
 
     strategy:
@@ -139,10 +139,9 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
-          auto-activate-base: true
           activate-environment: build
           python-version: ${{ matrix.python }}
-          channels: conda-forge,nodefaults
+          channels: conda-forge
           conda-remove-defaults: 'true'
 
       - name: Install conda-build
