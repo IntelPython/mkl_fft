@@ -82,7 +82,7 @@ def __downcast_float128_array(x):
 def __supported_array_or_not_implemented(x):
     """
     Used in _scipy_fft to convert array to float32,
-    float64, complex64, or complex128 type or return NotImplemented
+    float64, complex64, or complex128 type or raise NotImplementedError
     """
     __x = np.asarray(x)
     black_list = [np.half]
@@ -91,5 +91,5 @@ def __supported_array_or_not_implemented(x):
     if hasattr(np, "complex256"):
         black_list.append(np.complex256)
     if __x.dtype in black_list:
-        return NotImplemented
+        raise NotImplementedError
     return __x
