@@ -574,6 +574,7 @@ class TestFFTThreadSafe:
         self._test_mtsame(fft.ihfft, a, xp=xp)
 
 
+@pytest.mark.skip("skip due to gh-issue-151")
 @skip_xp_backends(np_only=True)
 @pytest.mark.parametrize("func", [fft.fft, fft.ifft, fft.rfft, fft.irfft])
 def test_multiprocess(func, xp):
