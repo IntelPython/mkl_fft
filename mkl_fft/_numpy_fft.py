@@ -74,32 +74,54 @@ import re
 import warnings
 
 import numpy as np
-from numpy import array, conjugate, prod, sqrt, take
 
-from . import _float_utils
 from . import _pydfti as mkl_fft  # pylint: disable=no-name-in-module
+from ._fft_utils import _check_norm, _compute_fwd_scale
+from ._float_utils import __downcast_float128_array
 
 
-def _compute_fwd_scale(norm, n, shape):
-    _check_norm(norm)
-    if norm in (None, "backward"):
-        return 1.0
-
-    ss = n if n is not None else shape
-    nn = prod(ss)
-    fsc = 1 / nn if nn != 0 else 1
-    if norm == "forward":
-        return fsc
-    else:  # norm == "ortho"
-        return sqrt(fsc)
-
-
-def _check_norm(norm):
-    if norm not in (None, "ortho", "forward", "backward"):
-        raise ValueError(
-            f"Invalid norm value {norm} should be None, 'ortho', 'forward', "
-            "or 'backward'."
+# copied with modifications from:
+# https://github.com/numpy/numpy/blob/main/numpy/fft/_pocketfft.py
+def _cook_nd_args(a, s=None, axes=None, invreal=False):
+    if s is None:
+        shapeless = True
+        if axes is None:
+            s = list(a.shape)
+        else:
+            s = np.take(a.shape, axes)
+    else:
+        shapeless = False
+    s = list(s)
+    if axes is None:
+        if not shapeless and np.__version__ >= "2.0":
+            msg = (
+                "`axes` should not be `None` if `s` is not `None` "
+                "(Deprecated in NumPy 2.0). In a future version of NumPy, "
+                "this will raise an error and `s[i]` will correspond to "
+                "the size along the transformed axis specified by "
+                "`axes[i]`. To retain current behaviour, pass a sequence "
+                "[0, ..., k-1] to `axes` for an array of dimension k."
+            )
+            warnings.warn(msg, DeprecationWarning, stacklevel=3)
+        axes = list(range(-len(s), 0))
+    if len(s) != len(axes):
+        raise ValueError("Shape and axes have different lengths.")
+    if invreal and shapeless:
+        s[-1] = (a.shape[axes[-1]] - 1) * 2
+    if None in s and np.__version__ >= "2.0":
+        msg = (
+            "Passing an array containing `None` values to `s` is "
+            "deprecated in NumPy 2.0 and will raise an error in "
+            "a future version of NumPy. To use the default behaviour "
+            "of the corresponding 1-D transform, pass the value matching "
+            "the default for its `n` parameter. To use the default "
+            "behaviour for every axis, the `s` argument can be omitted."
         )
+        warnings.warn(msg, DeprecationWarning, stacklevel=3)
+    # use the whole input array along axis `i` if `s[i] == -1 or None`
+    s = [a.shape[_a] if _s in [-1, None] else _s for _s, _a in zip(s, axes)]
+
+    return s, axes
 
 
 def _swap_direction(norm):
@@ -218,7 +240,7 @@ def fft(a, n=None, axis=-1, norm=None):
 
     """
 
-    x = _float_utils.__downcast_float128_array(a)
+    x = __downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     return trycall(mkl_fft.fft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
@@ -311,7 +333,7 @@ def ifft(a, n=None, axis=-1, norm=None):
 
     """
 
-    x = _float_utils.__downcast_float128_array(a)
+    x = __downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     return trycall(mkl_fft.ifft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
@@ -402,7 +424,7 @@ def rfft(a, n=None, axis=-1, norm=None):
 
     """
 
-    x = _float_utils.__downcast_float128_array(a)
+    x = __downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     return trycall(mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
@@ -495,7 +517,7 @@ def irfft(a, n=None, axis=-1, norm=None):
 
     """
 
-    x = _float_utils.__downcast_float128_array(a)
+    x = __downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     return trycall(
@@ -581,9 +603,9 @@ def hfft(a, n=None, axis=-1, norm=None):
     """
 
     norm = _swap_direction(norm)
-    x = _float_utils.__downcast_float128_array(a)
-    x = array(x, copy=True, dtype=complex)
-    conjugate(x, out=x)
+    x = __downcast_float128_array(a)
+    x = np.array(x, copy=True, dtype=complex)
+    np.conjugate(x, out=x)
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     return trycall(
@@ -651,59 +673,16 @@ def ihfft(a, n=None, axis=-1, norm=None):
 
     # The copy may be required for multithreading.
     norm = _swap_direction(norm)
-    x = _float_utils.__downcast_float128_array(a)
-    x = array(x, copy=True, dtype=float)
+    x = __downcast_float128_array(a)
+    x = np.array(x, copy=True, dtype=float)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     output = trycall(
         mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc}
     )
 
-    conjugate(output, out=output)
+    np.conjugate(output, out=output)
     return output
-
-
-# copied from: https://github.com/numpy/numpy/blob/main/numpy/fft/_pocketfft.py
-def _cook_nd_args(a, s=None, axes=None, invreal=False):
-    if s is None:
-        shapeless = True
-        if axes is None:
-            s = list(a.shape)
-        else:
-            s = take(a.shape, axes)
-    else:
-        shapeless = False
-    s = list(s)
-    if axes is None:
-        if not shapeless and np.__version__ >= "2.0":
-            msg = (
-                "`axes` should not be `None` if `s` is not `None` "
-                "(Deprecated in NumPy 2.0). In a future version of NumPy, "
-                "this will raise an error and `s[i]` will correspond to "
-                "the size along the transformed axis specified by "
-                "`axes[i]`. To retain current behaviour, pass a sequence "
-                "[0, ..., k-1] to `axes` for an array of dimension k."
-            )
-            warnings.warn(msg, DeprecationWarning, stacklevel=3)
-        axes = list(range(-len(s), 0))
-    if len(s) != len(axes):
-        raise ValueError("Shape and axes have different lengths.")
-    if invreal and shapeless:
-        s[-1] = (a.shape[axes[-1]] - 1) * 2
-    if None in s and np.__version__ >= "2.0":
-        msg = (
-            "Passing an array containing `None` values to `s` is "
-            "deprecated in NumPy 2.0 and will raise an error in "
-            "a future version of NumPy. To use the default behaviour "
-            "of the corresponding 1-D transform, pass the value matching "
-            "the default for its `n` parameter. To use the default "
-            "behaviour for every axis, the `s` argument can be omitted."
-        )
-        warnings.warn(msg, DeprecationWarning, stacklevel=3)
-    # use the whole input array along axis `i` if `s[i] == -1 or None`
-    s = [a.shape[_a] if _s in [-1, None] else _s for _s, _a in zip(s, axes)]
-
-    return s, axes
 
 
 def fftn(a, s=None, axes=None, norm=None):
@@ -806,7 +785,7 @@ def fftn(a, s=None, axes=None, norm=None):
 
     """
 
-    x = _float_utils.__downcast_float128_array(a)
+    x = __downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
@@ -913,7 +892,7 @@ def ifftn(a, s=None, axes=None, norm=None):
 
     """
 
-    x = _float_utils.__downcast_float128_array(a)
+    x = __downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
@@ -1201,7 +1180,7 @@ def rfftn(a, s=None, axes=None, norm=None):
 
     """
 
-    x = _float_utils.__downcast_float128_array(a)
+    x = __downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
@@ -1345,7 +1324,7 @@ def irfftn(a, s=None, axes=None, norm=None):
 
     """
 
-    x = _float_utils.__downcast_float128_array(a)
+    x = __downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes, invreal=True)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
