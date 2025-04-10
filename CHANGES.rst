@@ -1,6 +1,15 @@
-=================
+=========================
 :code:`mkl_fft` changelog
-=================
+=========================
+
+1.3.14 (04/10/2025)
+===================
+
+resolves gh-152 by adding an explicit :code:`mkl-service` dependency to :code:`mkl-fft` when building the wheel
+to ensure the :code:`mkl` Python module is always available at runtime
+
+resolves gh-115, gh-116, gh-119, gh-135
+
 
 1.3.13 (03/25/2025)
 ===================
