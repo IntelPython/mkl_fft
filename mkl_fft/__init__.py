@@ -24,8 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import mkl_fft.interfaces
-
 from . import _init_helper
 
 # pylint: disable=no-name-in-module
@@ -46,6 +44,8 @@ from ._pydfti import (
     rfftpack,
 )
 from ._version import __version__
+
+import mkl_fft.interfaces  # isort: skip
 
 __all__ = [
     "fft",
