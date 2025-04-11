@@ -1,9 +1,10 @@
-_vendored/__pycache__/
+# CMake build and local install directory
 build/
 mkl_fft.egg-info/
-mkl_fft/__pycache__/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
 mkl_fft/_pydfti.c
-mkl_fft/_pydfti.cpython-310-x86_64-linux-gnu.so
-mkl_fft/interfaces/__pycache__/
+mkl_fft/_pydfti.cpython*.so
 mkl_fft/src/mklfft.c
-mkl_fft/tests/__pycache__/
