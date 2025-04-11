@@ -1335,11 +1335,11 @@ def ifftn(x, s=None, axes=None, overwrite_x=False, fwd_scale=1.0):
 
 
 def rfft2(x, s=None, axes=(-2, -1), fwd_scale=1.0):
-    return rfftn(x, s=s, axes=axes, fsc=fwd_scale)
+    return rfftn(x, s=s, axes=axes, fwd_scale=fwd_scale)
 
 
 def irfft2(x, s=None, axes=(-2, -1), fwd_scale=1.0):
-    return irfftn(x, s=s, axes=axes, fsc=fwd_scale)
+    return irfftn(x, s=s, axes=axes, fwd_scale=fwd_scale)
 
 
 def _remove_axis(s, axes, axis_to_remove):

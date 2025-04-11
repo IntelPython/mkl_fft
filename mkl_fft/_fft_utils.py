@@ -24,47 +24,28 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from . import _pydfti as mkl_fft  # pylint: disable=no-name-in-module
-from ._float_utils import _upcast_float16_array
+import numpy as np
 
-__all__ = ["fft", "ifft", "fftn", "ifftn", "fft2", "ifft2", "rfft", "irfft"]
-
-
-def fft(a, n=None, axis=-1, overwrite_x=False):
-    x = _upcast_float16_array(a)
-    return mkl_fft.fft(x, n=n, axis=axis, overwrite_x=overwrite_x)
+__all__ = ["_check_norm", "_compute_fwd_scale"]
 
 
-def ifft(a, n=None, axis=-1, overwrite_x=False):
-    x = _upcast_float16_array(a)
-    return mkl_fft.ifft(x, n=n, axis=axis, overwrite_x=overwrite_x)
+def _check_norm(norm):
+    if norm not in (None, "ortho", "forward", "backward"):
+        raise ValueError(
+            f"Invalid norm value {norm} should be None, 'ortho', 'forward', "
+            "or 'backward'."
+        )
 
 
-def fftn(a, shape=None, axes=None, overwrite_x=False):
-    x = _upcast_float16_array(a)
-    return mkl_fft.fftn(x, s=shape, axes=axes, overwrite_x=overwrite_x)
+def _compute_fwd_scale(norm, n, shape):
+    _check_norm(norm)
+    if norm in (None, "backward"):
+        return 1.0
 
-
-def ifftn(a, shape=None, axes=None, overwrite_x=False):
-    x = _upcast_float16_array(a)
-    return mkl_fft.ifftn(x, s=shape, axes=axes, overwrite_x=overwrite_x)
-
-
-def fft2(a, shape=None, axes=(-2, -1), overwrite_x=False):
-    x = _upcast_float16_array(a)
-    return mkl_fft.fftn(x, s=shape, axes=axes, overwrite_x=overwrite_x)
-
-
-def ifft2(a, shape=None, axes=(-2, -1), overwrite_x=False):
-    x = _upcast_float16_array(a)
-    return mkl_fft.ifftn(x, s=shape, axes=axes, overwrite_x=overwrite_x)
-
-
-def rfft(a, n=None, axis=-1, overwrite_x=False):
-    x = _upcast_float16_array(a)
-    return mkl_fft.rfftpack(x, n=n, axis=axis, overwrite_x=overwrite_x)
-
-
-def irfft(a, n=None, axis=-1, overwrite_x=False):
-    x = _upcast_float16_array(a)
-    return mkl_fft.irfftpack(x, n=n, axis=axis, overwrite_x=overwrite_x)
+    ss = n if n is not None else shape
+    nn = np.prod(ss)
+    fsc = 1 / nn if nn != 0 else 1
+    if norm == "forward":
+        return fsc
+    else:  # norm == "ortho"
+        return np.sqrt(fsc)
