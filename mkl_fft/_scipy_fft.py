@@ -34,7 +34,7 @@ import numpy as np
 
 from . import _pydfti as mkl_fft  # pylint: disable=no-name-in-module
 from ._fft_utils import _compute_fwd_scale
-from ._float_utils import __supported_array_or_not_implemented
+from ._float_utils import _supported_array_or_not_implemented
 
 __doc__ = """
 This module implements interfaces mimicing `scipy.fft` module.
@@ -223,7 +223,7 @@ def _cook_nd_args(a, s=None, axes=None, invreal=False):
 
 def _validate_input(a):
     try:
-        x = __supported_array_or_not_implemented(a)
+        x = _supported_array_or_not_implemented(a)
     except ValueError:
         raise NotImplementedError
 

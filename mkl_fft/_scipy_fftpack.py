@@ -25,46 +25,46 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from . import _pydfti as mkl_fft  # pylint: disable=no-name-in-module
-from ._float_utils import __upcast_float16_array
+from ._float_utils import _upcast_float16_array
 
 __all__ = ["fft", "ifft", "fftn", "ifftn", "fft2", "ifft2", "rfft", "irfft"]
 
 
 def fft(a, n=None, axis=-1, overwrite_x=False):
-    x = __upcast_float16_array(a)
+    x = _upcast_float16_array(a)
     return mkl_fft.fft(x, n=n, axis=axis, overwrite_x=overwrite_x)
 
 
 def ifft(a, n=None, axis=-1, overwrite_x=False):
-    x = __upcast_float16_array(a)
+    x = _upcast_float16_array(a)
     return mkl_fft.ifft(x, n=n, axis=axis, overwrite_x=overwrite_x)
 
 
 def fftn(a, shape=None, axes=None, overwrite_x=False):
-    x = __upcast_float16_array(a)
+    x = _upcast_float16_array(a)
     return mkl_fft.fftn(x, s=shape, axes=axes, overwrite_x=overwrite_x)
 
 
 def ifftn(a, shape=None, axes=None, overwrite_x=False):
-    x = __upcast_float16_array(a)
+    x = _upcast_float16_array(a)
     return mkl_fft.ifftn(x, s=shape, axes=axes, overwrite_x=overwrite_x)
 
 
 def fft2(a, shape=None, axes=(-2, -1), overwrite_x=False):
-    x = __upcast_float16_array(a)
+    x = _upcast_float16_array(a)
     return mkl_fft.fftn(x, s=shape, axes=axes, overwrite_x=overwrite_x)
 
 
 def ifft2(a, shape=None, axes=(-2, -1), overwrite_x=False):
-    x = __upcast_float16_array(a)
+    x = _upcast_float16_array(a)
     return mkl_fft.ifftn(x, s=shape, axes=axes, overwrite_x=overwrite_x)
 
 
 def rfft(a, n=None, axis=-1, overwrite_x=False):
-    x = __upcast_float16_array(a)
+    x = _upcast_float16_array(a)
     return mkl_fft.rfftpack(x, n=n, axis=axis, overwrite_x=overwrite_x)
 
 
 def irfft(a, n=None, axis=-1, overwrite_x=False):
-    x = __upcast_float16_array(a)
+    x = _upcast_float16_array(a)
     return mkl_fft.irfftpack(x, n=n, axis=axis, overwrite_x=overwrite_x)

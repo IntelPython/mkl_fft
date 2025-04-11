@@ -77,7 +77,7 @@ import numpy as np
 
 from . import _pydfti as mkl_fft  # pylint: disable=no-name-in-module
 from ._fft_utils import _check_norm, _compute_fwd_scale
-from ._float_utils import __downcast_float128_array
+from ._float_utils import _downcast_float128_array
 
 
 # copied with modifications from:
@@ -240,7 +240,7 @@ def fft(a, n=None, axis=-1, norm=None):
 
     """
 
-    x = __downcast_float128_array(a)
+    x = _downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     return trycall(mkl_fft.fft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
@@ -333,7 +333,7 @@ def ifft(a, n=None, axis=-1, norm=None):
 
     """
 
-    x = __downcast_float128_array(a)
+    x = _downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     return trycall(mkl_fft.ifft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
@@ -424,7 +424,7 @@ def rfft(a, n=None, axis=-1, norm=None):
 
     """
 
-    x = __downcast_float128_array(a)
+    x = _downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     return trycall(mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc})
@@ -517,7 +517,7 @@ def irfft(a, n=None, axis=-1, norm=None):
 
     """
 
-    x = __downcast_float128_array(a)
+    x = _downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     return trycall(
@@ -603,7 +603,7 @@ def hfft(a, n=None, axis=-1, norm=None):
     """
 
     norm = _swap_direction(norm)
-    x = __downcast_float128_array(a)
+    x = _downcast_float128_array(a)
     x = np.array(x, copy=True, dtype=complex)
     np.conjugate(x, out=x)
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
@@ -673,7 +673,7 @@ def ihfft(a, n=None, axis=-1, norm=None):
 
     # The copy may be required for multithreading.
     norm = _swap_direction(norm)
-    x = __downcast_float128_array(a)
+    x = _downcast_float128_array(a)
     x = np.array(x, copy=True, dtype=float)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
@@ -785,7 +785,7 @@ def fftn(a, s=None, axes=None, norm=None):
 
     """
 
-    x = __downcast_float128_array(a)
+    x = _downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
@@ -892,7 +892,7 @@ def ifftn(a, s=None, axes=None, norm=None):
 
     """
 
-    x = __downcast_float128_array(a)
+    x = _downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
@@ -1180,7 +1180,7 @@ def rfftn(a, s=None, axes=None, norm=None):
 
     """
 
-    x = __downcast_float128_array(a)
+    x = _downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
@@ -1324,7 +1324,7 @@ def irfftn(a, s=None, axes=None, norm=None):
 
     """
 
-    x = __downcast_float128_array(a)
+    x = _downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes, invreal=True)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 

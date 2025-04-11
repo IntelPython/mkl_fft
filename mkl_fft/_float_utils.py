@@ -27,13 +27,13 @@
 import numpy as np
 
 __all__ = [
-    "__upcast_float16_array",
-    "__downcast_float128_array",
-    "__supported_array_or_not_implemented",
+    "_upcast_float16_array",
+    "_downcast_float128_array",
+    "_supported_array_or_not_implemented",
 ]
 
 
-def __upcast_float16_array(x):
+def _upcast_float16_array(x):
     """
     Used in _scipy_fft to upcast float16 to float32,
     instead of float64, as mkl_fft would do
@@ -46,18 +46,18 @@ def __upcast_float16_array(x):
         if xdt == np.longdouble and not xdt == np.float64:
             raise ValueError("type %s is not supported" % xdt)
     if not isinstance(x, np.ndarray):
-        __x = np.asarray(x)
-        xdt = __x.dtype
+        _x = np.asarray(x)
+        xdt = _x.dtype
         if xdt == np.half:
             # no half-precision routines, so convert to single precision
-            return np.asarray(__x, dtype=np.float32)
+            return np.asarray(_x, dtype=np.float32)
         if xdt == np.longdouble and not xdt == np.float64:
             raise ValueError("type %s is not supported" % xdt)
-        return __x
+        return _x
     return x
 
 
-def __downcast_float128_array(x):
+def _downcast_float128_array(x):
     """
     Used in _numpy_fft to unsafely downcast float128/complex256 to
     complex128, instead of raising an error
@@ -69,27 +69,27 @@ def __downcast_float128_array(x):
         elif xdt == np.clongdouble and not xdt == np.complex128:
             return np.asarray(x, dtype=np.complex128)
     if not isinstance(x, np.ndarray):
-        __x = np.asarray(x)
-        xdt = __x.dtype
+        _x = np.asarray(x)
+        xdt = _x.dtype
         if xdt == np.longdouble and not xdt == np.float64:
             return np.asarray(x, dtype=np.float64)
         elif xdt == np.clongdouble and not xdt == np.complex128:
             return np.asarray(x, dtype=np.complex128)
-        return __x
+        return _x
     return x
 
 
-def __supported_array_or_not_implemented(x):
+def _supported_array_or_not_implemented(x):
     """
     Used in _scipy_fft to convert array to float32,
     float64, complex64, or complex128 type or raise NotImplementedError
     """
-    __x = np.asarray(x)
+    _x = np.asarray(x)
     black_list = [np.half]
     if hasattr(np, "float128"):
         black_list.append(np.float128)
     if hasattr(np, "complex256"):
         black_list.append(np.complex256)
-    if __x.dtype in black_list:
+    if _x.dtype in black_list:
         raise NotImplementedError
-    return __x
+    return _x
