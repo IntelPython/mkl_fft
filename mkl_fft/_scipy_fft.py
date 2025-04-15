@@ -33,7 +33,7 @@ import mkl
 import numpy as np
 
 from . import _pydfti as mkl_fft  # pylint: disable=no-name-in-module
-from ._fft_utils import _compute_fwd_scale
+from ._fft_utils import _compute_fwd_scale, _swap_direction
 from ._float_utils import _supported_array_or_not_implemented
 
 __doc__ = """
@@ -125,6 +125,12 @@ __all__ = [
     "irfft2",
     "rfftn",
     "irfftn",
+    "hfft",
+    "ihfft",
+    "hfft2",
+    "ihfft2",
+    "hfftn",
+    "ihfftn",
     "get_workers",
     "set_workers",
     "DftiBackend",
@@ -231,7 +237,7 @@ def _validate_input(a):
 
 
 def fft(
-    a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, plan=None
+    a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *, plan=None
 ):
     _check_plan(plan)
     x = _validate_input(a)
@@ -244,7 +250,7 @@ def fft(
 
 
 def ifft(
-    a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, plan=None
+    a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *, plan=None
 ):
     _check_plan(plan)
     x = _validate_input(a)
@@ -263,6 +269,7 @@ def fft2(
     norm=None,
     overwrite_x=False,
     workers=None,
+    *,
     plan=None,
 ):
 
@@ -284,6 +291,7 @@ def ifft2(
     norm=None,
     overwrite_x=False,
     workers=None,
+    *,
     plan=None,
 ):
 
@@ -299,7 +307,14 @@ def ifft2(
 
 
 def fftn(
-    a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan=None
+    a,
+    s=None,
+    axes=None,
+    norm=None,
+    overwrite_x=False,
+    workers=None,
+    *,
+    plan=None,
 ):
     _check_plan(plan)
     x = _validate_input(a)
@@ -312,7 +327,14 @@ def fftn(
 
 
 def ifftn(
-    a, s=None, axes=None, norm=None, overwrite_x=False, workers=None, plan=None
+    a,
+    s=None,
+    axes=None,
+    norm=None,
+    overwrite_x=False,
+    workers=None,
+    *,
+    plan=None,
 ):
     _check_plan(plan)
     x = _validate_input(a)
@@ -324,7 +346,7 @@ def ifftn(
         )
 
 
-def rfft(a, n=None, axis=-1, norm=None, workers=None, plan=None):
+def rfft(a, n=None, axis=-1, norm=None, workers=None, *, plan=None):
     _check_plan(plan)
     x = _validate_input(a)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
@@ -333,7 +355,7 @@ def rfft(a, n=None, axis=-1, norm=None, workers=None, plan=None):
         return mkl_fft.rfft(x, n=n, axis=axis, fwd_scale=fsc)
 
 
-def irfft(a, n=None, axis=-1, norm=None, workers=None, plan=None):
+def irfft(a, n=None, axis=-1, norm=None, workers=None, *, plan=None):
     _check_plan(plan)
     x = _validate_input(a)
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
@@ -342,17 +364,15 @@ def irfft(a, n=None, axis=-1, norm=None, workers=None, plan=None):
         return mkl_fft.irfft(x, n=n, axis=axis, fwd_scale=fsc)
 
 
-def rfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, plan=None):
-
+def rfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, *, plan=None):
     return rfftn(a, s=s, axes=axes, norm=norm, workers=workers, plan=plan)
 
 
-def irfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, plan=None):
-
+def irfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, *, plan=None):
     return irfftn(a, s=s, axes=axes, norm=norm, workers=workers, plan=plan)
 
 
-def rfftn(a, s=None, axes=None, norm=None, workers=None, plan=None):
+def rfftn(a, s=None, axes=None, norm=None, workers=None, *, plan=None):
     _check_plan(plan)
     x = _validate_input(a)
     s, axes = _cook_nd_args(x, s, axes)
@@ -362,7 +382,7 @@ def rfftn(a, s=None, axes=None, norm=None, workers=None, plan=None):
         return mkl_fft.rfftn(x, s, axes, fwd_scale=fsc)
 
 
-def irfftn(a, s=None, axes=None, norm=None, workers=None, plan=None):
+def irfftn(a, s=None, axes=None, norm=None, workers=None, *, plan=None):
     _check_plan(plan)
     x = _validate_input(a)
     s, axes = _cook_nd_args(x, s, axes, invreal=True)
@@ -370,3 +390,63 @@ def irfftn(a, s=None, axes=None, norm=None, workers=None, plan=None):
 
     with Workers(workers):
         return mkl_fft.irfftn(x, s, axes, fwd_scale=fsc)
+
+
+def hfft(a, n=None, axis=-1, norm=None, workers=None, *, plan=None):
+    _check_plan(plan)
+    x = _validate_input(a)
+    norm = _swap_direction(norm)
+    x = np.array(x, copy=True)
+    np.conjugate(x, out=x)
+    fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
+
+    with Workers(workers):
+        return mkl_fft.irfft(x, n=n, axis=axis, fwd_scale=fsc)
+
+
+def ihfft(a, n=None, axis=-1, norm=None, workers=None, *, plan=None):
+    _check_plan(plan)
+    x = _validate_input(a)
+    norm = _swap_direction(norm)
+    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
+
+    with Workers(workers):
+        result = mkl_fft.rfft(x, n=n, axis=axis, fwd_scale=fsc)
+
+    np.conjugate(result, out=result)
+    return result
+
+
+def hfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, *, plan=None):
+    return hfftn(a, s=s, axes=axes, norm=norm, workers=workers, plan=plan)
+
+
+def ihfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, *, plan=None):
+    return ihfftn(a, s=s, axes=axes, norm=norm, workers=workers, plan=plan)
+
+
+def hfftn(a, s=None, axes=None, norm=None, workers=None, *, plan=None):
+    _check_plan(plan)
+    x = _validate_input(a)
+    norm = _swap_direction(norm)
+    x = np.array(x, copy=True)
+    np.conjugate(x, out=x)
+    s, axes = _cook_nd_args(x, s, axes, invreal=True)
+    fsc = _compute_fwd_scale(norm, s, x.shape)
+
+    with Workers(workers):
+        return mkl_fft.irfftn(x, s, axes, fwd_scale=fsc)
+
+
+def ihfftn(a, s=None, axes=None, norm=None, workers=None, *, plan=None):
+    _check_plan(plan)
+    x = _validate_input(a)
+    norm = _swap_direction(norm)
+    s, axes = _cook_nd_args(x, s, axes)
+    fsc = _compute_fwd_scale(norm, s, x.shape)
+
+    with Workers(workers):
+        result = mkl_fft.rfftn(x, s, axes, fwd_scale=fsc)
+
+    np.conjugate(result, out=result)
+    return result
