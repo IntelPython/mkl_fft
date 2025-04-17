@@ -22,6 +22,11 @@ jobs:
       matrix:
         python: ['3.9', '3.10', '3.11', '3.12']
     steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.12.1
+        with:
+          access_token: ${{ github.token }}
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -29,6 +34,7 @@ jobs:
       - name: Set pkgs_dirs
         run: |
           echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
+
       - name: Cache conda packages
         uses: actions/cache@v4
         env:
@@ -43,8 +49,10 @@ jobs:
 
       - name: Add conda to system path
         run: echo $CONDA/bin >> $GITHUB_PATH
+
       - name: Install conda-build
         run: conda install conda-build
+
       - name: Build conda package with NumPy 2.0
         run: |
           CHANNELS="-c conda-forge --override-channels"
@@ -56,6 +64,7 @@ jobs:
             $VERSIONS \
             $CHANNELS \
             conda-recipe-cf
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -81,10 +90,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python_ver }}
+
       - name: Add conda to system path
         run: echo $CONDA/bin >> $GITHUB_PATH
+
       - name: Install conda-build
         run: conda install conda-build
+
       - name: Create conda channel
         run: |
           mkdir -p $GITHUB_WORKSPACE/channel/linux-64
@@ -97,11 +109,14 @@ jobs:
         run: |
           CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
           conda create -n ${{ env.TEST_ENV_NAME }} $PACKAGE_NAME python=${{ matrix.python_ver }} ${{ matrix.numpy }} $CHANNELS --only-deps --dry-run > lockfile
+
       - name: Display lockfile
         run: cat lockfile
+
       - name: Set pkgs_dirs
         run: |
           echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
+
       - name: Cache conda packages
         uses: actions/cache@v4
         env:
@@ -120,6 +135,7 @@ jobs:
           conda create -n ${{ env.TEST_ENV_NAME }} python=${{ matrix.python_ver }} ${{ matrix.numpy }} $PACKAGE_NAME pytest scipy $CHANNELS
           # Test installed packages
           conda list -n ${{ env.TEST_ENV_NAME }}
+
       - name: Run tests
         run: |
           source $CONDA/etc/profile.d/conda.sh
@@ -133,9 +149,15 @@ jobs:
       matrix:
         python: ['3.9', '3.10', '3.11', '3.12']
     steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.12.1
+        with:
+          access_token: ${{ github.token }}
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
@@ -181,6 +203,7 @@ jobs:
     defaults:
       run:
         shell: cmd /C CALL {0}
+
     strategy:
       matrix:
         python_ver: ['3.9', '3.10', '3.11', '3.12']
@@ -227,9 +250,11 @@ jobs:
         shell: cmd /C CALL {0}
         run: |
           conda search ${{ env.PACKAGE_NAME }} -c ${{ env.workdir }}/channel --override-channels --info --json > ${{ env.workdir }}\ver.json
+
       - name: Output content of produced ver.json
         shell: pwsh
         run: Get-Content -Path ${{ env.workdir }}\ver.json
+
       - name: Collect dependencies
         shell: cmd /C CALL {0}
         run: |
@@ -242,9 +267,11 @@ jobs:
              SET PACKAGE_VERSION=%%F
           )
           conda install -n ${{ env.TEST_ENV_NAME }} ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% python=${{ matrix.python_ver }} ${{ matrix.numpy }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }} --only-deps --dry-run > lockfile
+
       - name: Display lockfile content
         shell: pwsh
         run: Get-Content -Path .\lockfile
+
       - name: Cache conda packages
         uses: actions/cache@v4
         env:
@@ -256,6 +283,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_ver }}-
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
+
       - name: Install mkl_fft
         shell: cmd /C CALL {0}
         run: |
@@ -269,12 +297,14 @@ jobs:
           )
           SET "TEST_DEPENDENCIES=pytest pytest-cov"
           conda install -n ${{ env.TEST_ENV_NAME }} ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% %TEST_DEPENDENCIES% python=${{ matrix.python }} ${{ matrix.numpy }} scipy -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
+
       - name: Report content of test environment
         shell: cmd /C CALL {0}
         run: |
           echo "Value of CONDA enviroment variable was: " %CONDA%
           echo "Value of CONDA_PREFIX enviroment variable was: " %CONDA_PREFIX%
           conda info && conda list -n ${{ env.TEST_ENV_NAME }}
+
       - name: Run tests
         shell: cmd /C CALL {0}
         run: >-

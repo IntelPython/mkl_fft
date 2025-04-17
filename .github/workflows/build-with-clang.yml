@@ -1,0 +1,77 @@
+name: Build project with IntelLLVM clang compiler
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions: read-all
+
+jobs:
+  build-with-clang:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python: ["3.9", "3.10", "3.11", "3.12"]
+        numpy_version: ["numpy'<2'", "numpy'>=2'"]
+
+    env:
+      ONEAPI_ROOT: /opt/intel/oneapi
+
+    defaults:
+      run:
+        shell: bash -el {0}
+
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.12.1
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Add Intel repository
+        run: |
+          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+          sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+          rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+          sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
+          sudo apt-get update
+
+      - name: Install Intel OneAPI
+        run: |
+          sudo apt-get install intel-oneapi-compiler-dpcpp-cpp
+          sudo apt-get install intel-oneapi-tbb
+          sudo apt-get install intel-oneapi-mkl-devel
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          architecture: x64
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install mkl_fft dependencies
+        run: |
+          pip install cython setuptools">=77"
+          pip install ${{ matrix.numpy_version }}
+
+      - name: List oneAPI folder content
+        run: ls ${{ env.ONEAPI_ROOT }}/compiler
+
+      - name: Build mkl_fft
+        run: |
+          source ${{ env.ONEAPI_ROOT }}/setvars.sh
+          echo $CMPLR_ROOT
+          export CC=$CMPLR_ROOT/bin/icx
+          export CFLAGS="${CFLAGS} -fno-fast-math -O2"
+          pip install -e . --no-build-isolation --no-deps --verbose
+
+      - name: Run mkl_fft tests
+        run: |
+          source ${{ env.ONEAPI_ROOT }}/setvars.sh
+          pip install scipy mkl-service pytest
+          pytest -s -v --pyargs mkl_fft
