@@ -24,6 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+"""
+An interface for FFT module of Scipy (`scipy.fft`) that uses OneMKL FFT
+in the backend.
+
+"""
+
 import contextlib
 import contextvars
 import operator
@@ -208,13 +214,20 @@ def _check_plan(plan):
         )
 
 
-def _cook_nd_args(a, s=None, axes=None, invreal=False):
+def _check_overwrite_x(overwrite_x):
+    if overwrite_x:
+        raise NotImplementedError(
+            "Overwriting the content of `x` is currently not supported"
+        )
+
+
+def _cook_nd_args(x, s=None, axes=None, invreal=False):
     if s is None:
         shapeless = True
         if axes is None:
-            s = list(a.shape)
+            s = list(x.shape)
         else:
-            s = np.take(a.shape, axes)
+            s = np.take(x.shape, axes)
     else:
         shapeless = False
     s = list(s)
@@ -223,13 +236,13 @@ def _cook_nd_args(a, s=None, axes=None, invreal=False):
     if len(s) != len(axes):
         raise ValueError("Shape and axes have different lengths.")
     if invreal and shapeless:
-        s[-1] = (a.shape[axes[-1]] - 1) * 2
+        s[-1] = (x.shape[axes[-1]] - 1) * 2
     return s, axes
 
 
-def _validate_input(a):
+def _validate_input(x):
     try:
-        x = _supported_array_or_not_implemented(a)
+        x = _supported_array_or_not_implemented(x)
     except ValueError:
         raise NotImplementedError
 
@@ -237,10 +250,16 @@ def _validate_input(a):
 
 
 def fft(
-    a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *, plan=None
+    x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *, plan=None
 ):
+    """
+    Compute the 1-D discrete Fourier Transform.
+
+    For full documentation refer to `scipy.fft.fft`.
+
+    """
     _check_plan(plan)
-    x = _validate_input(a)
+    x = _validate_input(x)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     with Workers(workers):
@@ -250,10 +269,16 @@ def fft(
 
 
 def ifft(
-    a, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *, plan=None
+    x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *, plan=None
 ):
+    """
+    Compute the 1-D inverse discrete Fourier Transform.
+
+    For full documentation refer to `scipy.fft.ifft`.
+
+    """
     _check_plan(plan)
-    x = _validate_input(a)
+    x = _validate_input(x)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     with Workers(workers):
@@ -263,7 +288,7 @@ def ifft(
 
 
 def fft2(
-    a,
+    x,
     s=None,
     axes=(-2, -1),
     norm=None,
@@ -272,9 +297,14 @@ def fft2(
     *,
     plan=None,
 ):
+    """
+    Compute the 2-D discrete Fourier Transform.
 
+    For full documentation refer to `scipy.fft.fft2`.
+
+    """
     return fftn(
-        a,
+        x,
         s=s,
         axes=axes,
         norm=norm,
@@ -285,7 +315,7 @@ def fft2(
 
 
 def ifft2(
-    a,
+    x,
     s=None,
     axes=(-2, -1),
     norm=None,
@@ -294,9 +324,14 @@ def ifft2(
     *,
     plan=None,
 ):
+    """
+    Compute the 2-D inverse discrete Fourier Transform.
 
+    For full documentation refer to `scipy.fft.ifft2`.
+
+    """
     return ifftn(
-        a,
+        x,
         s=s,
         axes=axes,
         norm=norm,
@@ -307,7 +342,7 @@ def ifft2(
 
 
 def fftn(
-    a,
+    x,
     s=None,
     axes=None,
     norm=None,
@@ -316,8 +351,14 @@ def fftn(
     *,
     plan=None,
 ):
+    """
+    Compute the N-D discrete Fourier Transform.
+
+    For full documentation refer to `scipy.fft.fftn`.
+
+    """
     _check_plan(plan)
-    x = _validate_input(a)
+    x = _validate_input(x)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with Workers(workers):
@@ -327,7 +368,7 @@ def fftn(
 
 
 def ifftn(
-    a,
+    x,
     s=None,
     axes=None,
     norm=None,
@@ -336,8 +377,14 @@ def ifftn(
     *,
     plan=None,
 ):
+    """
+    Compute the N-D inverse discrete Fourier Transform.
+
+    For full documentation refer to `scipy.fft.ifftn`.
+
+    """
     _check_plan(plan)
-    x = _validate_input(a)
+    x = _validate_input(x)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with Workers(workers):
@@ -346,35 +393,135 @@ def ifftn(
         )
 
 
-def rfft(a, n=None, axis=-1, norm=None, workers=None, *, plan=None):
+def rfft(
+    x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *, plan=None
+):
+    """
+    Compute the 1-D discrete Fourier Transform for real input..
+
+    For full documentation refer to `scipy.fft.rfft`.
+
+    Limitation
+    -----------
+    The kwarg `overwrite_x` is only supported with its default value.
+
+    """
     _check_plan(plan)
-    x = _validate_input(a)
+    _check_overwrite_x(overwrite_x)
+    x = _validate_input(x)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     with Workers(workers):
         return mkl_fft.rfft(x, n=n, axis=axis, fwd_scale=fsc)
 
 
-def irfft(a, n=None, axis=-1, norm=None, workers=None, *, plan=None):
+def irfft(
+    x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *, plan=None
+):
+    """
+    Compute the inverse of `rfft`.
+
+    For full documentation refer to `scipy.fft.irfft`.
+
+    Limitation
+    -----------
+    The kwarg `overwrite_x` is only supported with its default value.
+
+    """
     _check_plan(plan)
-    x = _validate_input(a)
+    _check_overwrite_x(overwrite_x)
+    x = _validate_input(x)
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     with Workers(workers):
         return mkl_fft.irfft(x, n=n, axis=axis, fwd_scale=fsc)
 
 
-def rfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, *, plan=None):
-    return rfftn(a, s=s, axes=axes, norm=norm, workers=workers, plan=plan)
+def rfft2(
+    x,
+    s=None,
+    axes=(-2, -1),
+    overwrite_x=False,
+    norm=None,
+    workers=None,
+    *,
+    plan=None,
+):
+    """
+    Compute the 2-D discrete Fourier Transform for real input.
+
+    For full documentation refer to `scipy.fft.rfft2`.
+
+    Limitation
+    -----------
+    The kwarg `overwrite_x` is only supported with its default value.
+
+    """
+    return rfftn(
+        x,
+        s=s,
+        axes=axes,
+        norm=norm,
+        overwrite_x=overwrite_x,
+        workers=workers,
+        plan=plan,
+    )
 
 
-def irfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, *, plan=None):
-    return irfftn(a, s=s, axes=axes, norm=norm, workers=workers, plan=plan)
+def irfft2(
+    x,
+    s=None,
+    axes=(-2, -1),
+    norm=None,
+    overwrite_x=False,
+    workers=None,
+    *,
+    plan=None,
+):
+    """
+    Compute the inverse of `rfft2`.
+
+    For full documentation refer to `scipy.fft.irfft2`.
+
+    Limitation
+    -----------
+    The kwarg `overwrite_x` is only supported with its default value.
+
+    """
+    return irfftn(
+        x,
+        s=s,
+        axes=axes,
+        norm=norm,
+        overwrite_x=overwrite_x,
+        workers=workers,
+        plan=plan,
+    )
 
 
-def rfftn(a, s=None, axes=None, norm=None, workers=None, *, plan=None):
+def rfftn(
+    x,
+    s=None,
+    axes=None,
+    norm=None,
+    overwrite_x=False,
+    workers=None,
+    *,
+    plan=None,
+):
+    """
+    Compute the N-D discrete Fourier Transform for real input.
+
+    For full documentation refer to `scipy.fft.rfftn`.
+
+    Limitation
+    -----------
+    The kwarg `overwrite_x` is only supported with its default value.
+
+    """
     _check_plan(plan)
-    x = _validate_input(a)
+    _check_overwrite_x(overwrite_x)
+    x = _validate_input(x)
     s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
@@ -382,9 +529,29 @@ def rfftn(a, s=None, axes=None, norm=None, workers=None, *, plan=None):
         return mkl_fft.rfftn(x, s, axes, fwd_scale=fsc)
 
 
-def irfftn(a, s=None, axes=None, norm=None, workers=None, *, plan=None):
+def irfftn(
+    x,
+    s=None,
+    axes=None,
+    norm=None,
+    overwrite_x=False,
+    workers=None,
+    *,
+    plan=None,
+):
+    """
+    Compute the inverse of `rfftn`.
+
+    For full documentation refer to `scipy.fft.irfftn`.
+
+    Limitation
+    -----------
+    The kwarg `overwrite_x` is only supported with its default value.
+
+    """
     _check_plan(plan)
-    x = _validate_input(a)
+    _check_overwrite_x(overwrite_x)
+    x = _validate_input(x)
     s, axes = _cook_nd_args(x, s, axes, invreal=True)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
@@ -392,9 +559,23 @@ def irfftn(a, s=None, axes=None, norm=None, workers=None, *, plan=None):
         return mkl_fft.irfftn(x, s, axes, fwd_scale=fsc)
 
 
-def hfft(a, n=None, axis=-1, norm=None, workers=None, *, plan=None):
+def hfft(
+    x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *, plan=None
+):
+    """
+    Compute the FFT of a signal that has Hermitian symmetry,
+    i.e., a real spectrum.
+
+    For full documentation refer to `scipy.fft.hfft`.
+
+    Limitation
+    -----------
+    The kwarg `overwrite_x` is only supported with its default value.
+
+    """
     _check_plan(plan)
-    x = _validate_input(a)
+    _check_overwrite_x(overwrite_x)
+    x = _validate_input(x)
     norm = _swap_direction(norm)
     x = np.array(x, copy=True)
     np.conjugate(x, out=x)
@@ -404,9 +585,22 @@ def hfft(a, n=None, axis=-1, norm=None, workers=None, *, plan=None):
         return mkl_fft.irfft(x, n=n, axis=axis, fwd_scale=fsc)
 
 
-def ihfft(a, n=None, axis=-1, norm=None, workers=None, *, plan=None):
+def ihfft(
+    x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *, plan=None
+):
+    """
+    Compute the inverse FFT of a signal that has Hermitian symmetry.
+
+    For full documentation refer to `scipy.fft.ihfft`.
+
+    Limitation
+    -----------
+    The kwarg `overwrite_x` is only supported with its default value.
+
+    """
     _check_plan(plan)
-    x = _validate_input(a)
+    _check_overwrite_x(overwrite_x)
+    x = _validate_input(x)
     norm = _swap_direction(norm)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
@@ -417,17 +611,91 @@ def ihfft(a, n=None, axis=-1, norm=None, workers=None, *, plan=None):
     return result
 
 
-def hfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, *, plan=None):
-    return hfftn(a, s=s, axes=axes, norm=norm, workers=workers, plan=plan)
+def hfft2(
+    x,
+    s=None,
+    axes=(-2, -1),
+    norm=None,
+    overwrite_x=False,
+    workers=None,
+    *,
+    plan=None,
+):
+    """
+    Compute the 2-D FFT of a Hermitian complex array.
+
+    For full documentation refer to `scipy.fft.hfft2`.
+
+    Limitation
+    -----------
+    The kwarg `overwrite_x` is only supported with its default value.
+
+    """
+    return hfftn(
+        x,
+        s=s,
+        axes=axes,
+        norm=norm,
+        overwrite_x=overwrite_x,
+        workers=workers,
+        plan=plan,
+    )
 
 
-def ihfft2(a, s=None, axes=(-2, -1), norm=None, workers=None, *, plan=None):
-    return ihfftn(a, s=s, axes=axes, norm=norm, workers=workers, plan=plan)
+def ihfft2(
+    x,
+    s=None,
+    axes=(-2, -1),
+    norm=None,
+    overwrite_x=False,
+    workers=None,
+    *,
+    plan=None,
+):
+    """
+    Compute the 2-D inverse FFT of a real spectrum.
+
+    For full documentation refer to `scipy.fft.ihfft2`.
+
+    Limitation
+    -----------
+    The kwarg `overwrite_x` is only supported with its default value.
+
+    """
+    return ihfftn(
+        x,
+        s=s,
+        axes=axes,
+        norm=norm,
+        overwrite_x=overwrite_x,
+        workers=workers,
+        plan=plan,
+    )
 
 
-def hfftn(a, s=None, axes=None, norm=None, workers=None, *, plan=None):
+def hfftn(
+    x,
+    s=None,
+    axes=None,
+    norm=None,
+    overwrite_x=False,
+    workers=None,
+    *,
+    plan=None,
+):
+    """
+    Compute the N-D FFT of Hermitian symmetric complex input, i.e., a signal with a real spectrum.
+
+    For full documentation refer to `scipy.fft.hfftn`.
+
+    Limitation
+    -----------
+    The kwarg `overwrite_x` is only supported with its default value.
+
+    """
     _check_plan(plan)
-    x = _validate_input(a)
+    _check_overwrite_x(overwrite_x)
+    x = _validate_input(x)
     norm = _swap_direction(norm)
     x = np.array(x, copy=True)
     np.conjugate(x, out=x)
@@ -438,9 +706,29 @@ def hfftn(a, s=None, axes=None, norm=None, workers=None, *, plan=None):
         return mkl_fft.irfftn(x, s, axes, fwd_scale=fsc)
 
 
-def ihfftn(a, s=None, axes=None, norm=None, workers=None, *, plan=None):
+def ihfftn(
+    x,
+    s=None,
+    axes=None,
+    norm=None,
+    overwrite_x=False,
+    workers=None,
+    *,
+    plan=None,
+):
+    """
+    Compute the N-D inverse discrete Fourier Transform for a real spectrum.
+
+    For full documentation refer to `scipy.fft.ihfftn`.
+
+    Limitation
+    -----------
+    The kwarg `overwrite_x` is only supported with its default value.
+
+    """
     _check_plan(plan)
-    x = _validate_input(a)
+    _check_overwrite_x(overwrite_x)
+    x = _validate_input(x)
     norm = _swap_direction(norm)
     s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
