@@ -26,7 +26,7 @@
 
 import numpy as np
 
-__all__ = ["_check_norm", "_compute_fwd_scale"]
+__all__ = ["_check_norm", "_compute_fwd_scale", "_swap_direction"]
 
 
 def _check_norm(norm):
@@ -49,3 +49,15 @@ def _compute_fwd_scale(norm, n, shape):
         return fsc
     else:  # norm == "ortho"
         return np.sqrt(fsc)
+
+
+def _swap_direction(norm):
+    _check_norm(norm)
+    _swap_direction_map = {
+        "backward": "forward",
+        None: "forward",
+        "ortho": "ortho",
+        "forward": "backward",
+    }
+
+    return _swap_direction_map[norm]

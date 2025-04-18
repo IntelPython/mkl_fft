@@ -2,7 +2,13 @@
 :code:`mkl_fft` changelog
 =========================
 
-1.3.14 (04/10/2025)
+[dev] (MM/DD/YY)
+==================
+
+scipy interface :code:`mkl_fft.interfaces.scipy_fft` now includes Hermitian FFT functions:
+:code:`hfft`, :code:`ihfft`, :code:`hfftn`, :code:`ihfftn`, :code:`hfft2`, and :code:`ihfft2`
+
+1.3.14 (04/11/2025)
 ===================
 
 resolves gh-152 by adding an explicit :code:`mkl-service` dependency to :code:`mkl-fft` when building the wheel
