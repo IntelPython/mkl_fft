@@ -76,7 +76,7 @@ import warnings
 import numpy as np
 
 from . import _pydfti as mkl_fft  # pylint: disable=no-name-in-module
-from ._fft_utils import _check_norm, _compute_fwd_scale
+from ._fft_utils import _compute_fwd_scale, _swap_direction
 from ._float_utils import _downcast_float128_array
 
 
@@ -122,18 +122,6 @@ def _cook_nd_args(a, s=None, axes=None, invreal=False):
     s = [a.shape[_a] if _s in [-1, None] else _s for _s, _a in zip(s, axes)]
 
     return s, axes
-
-
-def _swap_direction(norm):
-    _check_norm(norm)
-    _swap_direction_map = {
-        "backward": "forward",
-        None: "forward",
-        "ortho": "ortho",
-        "forward": "backward",
-    }
-
-    return _swap_direction_map[norm]
 
 
 def trycall(func, args, kwrds):
@@ -604,7 +592,7 @@ def hfft(a, n=None, axis=-1, norm=None):
 
     norm = _swap_direction(norm)
     x = _downcast_float128_array(a)
-    x = np.array(x, copy=True, dtype=complex)
+    x = np.array(x, copy=True)
     np.conjugate(x, out=x)
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
@@ -671,10 +659,8 @@ def ihfft(a, n=None, axis=-1, norm=None):
 
     """
 
-    # The copy may be required for multithreading.
     norm = _swap_direction(norm)
     x = _downcast_float128_array(a)
-    x = np.array(x, copy=True, dtype=float)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     output = trycall(
