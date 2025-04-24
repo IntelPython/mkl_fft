@@ -29,31 +29,32 @@ An interface for FFT module of NumPy (`numpy.fft`) that uses OneMKL FFT
 in the backend.
 """
 
-__all__ = [
-    "fft",
-    "ifft",
-    "rfft",
-    "irfft",
-    "hfft",
-    "ihfft",
-    "rfftn",
-    "irfftn",
-    "rfft2",
-    "irfft2",
-    "fft2",
-    "ifft2",
-    "fftn",
-    "ifftn",
-]
-
 import re
 import warnings
 
 import numpy as np
 
-from . import _pydfti as mkl_fft  # pylint: disable=no-name-in-module
-from ._fft_utils import _compute_fwd_scale, _swap_direction
+import mkl_fft
+
+from .._fft_utils import _compute_fwd_scale, _swap_direction
 from ._float_utils import _downcast_float128_array
+
+__all__ = [
+    "fft",
+    "ifft",
+    "fft2",
+    "ifft2",
+    "fftn",
+    "ifftn",
+    "rfft",
+    "irfft",
+    "rfft2",
+    "irfft2",
+    "rfftn",
+    "irfftn",
+    "hfft",
+    "ihfft",
+]
 
 
 # copied with modifications from:
@@ -100,7 +101,7 @@ def _cook_nd_args(a, s=None, axes=None, invreal=False):
     return s, axes
 
 
-def trycall(func, args, kwrds):
+def _trycall(func, args, kwrds):
     try:
         res = func(*args, **kwrds)
     except ValueError as ve:
@@ -121,7 +122,7 @@ def fft(a, n=None, axis=-1, norm=None, out=None):
     x = _downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
-    return trycall(
+    return _trycall(
         mkl_fft.fft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
     )
 
@@ -136,114 +137,8 @@ def ifft(a, n=None, axis=-1, norm=None, out=None):
     x = _downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
-    return trycall(
+    return _trycall(
         mkl_fft.ifft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
-    )
-
-
-def rfft(a, n=None, axis=-1, norm=None, out=None):
-    """
-    Compute the one-dimensional discrete Fourier Transform for real input.
-
-    For full documentation refer to `numpy.fft.rfft`.
-
-    """
-    x = _downcast_float128_array(a)
-    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
-
-    return trycall(
-        mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
-    )
-
-
-def irfft(a, n=None, axis=-1, norm=None, out=None):
-    """
-    Compute the inverse of `rfft`.
-
-    For full documentation refer to `numpy.fft.irfft`.
-
-    """
-    x = _downcast_float128_array(a)
-    fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
-
-    return trycall(
-        mkl_fft.irfft,
-        (x,),
-        {"n": n, "axis": axis, "fwd_scale": fsc, "out": out},
-    )
-
-
-def hfft(a, n=None, axis=-1, norm=None, out=None):
-    """
-    Compute the FFT of a signal which has Hermitian symmetry,
-    i.e., a real spectrum..
-
-    For full documentation refer to `numpy.fft.hfft`.
-
-    """
-    norm = _swap_direction(norm)
-    x = _downcast_float128_array(a)
-    x = np.array(x, copy=True)
-    np.conjugate(x, out=x)
-    fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
-
-    return trycall(
-        mkl_fft.irfft,
-        (x,),
-        {"n": n, "axis": axis, "fwd_scale": fsc, "out": out},
-    )
-
-
-def ihfft(a, n=None, axis=-1, norm=None, out=None):
-    """
-    Compute the inverse FFT of a signal which has Hermitian symmetry.
-
-    For full documentation refer to `numpy.fft.ihfft`.
-
-    """
-    norm = _swap_direction(norm)
-    x = _downcast_float128_array(a)
-    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
-
-    output = trycall(
-        mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
-    )
-
-    np.conjugate(output, out=output)
-    return output
-
-
-def fftn(a, s=None, axes=None, norm=None, out=None):
-    """
-    Compute the N-dimensional discrete Fourier Transform.
-
-    For full documentation refer to `numpy.fft.fftn`.
-
-    """
-    x = _downcast_float128_array(a)
-    s, axes = _cook_nd_args(x, s, axes)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
-
-    return trycall(
-        mkl_fft.fftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc, "out": out}
-    )
-
-
-def ifftn(a, s=None, axes=None, norm=None, out=None):
-    """
-    Compute the N-dimensional inverse discrete Fourier Transform.
-
-    For full documentation refer to `numpy.fft.ifftn`.
-
-    """
-    x = _downcast_float128_array(a)
-    s, axes = _cook_nd_args(x, s, axes)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
-
-    return trycall(
-        mkl_fft.ifftn,
-        (x,),
-        {"s": s, "axes": axes, "fwd_scale": fsc, "out": out},
     )
 
 
@@ -267,21 +162,69 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None, out=None):
     return ifftn(a, s=s, axes=axes, norm=norm, out=out)
 
 
-def rfftn(a, s=None, axes=None, norm=None, out=None):
+def fftn(a, s=None, axes=None, norm=None, out=None):
     """
-    Compute the N-dimensional discrete Fourier Transform for real input.
+    Compute the N-dimensional discrete Fourier Transform.
 
-    For full documentation refer to `numpy.fft.rfftn`.
+    For full documentation refer to `numpy.fft.fftn`.
 
     """
     x = _downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
-    return trycall(
-        mkl_fft.rfftn,
+    return _trycall(
+        mkl_fft.fftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc, "out": out}
+    )
+
+
+def ifftn(a, s=None, axes=None, norm=None, out=None):
+    """
+    Compute the N-dimensional inverse discrete Fourier Transform.
+
+    For full documentation refer to `numpy.fft.ifftn`.
+
+    """
+    x = _downcast_float128_array(a)
+    s, axes = _cook_nd_args(x, s, axes)
+    fsc = _compute_fwd_scale(norm, s, x.shape)
+
+    return _trycall(
+        mkl_fft.ifftn,
         (x,),
         {"s": s, "axes": axes, "fwd_scale": fsc, "out": out},
+    )
+
+
+def rfft(a, n=None, axis=-1, norm=None, out=None):
+    """
+    Compute the one-dimensional discrete Fourier Transform for real input.
+
+    For full documentation refer to `numpy.fft.rfft`.
+
+    """
+    x = _downcast_float128_array(a)
+    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
+
+    return _trycall(
+        mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
+    )
+
+
+def irfft(a, n=None, axis=-1, norm=None, out=None):
+    """
+    Compute the inverse of `rfft`.
+
+    For full documentation refer to `numpy.fft.irfft`.
+
+    """
+    x = _downcast_float128_array(a)
+    fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
+
+    return _trycall(
+        mkl_fft.irfft,
+        (x,),
+        {"n": n, "axis": axis, "fwd_scale": fsc, "out": out},
     )
 
 
@@ -293,6 +236,34 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
 
     """
     return rfftn(a, s=s, axes=axes, norm=norm, out=out)
+
+
+def irfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
+    """
+    Compute the inverse FFT of `rfft2`.
+
+    For full documentation refer to `numpy.fft.irfft2`.
+
+    """
+    return irfftn(a, s=s, axes=axes, norm=norm, out=out)
+
+
+def rfftn(a, s=None, axes=None, norm=None, out=None):
+    """
+    Compute the N-dimensional discrete Fourier Transform for real input.
+
+    For full documentation refer to `numpy.fft.rfftn`.
+
+    """
+    x = _downcast_float128_array(a)
+    s, axes = _cook_nd_args(x, s, axes)
+    fsc = _compute_fwd_scale(norm, s, x.shape)
+
+    return _trycall(
+        mkl_fft.rfftn,
+        (x,),
+        {"s": s, "axes": axes, "fwd_scale": fsc, "out": out},
+    )
 
 
 def irfftn(a, s=None, axes=None, norm=None, out=None):
@@ -307,18 +278,48 @@ def irfftn(a, s=None, axes=None, norm=None, out=None):
     s, axes = _cook_nd_args(x, s, axes, invreal=True)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
-    return trycall(
+    return _trycall(
         mkl_fft.irfftn,
         (x,),
         {"s": s, "axes": axes, "fwd_scale": fsc, "out": out},
     )
 
 
-def irfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
+def hfft(a, n=None, axis=-1, norm=None, out=None):
     """
-    Compute the inverse FFT of `rfft2`.
+    Compute the FFT of a signal which has Hermitian symmetry,
+    i.e., a real spectrum..
 
-    For full documentation refer to `numpy.fft.irfft2`.
+    For full documentation refer to `numpy.fft.hfft`.
 
     """
-    return irfftn(a, s=s, axes=axes, norm=norm, out=out)
+    norm = _swap_direction(norm)
+    x = _downcast_float128_array(a)
+    x = np.array(x, copy=True)
+    np.conjugate(x, out=x)
+    fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
+
+    return _trycall(
+        mkl_fft.irfft,
+        (x,),
+        {"n": n, "axis": axis, "fwd_scale": fsc, "out": out},
+    )
+
+
+def ihfft(a, n=None, axis=-1, norm=None, out=None):
+    """
+    Compute the inverse FFT of a signal which has Hermitian symmetry.
+
+    For full documentation refer to `numpy.fft.ihfft`.
+
+    """
+    norm = _swap_direction(norm)
+    x = _downcast_float128_array(a)
+    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
+
+    output = _trycall(
+        mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
+    )
+
+    np.conjugate(output, out=output)
+    return output

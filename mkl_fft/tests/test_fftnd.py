@@ -158,8 +158,9 @@ class Test_mklfft_matrix(TestCase):
                     s = container(d.shape)
                     kwargs = dict(s=s, axes=axes, norm=norm)
                     r_tol, a_tol = _get_rtol_atol(d)
-                    t = mkl_fft._numpy_fft.fftn(
-                        mkl_fft._numpy_fft.ifftn(d, **kwargs), **kwargs
+                    t = mkl_fft.interfaces.numpy_fft.fftn(
+                        mkl_fft.interfaces.numpy_fft.ifftn(d, **kwargs),
+                        **kwargs,
                     )
                     assert_allclose(
                         d,

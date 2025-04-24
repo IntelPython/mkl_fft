@@ -37,9 +37,35 @@ import os
 import mkl
 import numpy as np
 
-from . import _pydfti as mkl_fft  # pylint: disable=no-name-in-module
-from ._fft_utils import _compute_fwd_scale, _swap_direction
+import mkl_fft
+
+from .._fft_utils import _compute_fwd_scale, _swap_direction
 from ._float_utils import _supported_array_or_not_implemented
+
+__all__ = [
+    "fft",
+    "ifft",
+    "fft2",
+    "ifft2",
+    "fftn",
+    "ifftn",
+    "rfft",
+    "irfft",
+    "rfft2",
+    "irfft2",
+    "rfftn",
+    "irfftn",
+    "hfft",
+    "ihfft",
+    "hfft2",
+    "ihfft2",
+    "hfftn",
+    "ihfftn",
+    "get_workers",
+    "set_workers",
+    "DftiBackend",
+]
+
 
 __doc__ = """
 This module implements interfaces mimicking `scipy.fft` module.
@@ -49,10 +75,33 @@ via `scipy.fft` namespace.
 
 :Example:
     import scipy.fft
-    import mkl_fft._scipy_fft as be
+    import mkl_fft.interfaces._scipy_fft as mkl_be
     # Set mkl_fft to be used as backend of SciPy's FFT functions.
-    scipy.fft.set_global_backend(be)
+    scipy.fft.set_global_backend(mkl_be)
 """
+
+
+__ua_domain__ = "numpy.scipy.fft"
+
+
+def __ua_function__(method, args, kwargs):
+    """Fetch registered UA function."""
+    fn = globals().get(method.__name__, None)
+    if fn is None:
+        return NotImplemented
+    return fn(*args, **kwargs)
+
+
+class DftiBackend:
+    __ua_domain__ = "numpy.scipy.fft"
+
+    @staticmethod
+    def __ua_function__(method, args, kwargs):
+        """Fetch registered UA function."""
+        fn = globals().get(method.__name__, None)
+        if fn is None:
+            return NotImplemented
+        return fn(*args, **kwargs)
 
 
 class _cpu_max_threads_count:
@@ -96,74 +145,6 @@ _workers_global_settings = contextvars.ContextVar(
 )
 
 
-def get_workers():
-    """Gets the number of workers used by mkl_fft by default"""
-    return _workers_global_settings.get().workers
-
-
-@contextlib.contextmanager
-def set_workers(n_workers):
-    """Set the value of workers used by default, returns the previous value"""
-    nw = operator.index(n_workers)
-    token = None
-    try:
-        new_wd = _workers_data(nw)
-        token = _workers_global_settings.set(new_wd)
-        yield
-    finally:
-        if token:
-            _workers_global_settings.reset(token)
-        else:
-            raise ValueError
-
-
-__all__ = [
-    "fft",
-    "ifft",
-    "fft2",
-    "ifft2",
-    "fftn",
-    "ifftn",
-    "rfft",
-    "irfft",
-    "rfft2",
-    "irfft2",
-    "rfftn",
-    "irfftn",
-    "hfft",
-    "ihfft",
-    "hfft2",
-    "ihfft2",
-    "hfftn",
-    "ihfftn",
-    "get_workers",
-    "set_workers",
-    "DftiBackend",
-]
-
-__ua_domain__ = "numpy.scipy.fft"
-
-
-def __ua_function__(method, args, kwargs):
-    """Fetch registered UA function."""
-    fn = globals().get(method.__name__, None)
-    if fn is None:
-        return NotImplemented
-    return fn(*args, **kwargs)
-
-
-class DftiBackend:
-    __ua_domain__ = "numpy.scipy.fft"
-
-    @staticmethod
-    def __ua_function__(method, args, kwargs):
-        """Fetch registered UA function."""
-        fn = globals().get(method.__name__, None)
-        if fn is None:
-            return NotImplemented
-        return fn(*args, **kwargs)
-
-
 def _workers_to_num_threads(w):
     """Handle conversion of workers to a positive number of threads in the
     same way as scipy.fft.helpers._workers.
@@ -184,7 +165,7 @@ def _workers_to_num_threads(w):
     return _w
 
 
-class Workers:
+class _Workers:
     def __init__(self, workers):
         self.workers = workers
         self.n_threads = _workers_to_num_threads(workers)
@@ -261,7 +242,7 @@ def fft(
     x = _validate_input(x)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
-    with Workers(workers):
+    with _Workers(workers):
         return mkl_fft.fft(
             x, n=n, axis=axis, overwrite_x=overwrite_x, fwd_scale=fsc
         )
@@ -280,7 +261,7 @@ def ifft(
     x = _validate_input(x)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
-    with Workers(workers):
+    with _Workers(workers):
         return mkl_fft.ifft(
             x, n=n, axis=axis, overwrite_x=overwrite_x, fwd_scale=fsc
         )
@@ -358,9 +339,10 @@ def fftn(
     """
     _check_plan(plan)
     x = _validate_input(x)
+    s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
-    with Workers(workers):
+    with _Workers(workers):
         return mkl_fft.fftn(
             x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc
         )
@@ -384,9 +366,10 @@ def ifftn(
     """
     _check_plan(plan)
     x = _validate_input(x)
+    s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
-    with Workers(workers):
+    with _Workers(workers):
         return mkl_fft.ifftn(
             x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc
         )
@@ -410,7 +393,7 @@ def rfft(
     x = _validate_input(x)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
-    with Workers(workers):
+    with _Workers(workers):
         return mkl_fft.rfft(x, n=n, axis=axis, fwd_scale=fsc)
 
 
@@ -432,7 +415,7 @@ def irfft(
     x = _validate_input(x)
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
-    with Workers(workers):
+    with _Workers(workers):
         return mkl_fft.irfft(x, n=n, axis=axis, fwd_scale=fsc)
 
 
@@ -524,7 +507,7 @@ def rfftn(
     s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
-    with Workers(workers):
+    with _Workers(workers):
         return mkl_fft.rfftn(x, s, axes, fwd_scale=fsc)
 
 
@@ -554,7 +537,7 @@ def irfftn(
     s, axes = _cook_nd_args(x, s, axes, invreal=True)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
-    with Workers(workers):
+    with _Workers(workers):
         return mkl_fft.irfftn(x, s, axes, fwd_scale=fsc)
 
 
@@ -580,7 +563,7 @@ def hfft(
     np.conjugate(x, out=x)
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
-    with Workers(workers):
+    with _Workers(workers):
         return mkl_fft.irfft(x, n=n, axis=axis, fwd_scale=fsc)
 
 
@@ -603,7 +586,7 @@ def ihfft(
     norm = _swap_direction(norm)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
-    with Workers(workers):
+    with _Workers(workers):
         result = mkl_fft.rfft(x, n=n, axis=axis, fwd_scale=fsc)
 
     np.conjugate(result, out=result)
@@ -683,7 +666,8 @@ def hfftn(
     plan=None,
 ):
     """
-    Compute the N-D FFT of Hermitian symmetric complex input, i.e., a signal with a real spectrum.
+    Compute the N-D FFT of Hermitian symmetric complex input,
+    i.e., a signal with a real spectrum.
 
     For full documentation refer to `scipy.fft.hfftn`.
 
@@ -701,7 +685,7 @@ def hfftn(
     s, axes = _cook_nd_args(x, s, axes, invreal=True)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
-    with Workers(workers):
+    with _Workers(workers):
         return mkl_fft.irfftn(x, s, axes, fwd_scale=fsc)
 
 
@@ -732,8 +716,39 @@ def ihfftn(
     s, axes = _cook_nd_args(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
-    with Workers(workers):
+    with _Workers(workers):
         result = mkl_fft.rfftn(x, s, axes, fwd_scale=fsc)
 
     np.conjugate(result, out=result)
     return result
+
+
+def get_workers():
+    """
+    Gets the number of workers used by mkl_fft by default.
+
+    For full documentation refer to `scipy.fft.get_workers`.
+
+    """
+    return _workers_global_settings.get().workers
+
+
+@contextlib.contextmanager
+def set_workers(n_workers):
+    """
+    Set the value of workers used by default, returns the previous value.
+
+    For full documentation refer to `scipy.fft.set_workers`.
+
+    """
+    nw = operator.index(n_workers)
+    token = None
+    try:
+        new_wd = _workers_data(nw)
+        token = _workers_global_settings.set(new_wd)
+        yield
+    finally:
+        if token:
+            _workers_global_settings.reset(token)
+        else:
+            raise ValueError
