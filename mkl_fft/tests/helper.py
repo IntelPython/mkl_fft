@@ -29,5 +29,6 @@ import numpy as np
 import pytest
 
 requires_numpy_2 = pytest.mark.skipif(
-    np.__version__ < "2.0", reason="Requires NumPy >= 2.0"
+    np.lib.NumpyVersion(np.__version__) < "2.0.0",
+    reason="Requires NumPy >= 2.0.0",
 )
