@@ -75,11 +75,22 @@ The package also provides `mkl_fft.interfaces.numpy_fft` and `mkl_fft.interfaces
 ---
 
 To build `mkl_fft` from sources on Linux with Intel® OneMKL:
-  - install a recent version of MKL, if necessary;
-  - execute `source /path_to_oneapi/mkl/latest/env/vars.sh`;
-  - execute `python -m pip install .`
+  - create a virtual environemnt: `python3 -m venv fft_env`
+  - activate the environment: `source fft_env/bin/activate`
+  - install a recent version of OneMKL, if necessary
+  - execute `source /path_to_oneapi/mkl/latest/env/vars.sh`
+  - `git clone https://github.com/IntelPython/mkl_fft.git mkl_fft`
+  - `cd mkl_fft`
+  - `python -m pip install .`
+  - `cd ..`
+  - `python -c "import mkl_fft"`
 
-To build `mkl_fft` from sources on Linux with conda:
-  - install `python` and `mkl-devel` in a conda environment;
-  - execute `export MKLROOT=$CONDA_PREFIX`
-  - execute `python -m pip install .`
+To build `mkl_fft` from sources on Linux with conda follow these steps:
+  - `conda create -n fft_env python=3.12 mkl-devel`
+  - `conda activate fft_env`
+  - `export MKLROOT=$CONDA_PREFIX`
+  - `git clone https://github.com/IntelPython/mkl_fft.git mkl_fft`
+  - `cd mkl_fft`
+  - `python -m pip install .`
+  - `cd ..`
+  - `python -c "import mkl_fft"`
