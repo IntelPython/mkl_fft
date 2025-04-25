@@ -52,7 +52,7 @@ def _mt_fft(x):
     return fft.fft(x, workers=2)
 
 
-@pytest.mark.slow
+# @pytest.mark.slow
 def test_mixed_threads_processes(x):
     # Test that the fft threadpool is safe to use before & after fork
 
@@ -79,10 +79,11 @@ def test_invalid_workers(x):
         fft.ifft(x, workers=-cpus - 1)
 
 
-@pytest.mark.skip()
 def test_set_get_workers():
     cpus = os.cpu_count()
-    assert fft.get_workers() == 1
+
+    # default value is max number of threads unlike stock SciPy
+    assert fft.get_workers() == cpus
     with fft.set_workers(4):
         assert fft.get_workers() == 4
 
@@ -91,13 +92,13 @@ def test_set_get_workers():
 
         assert fft.get_workers() == 4
 
-    assert fft.get_workers() == 1
+    # default value is max number of threads unlike stock SciPy
+    assert fft.get_workers() == cpus
 
     with fft.set_workers(-cpus):
         assert fft.get_workers() == 1
 
 
-@pytest.mark.skip("mkl_fft does not validate workers")
 def test_set_workers_invalid():
 
     with pytest.raises(ValueError, match="workers must not be zero"):
