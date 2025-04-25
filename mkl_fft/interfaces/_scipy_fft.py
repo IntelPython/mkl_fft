@@ -33,6 +33,7 @@ import contextlib
 import contextvars
 import operator
 import os
+from numbers import Number
 
 import mkl
 import numpy as np
@@ -194,30 +195,65 @@ def _check_plan(plan):
         )
 
 
-def _check_overwrite_x(overwrite_x):
-    if overwrite_x:
-        raise NotImplementedError(
-            "Overwriting the content of `x` is currently not supported"
-        )
+# copied from scipy.fft._pocketfft.helper
+# https://github.com/scipy/scipy/blob/main/scipy/fft/_pocketfft/helper.py
+def _iterable_of_int(x, name=None):
+    if isinstance(x, Number):
+        x = (x,)
+
+    try:
+        x = [operator.index(a) for a in x]
+    except TypeError as e:
+        name = name or "value"
+        raise ValueError(
+            f"{name} must be a scalar or iterable of integers"
+        ) from e
+
+    return x
 
 
-def _cook_nd_args(x, s=None, axes=None, invreal=False):
-    if s is None:
-        shapeless = True
-        if axes is None:
-            s = list(x.shape)
-        else:
-            s = np.take(x.shape, axes)
+# copied and modified from scipy.fft._pocketfft.helper
+# https://github.com/scipy/scipy/blob/main/scipy/fft/_pocketfft/helper.py
+def _init_nd_shape_and_axes(x, shape, axes, invreal=False):
+    noshape = shape is None
+    noaxes = axes is None
+
+    if not noaxes:
+        axes = _iterable_of_int(axes, "axes")
+        axes = [a + x.ndim if a < 0 else a for a in axes]
+
+        if any(a >= x.ndim or a < 0 for a in axes):
+            raise ValueError("axes exceeds dimensionality of input")
+        if len(set(axes)) != len(axes):
+            raise ValueError("all axes must be unique")
+
+    if not noshape:
+        shape = _iterable_of_int(shape, "shape")
+
+        if axes and len(axes) != len(shape):
+            raise ValueError(
+                "when given, axes and shape arguments"
+                " have to be of the same length"
+            )
+        if noaxes:
+            if len(shape) > x.ndim:
+                raise ValueError("shape requires more axes than are present")
+            axes = range(x.ndim - len(shape), x.ndim)
+
+        shape = [x.shape[a] if s == -1 else s for s, a in zip(shape, axes)]
+    elif noaxes:
+        shape = list(x.shape)
+        axes = range(x.ndim)
     else:
-        shapeless = False
-    s = list(s)
-    if axes is None:
-        axes = list(range(-len(s), 0))
-    if len(s) != len(axes):
-        raise ValueError("Shape and axes have different lengths.")
-    if invreal and shapeless:
-        s[-1] = (x.shape[axes[-1]] - 1) * 2
-    return s, axes
+        shape = [x.shape[a] for a in axes]
+
+    if noshape and invreal:
+        shape[-1] = (x.shape[axes[-1]] - 1) * 2
+
+    if any(s < 1 for s in shape):
+        raise ValueError(f"invalid number of data points ({shape}) specified")
+
+    return tuple(shape), list(axes)
 
 
 def _validate_input(x):
@@ -339,7 +375,7 @@ def fftn(
     """
     _check_plan(plan)
     x = _validate_input(x)
-    s, axes = _cook_nd_args(x, s, axes)
+    s, axes = _init_nd_shape_and_axes(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
@@ -366,7 +402,7 @@ def ifftn(
     """
     _check_plan(plan)
     x = _validate_input(x)
-    s, axes = _cook_nd_args(x, s, axes)
+    s, axes = _init_nd_shape_and_axes(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
@@ -383,17 +419,13 @@ def rfft(
 
     For full documentation refer to `scipy.fft.rfft`.
 
-    Limitation
-    -----------
-    The kwarg `overwrite_x` is only supported with its default value.
-
     """
     _check_plan(plan)
-    _check_overwrite_x(overwrite_x)
     x = _validate_input(x)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     with _Workers(workers):
+        # Note: overwrite_x is not utilized
         return mkl_fft.rfft(x, n=n, axis=axis, fwd_scale=fsc)
 
 
@@ -405,17 +437,13 @@ def irfft(
 
     For full documentation refer to `scipy.fft.irfft`.
 
-    Limitation
-    -----------
-    The kwarg `overwrite_x` is only supported with its default value.
-
     """
     _check_plan(plan)
-    _check_overwrite_x(overwrite_x)
     x = _validate_input(x)
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     with _Workers(workers):
+        # Note: overwrite_x is not utilized
         return mkl_fft.irfft(x, n=n, axis=axis, fwd_scale=fsc)
 
 
@@ -433,10 +461,6 @@ def rfft2(
     Compute the 2-D discrete Fourier Transform for real input.
 
     For full documentation refer to `scipy.fft.rfft2`.
-
-    Limitation
-    -----------
-    The kwarg `overwrite_x` is only supported with its default value.
 
     """
     return rfftn(
@@ -465,10 +489,6 @@ def irfft2(
 
     For full documentation refer to `scipy.fft.irfft2`.
 
-    Limitation
-    -----------
-    The kwarg `overwrite_x` is only supported with its default value.
-
     """
     return irfftn(
         x,
@@ -496,18 +516,14 @@ def rfftn(
 
     For full documentation refer to `scipy.fft.rfftn`.
 
-    Limitation
-    -----------
-    The kwarg `overwrite_x` is only supported with its default value.
-
     """
     _check_plan(plan)
-    _check_overwrite_x(overwrite_x)
     x = _validate_input(x)
-    s, axes = _cook_nd_args(x, s, axes)
+    s, axes = _init_nd_shape_and_axes(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
+        # Note: overwrite_x is not utilized
         return mkl_fft.rfftn(x, s, axes, fwd_scale=fsc)
 
 
@@ -526,18 +542,14 @@ def irfftn(
 
     For full documentation refer to `scipy.fft.irfftn`.
 
-    Limitation
-    -----------
-    The kwarg `overwrite_x` is only supported with its default value.
-
     """
     _check_plan(plan)
-    _check_overwrite_x(overwrite_x)
     x = _validate_input(x)
-    s, axes = _cook_nd_args(x, s, axes, invreal=True)
+    s, axes = _init_nd_shape_and_axes(x, s, axes, invreal=True)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
+        # Note: overwrite_x is not utilized
         return mkl_fft.irfftn(x, s, axes, fwd_scale=fsc)
 
 
@@ -548,15 +560,10 @@ def hfft(
     Compute the FFT of a signal that has Hermitian symmetry,
     i.e., a real spectrum.
 
-    For full documentation refer to `scipy.fft.hfft`.
-
-    Limitation
-    -----------
-    The kwarg `overwrite_x` is only supported with its default value.
+    For full documentation refer to `scipy.fft.hfft`..
 
     """
     _check_plan(plan)
-    _check_overwrite_x(overwrite_x)
     x = _validate_input(x)
     norm = _swap_direction(norm)
     x = np.array(x, copy=True)
@@ -564,6 +571,7 @@ def hfft(
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     with _Workers(workers):
+        # Note: overwrite_x is not utilized
         return mkl_fft.irfft(x, n=n, axis=axis, fwd_scale=fsc)
 
 
@@ -575,18 +583,14 @@ def ihfft(
 
     For full documentation refer to `scipy.fft.ihfft`.
 
-    Limitation
-    -----------
-    The kwarg `overwrite_x` is only supported with its default value.
-
     """
     _check_plan(plan)
-    _check_overwrite_x(overwrite_x)
     x = _validate_input(x)
     norm = _swap_direction(norm)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     with _Workers(workers):
+        # Note: overwrite_x is not utilized
         result = mkl_fft.rfft(x, n=n, axis=axis, fwd_scale=fsc)
 
     np.conjugate(result, out=result)
@@ -607,10 +611,6 @@ def hfft2(
     Compute the 2-D FFT of a Hermitian complex array.
 
     For full documentation refer to `scipy.fft.hfft2`.
-
-    Limitation
-    -----------
-    The kwarg `overwrite_x` is only supported with its default value.
 
     """
     return hfftn(
@@ -638,10 +638,6 @@ def ihfft2(
     Compute the 2-D inverse FFT of a real spectrum.
 
     For full documentation refer to `scipy.fft.ihfft2`.
-
-    Limitation
-    -----------
-    The kwarg `overwrite_x` is only supported with its default value.
 
     """
     return ihfftn(
@@ -671,21 +667,17 @@ def hfftn(
 
     For full documentation refer to `scipy.fft.hfftn`.
 
-    Limitation
-    -----------
-    The kwarg `overwrite_x` is only supported with its default value.
-
     """
     _check_plan(plan)
-    _check_overwrite_x(overwrite_x)
     x = _validate_input(x)
     norm = _swap_direction(norm)
     x = np.array(x, copy=True)
     np.conjugate(x, out=x)
-    s, axes = _cook_nd_args(x, s, axes, invreal=True)
+    s, axes = _init_nd_shape_and_axes(x, s, axes, invreal=True)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
+        # Note: overwrite_x is not utilized
         return mkl_fft.irfftn(x, s, axes, fwd_scale=fsc)
 
 
@@ -704,19 +696,15 @@ def ihfftn(
 
     For full documentation refer to `scipy.fft.ihfftn`.
 
-    Limitation
-    -----------
-    The kwarg `overwrite_x` is only supported with its default value.
-
     """
     _check_plan(plan)
-    _check_overwrite_x(overwrite_x)
     x = _validate_input(x)
     norm = _swap_direction(norm)
-    s, axes = _cook_nd_args(x, s, axes)
+    s, axes = _init_nd_shape_and_axes(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
+        # Note: overwrite_x is not utilized
         result = mkl_fft.rfftn(x, s, axes, fwd_scale=fsc)
 
     np.conjugate(result, out=result)
