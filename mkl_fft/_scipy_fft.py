@@ -42,7 +42,7 @@ from ._fft_utils import _compute_fwd_scale, _swap_direction
 from ._float_utils import _supported_array_or_not_implemented
 
 __doc__ = """
-This module implements interfaces mimicing `scipy.fft` module.
+This module implements interfaces mimicking `scipy.fft` module.
 
 It also provides DftiBackend class which can be used to set mkl_fft to be used
 via `scipy.fft` namespace.
