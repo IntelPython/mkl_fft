@@ -25,9 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-An interface for FFT module of Scipy (`scipy.fft`) that uses OneMKL FFT
+An interface for FFT module of NumPy (`numpy.fft`) that uses OneMKL FFT
 in the backend.
-
 """
 
 __all__ = [

@@ -75,7 +75,7 @@ The package also provides `mkl_fft.interfaces.numpy_fft` and `mkl_fft.interfaces
 ---
 
 To build `mkl_fft` from sources on Linux with Intel® OneMKL:
-  - create a virtual environemnt: `python3 -m venv fft_env`
+  - create a virtual environment: `python3 -m venv fft_env`
   - activate the environment: `source fft_env/bin/activate`
   - install a recent version of OneMKL, if necessary
   - execute `source /path_to_oneapi/mkl/latest/env/vars.sh`
