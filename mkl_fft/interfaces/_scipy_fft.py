@@ -39,7 +39,7 @@ import numpy as np
 
 import mkl_fft
 
-from .._fft_utils import _compute_fwd_scale, _swap_direction
+from .._fft_utils import _swap_direction
 from ._float_utils import _supported_array_or_not_implemented
 
 __all__ = [
@@ -223,11 +223,10 @@ def fft(
     """
     _check_plan(plan)
     x = _validate_input(x)
-    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     with _Workers(workers):
         return mkl_fft.fft(
-            x, n=n, axis=axis, overwrite_x=overwrite_x, fwd_scale=fsc
+            x, n=n, axis=axis, overwrite_x=overwrite_x, norm=norm
         )
 
 
@@ -242,11 +241,10 @@ def ifft(
     """
     _check_plan(plan)
     x = _validate_input(x)
-    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     with _Workers(workers):
         return mkl_fft.ifft(
-            x, n=n, axis=axis, overwrite_x=overwrite_x, fwd_scale=fsc
+            x, n=n, axis=axis, overwrite_x=overwrite_x, norm=norm
         )
 
 
@@ -323,11 +321,10 @@ def fftn(
     _check_plan(plan)
     x = _validate_input(x)
     s, axes = _init_nd_shape_and_axes(x, s, axes)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
         return mkl_fft.fftn(
-            x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc
+            x, s=s, axes=axes, overwrite_x=overwrite_x, norm=norm
         )
 
 
@@ -350,11 +347,10 @@ def ifftn(
     _check_plan(plan)
     x = _validate_input(x)
     s, axes = _init_nd_shape_and_axes(x, s, axes)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
         return mkl_fft.ifftn(
-            x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc
+            x, s=s, axes=axes, overwrite_x=overwrite_x, norm=norm
         )
 
 
@@ -369,11 +365,10 @@ def rfft(
     """
     _check_plan(plan)
     x = _validate_input(x)
-    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     with _Workers(workers):
         # Note: overwrite_x is not utilized
-        return mkl_fft.rfft(x, n=n, axis=axis, fwd_scale=fsc)
+        return mkl_fft.rfft(x, n=n, axis=axis, norm=norm)
 
 
 def irfft(
@@ -387,11 +382,10 @@ def irfft(
     """
     _check_plan(plan)
     x = _validate_input(x)
-    fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     with _Workers(workers):
         # Note: overwrite_x is not utilized
-        return mkl_fft.irfft(x, n=n, axis=axis, fwd_scale=fsc)
+        return mkl_fft.irfft(x, n=n, axis=axis, norm=norm)
 
 
 def rfft2(
@@ -467,11 +461,10 @@ def rfftn(
     _check_plan(plan)
     x = _validate_input(x)
     s, axes = _init_nd_shape_and_axes(x, s, axes)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
         # Note: overwrite_x is not utilized
-        return mkl_fft.rfftn(x, s, axes, fwd_scale=fsc)
+        return mkl_fft.rfftn(x, s, axes, norm=norm)
 
 
 def irfftn(
@@ -493,11 +486,10 @@ def irfftn(
     _check_plan(plan)
     x = _validate_input(x)
     s, axes = _init_nd_shape_and_axes(x, s, axes, invreal=True)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
         # Note: overwrite_x is not utilized
-        return mkl_fft.irfftn(x, s, axes, fwd_scale=fsc)
+        return mkl_fft.irfftn(x, s, axes, norm=norm)
 
 
 def hfft(
@@ -515,11 +507,10 @@ def hfft(
     norm = _swap_direction(norm)
     x = np.array(x, copy=True)
     np.conjugate(x, out=x)
-    fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     with _Workers(workers):
         # Note: overwrite_x is not utilized
-        return mkl_fft.irfft(x, n=n, axis=axis, fwd_scale=fsc)
+        return mkl_fft.irfft(x, n=n, axis=axis, norm=norm)
 
 
 def ihfft(
@@ -534,11 +525,10 @@ def ihfft(
     _check_plan(plan)
     x = _validate_input(x)
     norm = _swap_direction(norm)
-    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     with _Workers(workers):
         # Note: overwrite_x is not utilized
-        result = mkl_fft.rfft(x, n=n, axis=axis, fwd_scale=fsc)
+        result = mkl_fft.rfft(x, n=n, axis=axis, norm=norm)
 
     np.conjugate(result, out=result)
     return result
@@ -621,11 +611,10 @@ def hfftn(
     x = np.array(x, copy=True)
     np.conjugate(x, out=x)
     s, axes = _init_nd_shape_and_axes(x, s, axes, invreal=True)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
         # Note: overwrite_x is not utilized
-        return mkl_fft.irfftn(x, s, axes, fwd_scale=fsc)
+        return mkl_fft.irfftn(x, s, axes, norm=norm)
 
 
 def ihfftn(
@@ -648,11 +637,10 @@ def ihfftn(
     x = _validate_input(x)
     norm = _swap_direction(norm)
     s, axes = _init_nd_shape_and_axes(x, s, axes)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
         # Note: overwrite_x is not utilized
-        result = mkl_fft.rfftn(x, s, axes, fwd_scale=fsc)
+        result = mkl_fft.rfftn(x, s, axes, norm=norm)
 
     np.conjugate(result, out=result)
     return result
