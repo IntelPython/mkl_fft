@@ -283,10 +283,8 @@ def test_gh109():
     b_int = np.array([[5, 7, 6, 5], [4, 6, 4, 8], [9, 3, 7, 5]], dtype=np.int64)
     b = np.asarray(b_int, dtype=np.float32)
 
-    r1 = mkl_fft.fftn(b, s=None, axes=(0,), overwrite_x=False, fwd_scale=1 / 3)
-    r2 = mkl_fft.fftn(
-        b_int, s=None, axes=(0,), overwrite_x=False, fwd_scale=1 / 3
-    )
+    r1 = mkl_fft.fftn(b, s=None, axes=(0,), fwd_scale=1 / 3)
+    r2 = mkl_fft.fftn(b_int, s=None, axes=(0,), fwd_scale=1 / 3)
 
     rtol, atol = _get_rtol_atol(b)
     assert_allclose(r1, r2, rtol=rtol, atol=atol)
@@ -303,8 +301,29 @@ def test_s_axes(dtype, s, axes, func):
     else:
         x = np.random.random(shape)
 
-    r1 = getattr(mkl_fft, func)(x, s=s, axes=axes)
-    r2 = getattr(np.fft, func)(x, s=s, axes=axes)
+    r1 = getattr(np.fft, func)(x, s=s, axes=axes)
+    r2 = getattr(mkl_fft, func)(x, s=s, axes=axes)
+
+    rtol, atol = _get_rtol_atol(x)
+    assert_allclose(r1, r2, rtol=rtol, atol=atol)
+
+
+@requires_numpy_2
+@pytest.mark.parametrize("dtype", [complex, float])
+@pytest.mark.parametrize("s", [(15, 24, 10), [35, 25, 15], [25, 15, 5]])
+@pytest.mark.parametrize("axes", [(0, 1, 2), (-1, -2, -3), [1, 0, 2]])
+@pytest.mark.parametrize("func", ["fftn", "ifftn", "rfftn", "irfftn"])
+def test_s_axes_out(dtype, s, axes, func):
+    shape = (30, 20, 10)
+    if dtype is complex and func != "rfftn":
+        x = np.random.random(shape) + 1j * np.random.random(shape)
+    else:
+        x = np.random.random(shape)
+
+    r1 = getattr(np.fft, func)(x, s=s, axes=axes)
+    out = np.empty_like(r1)
+    r2 = getattr(mkl_fft, func)(x, s=s, axes=axes, out=out)
+    assert r2 is out
 
     rtol, atol = _get_rtol_atol(x)
     assert_allclose(r1, r2, rtol=rtol, atol=atol)
@@ -320,8 +339,8 @@ def test_repeated_axes(dtype, axes, func):
     else:
         x = np.random.random(shape)
 
-    r1 = getattr(mkl_fft, func)(x, axes=axes)
-    r2 = getattr(np.fft, func)(x, axes=axes)
+    r1 = getattr(np.fft, func)(x, axes=axes)
+    r2 = getattr(mkl_fft, func)(x, axes=axes)
 
     rtol, atol = _get_rtol_atol(x)
     assert_allclose(r1, r2, rtol=rtol, atol=atol)
@@ -340,4 +359,4 @@ def test_out_strided(axes, func):
     result = getattr(mkl_fft, func)(x, axes=axes, out=out)
     expected = getattr(np.fft, func)(x, axes=axes, out=out)
 
-    assert_allclose(result, expected)
+    assert_allclose(result, expected, strict=True)
