@@ -36,7 +36,7 @@ import numpy as np
 
 import mkl_fft
 
-from .._fft_utils import _compute_fwd_scale, _swap_direction
+from .._fft_utils import _swap_direction
 from ._float_utils import _downcast_float128_array
 
 __all__ = [
@@ -120,10 +120,9 @@ def fft(a, n=None, axis=-1, norm=None, out=None):
 
     """
     x = _downcast_float128_array(a)
-    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     return _trycall(
-        mkl_fft.fft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
+        mkl_fft.fft, (x,), {"n": n, "axis": axis, "norm": norm, "out": out}
     )
 
 
@@ -135,10 +134,9 @@ def ifft(a, n=None, axis=-1, norm=None, out=None):
 
     """
     x = _downcast_float128_array(a)
-    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     return _trycall(
-        mkl_fft.ifft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
+        mkl_fft.ifft, (x,), {"n": n, "axis": axis, "norm": norm, "out": out}
     )
 
 
@@ -171,10 +169,9 @@ def fftn(a, s=None, axes=None, norm=None, out=None):
     """
     x = _downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     return _trycall(
-        mkl_fft.fftn, (x,), {"s": s, "axes": axes, "fwd_scale": fsc, "out": out}
+        mkl_fft.fftn, (x,), {"s": s, "axes": axes, "norm": norm, "out": out}
     )
 
 
@@ -187,12 +184,11 @@ def ifftn(a, s=None, axes=None, norm=None, out=None):
     """
     x = _downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     return _trycall(
         mkl_fft.ifftn,
         (x,),
-        {"s": s, "axes": axes, "fwd_scale": fsc, "out": out},
+        {"s": s, "axes": axes, "norm": norm, "out": out},
     )
 
 
@@ -204,10 +200,9 @@ def rfft(a, n=None, axis=-1, norm=None, out=None):
 
     """
     x = _downcast_float128_array(a)
-    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     return _trycall(
-        mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
+        mkl_fft.rfft, (x,), {"n": n, "axis": axis, "norm": norm, "out": out}
     )
 
 
@@ -219,12 +214,11 @@ def irfft(a, n=None, axis=-1, norm=None, out=None):
 
     """
     x = _downcast_float128_array(a)
-    fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     return _trycall(
         mkl_fft.irfft,
         (x,),
-        {"n": n, "axis": axis, "fwd_scale": fsc, "out": out},
+        {"n": n, "axis": axis, "norm": norm, "out": out},
     )
 
 
@@ -257,12 +251,11 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
     """
     x = _downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     return _trycall(
         mkl_fft.rfftn,
         (x,),
-        {"s": s, "axes": axes, "fwd_scale": fsc, "out": out},
+        {"s": s, "axes": axes, "norm": norm, "out": out},
     )
 
 
@@ -276,12 +269,11 @@ def irfftn(a, s=None, axes=None, norm=None, out=None):
 
     x = _downcast_float128_array(a)
     s, axes = _cook_nd_args(x, s, axes, invreal=True)
-    fsc = _compute_fwd_scale(norm, s, x.shape)
 
     return _trycall(
         mkl_fft.irfftn,
         (x,),
-        {"s": s, "axes": axes, "fwd_scale": fsc, "out": out},
+        {"s": s, "axes": axes, "norm": norm, "out": out},
     )
 
 
@@ -297,12 +289,11 @@ def hfft(a, n=None, axis=-1, norm=None, out=None):
     x = _downcast_float128_array(a)
     x = np.array(x, copy=True)
     np.conjugate(x, out=x)
-    fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     return _trycall(
         mkl_fft.irfft,
         (x,),
-        {"n": n, "axis": axis, "fwd_scale": fsc, "out": out},
+        {"n": n, "axis": axis, "norm": norm, "out": out},
     )
 
 
@@ -315,10 +306,9 @@ def ihfft(a, n=None, axis=-1, norm=None, out=None):
     """
     norm = _swap_direction(norm)
     x = _downcast_float128_array(a)
-    fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     output = _trycall(
-        mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
+        mkl_fft.rfft, (x,), {"n": n, "axis": axis, "norm": norm, "out": out}
     )
 
     np.conjugate(output, out=output)
