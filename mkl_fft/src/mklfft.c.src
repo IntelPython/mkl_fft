@@ -363,7 +363,7 @@ compute_strides_and_distances(
         break;
     default:
         /* we must have C- or F- contiguous layout */
-        /* TODO: enhance the test to acommodate equal size slices along all axis of a contiguous array,  *
+        /* TODO: enhance the test to accommodate equal size slices along all axis of a contiguous array,  *
          *       for example x = contig_r3_arr[::4, ::4, ::4]                                            */
         {
             int any_contig = (PyArray_ISONESEGMENT(x)) ? 1 : 0;

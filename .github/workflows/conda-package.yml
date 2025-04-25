@@ -301,8 +301,8 @@ jobs:
       - name: Report content of test environment
         shell: cmd /C CALL {0}
         run: |
-          echo "Value of CONDA enviroment variable was: " %CONDA%
-          echo "Value of CONDA_PREFIX enviroment variable was: " %CONDA_PREFIX%
+          echo "Value of CONDA environment variable was: " %CONDA%
+          echo "Value of CONDA_PREFIX environment variable was: " %CONDA_PREFIX%
           conda info && conda list -n ${{ env.TEST_ENV_NAME }}
       - name: Run tests
         shell: cmd /C CALL {0}

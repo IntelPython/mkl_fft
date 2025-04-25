@@ -175,7 +175,7 @@ class TestFFT1D:
         else:
             assert_array_equal(y3[:, :5], y[:, :5])
             assert_array_equal(y3[:, 15:], y[:, 15:])
-        # In-place with n > nin; rest should be unchanged.
+        # In-place with n > n_in; rest should be unchanged.
         y4 = y.copy()
         y4_sel = y4[:10] if axis == 0 else y4[:, :10]
         out4 = y4[:15] if axis == 0 else y4[:, :15]
