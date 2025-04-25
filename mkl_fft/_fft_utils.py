@@ -262,23 +262,33 @@ def _iter_fftnd(
     axes=None,
     out=None,
     direction=+1,
-    overwrite_x=False,
     scale_function=lambda n, ind: 1.0,
 ):
     a = np.asarray(a)
     s, axes = _init_nd_shape_and_axes(a, s, axes)
-    ovwr = overwrite_x
     for ii in reversed(range(len(axes))):
+        if tuple(s) == a.shape and np.issubdtype(a.dtype, np.complexfloating):
+            # if shape of a does not change in intermediate steps we can use we can write to a
+            # after first iteration
+            if out is not None:
+                res = out
+            elif np.issubdtype(a.dtype, np.complexfloating):
+                res = a
+            else:
+                res = None
+        elif ii == 0 and out is not None:
+            # if shape of a changes in intermediate steps we can only use out if given in final step
+            res = out
+        else:
+            res = None
         a = _c2c_fft1d_impl(
             a,
             n=s[ii],
             axis=axes[ii],
-            overwrite_x=ovwr,
             direction=direction,
             fsc=scale_function(s[ii], ii),
-            out=out,
+            out=res,
         )
-        ovwr = True
     return a
 
 
@@ -360,7 +370,6 @@ def _c2c_fftnd_impl(
     x,
     s=None,
     axes=None,
-    overwrite_x=False,
     direction=+1,
     fsc=1.0,
     out=None,
@@ -385,7 +394,6 @@ def _c2c_fftnd_impl(
     if _direct:
         return _direct_fftnd(
             x,
-            overwrite_x=overwrite_x,
             direction=direction,
             fsc=fsc,
             out=out,
@@ -403,11 +411,7 @@ def _c2c_fftnd_impl(
                 x,
                 axes,
                 _direct_fftnd,
-                {
-                    "overwrite_x": overwrite_x,
-                    "direction": direction,
-                    "fsc": fsc,
-                },
+                {"direction": direction, "fsc": fsc},
                 res,
             )
         else:
@@ -418,7 +422,6 @@ def _c2c_fftnd_impl(
                 axes=axes,
                 out=out,
                 direction=direction,
-                overwrite_x=overwrite_x,
                 scale_function=lambda n, i: fsc if i == 0 else 1.0,
             )
 
@@ -433,6 +436,7 @@ def _r2c_fftnd_impl(x, s=None, axes=None, fsc=1.0, out=None):
         a = _trim_array(a, s, axes)
     # r2c along last axis
     a = _r2c_fft1d_impl(a, n=s[-1], axis=la, fsc=fsc, out=out)
+    orig_shape = a.shape
     if len(s) > 1:
         if not no_trim:
             ss = list(s)
@@ -449,16 +453,25 @@ def _r2c_fftnd_impl(x, s=None, axes=None, fsc=1.0, out=None):
                 ind[la] = ii
                 tind = tuple(ind)
                 a_inp = a[tind]
-                res = out[tind] if out is not None else None
+                res = out[tind] if out is not None else a_inp
                 a_res = _c2c_fftnd_impl(
-                    a_inp, s=ss, axes=aa, overwrite_x=True, direction=1, out=res
+                    a_inp, s=ss, axes=aa, direction=1, out=res
                 )
                 if a_res is not a_inp:
                     a[tind] = a_res  # copy in place
         else:
             # a series of 1D c2c FFTs along all axes except last
             for ii in range(len(axes) - 2, -1, -1):
-                a = _c2c_fft1d_impl(a, s[ii], axes[ii], overwrite_x=True)
+                if s == orig_shape:
+                    # if shape of a does not change in intermediate steps we can use out if given
+                    # and if not we can overwrite to a
+                    res = out if out is not None else a
+                elif ii == 0:
+                    # if shape of a changes in intermediate steps we can only use out if given in final step
+                    res = out if out is not None else None
+                else:
+                    res = None
+                a = _c2c_fft1d_impl(a, s[ii], axes[ii], out=res)
     return a
 
 
@@ -472,21 +485,17 @@ def _c2r_fftnd_impl(x, s=None, axes=None, fsc=1.0, out=None):
     if len(s) > 1:
         if not no_trim:
             a = _pad_array(a, s, axes)
-        ovr_x = True if _datacopied(a, x) else False
         len_axes = len(axes)
         if len(set(axes)) == len_axes and len_axes == a.ndim and len_axes > 2:
             # a series of ND c2c FFTs along last axis
             # due to need to write into a, we must copy
-            if not ovr_x:
-                a = a.copy()
-                ovr_x = True
+            a = a if _datacopied(a, x) else a.copy()
             if not np.issubdtype(a.dtype, np.complexfloating):
                 # complex output will be copied to input, copy is needed
                 if a.dtype == np.float32:
                     a = a.astype(np.complex64)
                 else:
                     a = a.astype(np.complex128)
-                ovr_x = True
             ss, aa = _remove_axis(s, axes, -1)
             ind = [
                 slice(None, None, 1),
@@ -497,7 +506,7 @@ def _c2r_fftnd_impl(x, s=None, axes=None, fsc=1.0, out=None):
                 a_inp = a[tind]
                 # out has real dtype and cannot be used in intermediate steps
                 a_res = _c2c_fftnd_impl(
-                    a_inp, s=ss, axes=aa, overwrite_x=True, direction=-1
+                    a_inp, s=ss, axes=aa, out=a_inp, direction=-1
                 )
                 if a_res is not a_inp:
                     a[tind] = a_res  # copy in place
@@ -505,10 +514,15 @@ def _c2r_fftnd_impl(x, s=None, axes=None, fsc=1.0, out=None):
             # a series of 1D c2c FFTs along all axes except last
             for ii in range(len(axes) - 1):
                 # out has real dtype and cannot be used in intermediate steps
-                a = _c2c_fft1d_impl(
-                    a, s[ii], axes[ii], overwrite_x=ovr_x, direction=-1
-                )
-                ovr_x = True
+
+                if s == a.shape and np.issubdtype(a.dtype, np.complexfloating):
+                    # if shape of a does not change in intermediate steps we can write to a
+                    # if it has correct dtype
+                    res = a
+                else:
+                    res = None
+
+                a = _c2c_fft1d_impl(a, s[ii], axes[ii], out=res, direction=-1)
     # c2r along last axis
     a = _c2r_fft1d_impl(a, n=s[-1], axis=la, fsc=fsc, out=out)
     return a

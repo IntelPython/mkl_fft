@@ -224,7 +224,6 @@ cdef cnp.ndarray _process_arguments(
     object x,
     object n,
     object axis,
-    object overwrite_x,
     object direction,
     long *axis_,
     long *n_,
@@ -245,8 +244,6 @@ cdef cnp.ndarray _process_arguments(
     else:
         dir_[0] = -1 if direction is -1 else +1
 
-    in_place[0] = 1 if overwrite_x else 0
-
     # convert x to ndarray, ensure that strides are multiples of itemsize
     x_arr = PyArray_CheckFromAny(
           x, NULL, 0, 0,
@@ -256,8 +253,8 @@ cdef cnp.ndarray _process_arguments(
     if (<void *> x_arr) is NULL:
         raise ValueError("An input argument x is not an array-like object")
 
-    if _datacopied(x_arr, x):
-        in_place[0] = 1  # a copy was made, so we can work in place.
+    # a copy was made, so we can work in place.
+    in_place[0] = 1 if _datacopied(x_arr, x) else 0
 
     xnd[0] = cnp.PyArray_NDIM(x_arr)  # tensor-rank of the array
 
@@ -376,15 +373,7 @@ def _validate_out_array(out, x, out_dtype, axis=None, n=None):
 # float/double inputs are not cast to complex, but are effectively
 # treated as complexes with zero imaginary parts.
 # All other types are cast to complex double.
-def _c2c_fft1d_impl(
-    x,
-    n=None,
-    axis=-1,
-    overwrite_x=False,
-    direction=+1,
-    double fsc=1.0,
-    out=None,
-):
+def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
     """
     Uses MKL to perform 1D FFT on the input array x along the given axis.
     """
@@ -398,8 +387,9 @@ def _c2c_fft1d_impl(
     cdef bytes py_error_msg
     cdef DftiCache *_cache
 
-    x_arr = _process_arguments(x, n, axis, overwrite_x, direction,
-                               &axis_, &n_, &in_place, &xnd, &dir_, 0)
+    x_arr = _process_arguments(
+        x, n, axis, direction, &axis_, &n_, &in_place, &xnd, &dir_, 0
+    )
 
     x_type = cnp.PyArray_TYPE(x_arr)
 
@@ -566,7 +556,7 @@ def _c2c_fft1d_impl(
 
 
 def _r2c_fft1d_impl(
-    x, n=None, axis=-1, overwrite_x=False, double fsc=1.0, out=None
+    x, n=None, axis=-1, double fsc=1.0, out=None
 ):
     """
     Uses MKL to perform 1D FFT on the real input array x along the given axis,
@@ -585,8 +575,9 @@ def _r2c_fft1d_impl(
     cdef bytes py_error_msg
     cdef DftiCache *_cache
 
-    x_arr = _process_arguments(x, n, axis, overwrite_x, direction,
-                               &axis_, &n_, &in_place, &xnd, &dir_, 1)
+    x_arr = _process_arguments(
+        x, n, axis, direction, &axis_, &n_, &in_place, &xnd, &dir_, 1
+    )
 
     x_type = cnp.PyArray_TYPE(x_arr)
 
@@ -667,7 +658,7 @@ def _r2c_fft1d_impl(
 
 # this routine is functionally equivalent to numpy.fft.irfft
 def _c2r_fft1d_impl(
-    x, n=None, axis=-1, overwrite_x=False, double fsc=1.0, out=None
+    x, n=None, axis=-1, double fsc=1.0, out=None
 ):
     """
     Uses MKL to perform 1D FFT on the real input array x along the given axis,
@@ -688,8 +679,9 @@ def _c2r_fft1d_impl(
     int_n = _is_integral(n)
     # nn gives the number elements along axis of the input that we use
     nn = (n // 2 + 1) if int_n and n > 0 else n
-    x_arr = _process_arguments(x, nn, axis, overwrite_x, direction,
-                               &axis_, &n_, &in_place, &xnd, &dir_, 0)
+    x_arr = _process_arguments(
+        x, nn, axis, direction, &axis_, &n_, &in_place, &xnd, &dir_, 0
+    )
     n_ = 2*(n_ - 1)
     if int_n and (n % 2 == 1):
         n_ += 1
@@ -772,7 +764,7 @@ def _c2r_fft1d_impl(
 
 
 def _direct_fftnd(
-    x, overwrite_x=False, direction=+1, double fsc=1.0, out=None
+    x, direction=+1, double fsc=1.0, out=None
 ):
     """Perform n-dimensional FFT over all axes"""
     cdef int err
@@ -785,8 +777,6 @@ def _direct_fftnd(
     else:
         dir_ = -1 if direction is -1 else +1
 
-    in_place = 1 if overwrite_x else 0
-
     # convert x to ndarray, ensure that strides are multiples of itemsize
     x_arr = PyArray_CheckFromAny(
           x, NULL, 0, 0,
@@ -796,8 +786,8 @@ def _direct_fftnd(
     if <void *> x_arr is NULL:
         raise ValueError("An input argument x is not an array-like object")
 
-    if _datacopied(x_arr, x):
-        in_place = 1  # a copy was made, so we can work in place.
+    # a copy was made, so we can work in place.
+    in_place = 1 if _datacopied(x_arr, x) else 0
 
     x_type = cnp.PyArray_TYPE(x_arr)
     if (

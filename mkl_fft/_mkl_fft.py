@@ -45,63 +45,35 @@ __all__ = [
 ]
 
 
-def fft(x, n=None, axis=-1, out=None, overwrite_x=False, fwd_scale=1.0):
+def fft(x, n=None, axis=-1, out=None, fwd_scale=1.0):
     return _c2c_fft1d_impl(
-        x,
-        n=n,
-        axis=axis,
-        out=out,
-        overwrite_x=overwrite_x,
-        direction=+1,
-        fsc=fwd_scale,
+        x, n=n, axis=axis, out=out, direction=+1, fsc=fwd_scale
     )
 
 
-def ifft(x, n=None, axis=-1, out=None, overwrite_x=False, fwd_scale=1.0):
+def ifft(x, n=None, axis=-1, out=None, fwd_scale=1.0):
     return _c2c_fft1d_impl(
-        x,
-        n=n,
-        axis=axis,
-        out=out,
-        overwrite_x=overwrite_x,
-        direction=-1,
-        fsc=fwd_scale,
+        x, n=n, axis=axis, out=out, direction=-1, fsc=fwd_scale
     )
 
 
-def fft2(x, s=None, axes=(-2, -1), out=None, overwrite_x=False, fwd_scale=1.0):
-    return fftn(
-        x, s=s, axes=axes, out=out, overwrite_x=overwrite_x, fwd_scale=fwd_scale
-    )
+def fft2(x, s=None, axes=(-2, -1), out=None, fwd_scale=1.0):
+    return fftn(x, s=s, axes=axes, out=out, fwd_scale=fwd_scale)
 
 
-def ifft2(x, s=None, axes=(-2, -1), out=None, overwrite_x=False, fwd_scale=1.0):
-    return ifftn(
-        x, s=s, axes=axes, out=out, overwrite_x=overwrite_x, fwd_scale=fwd_scale
-    )
+def ifft2(x, s=None, axes=(-2, -1), out=None, fwd_scale=1.0):
+    return ifftn(x, s=s, axes=axes, out=out, fwd_scale=fwd_scale)
 
 
-def fftn(x, s=None, axes=None, out=None, overwrite_x=False, fwd_scale=1.0):
+def fftn(x, s=None, axes=None, out=None, fwd_scale=1.0):
     return _c2c_fftnd_impl(
-        x,
-        s=s,
-        axes=axes,
-        out=out,
-        overwrite_x=overwrite_x,
-        direction=+1,
-        fsc=fwd_scale,
+        x, s=s, axes=axes, out=out, direction=+1, fsc=fwd_scale
     )
 
 
-def ifftn(x, s=None, axes=None, out=None, overwrite_x=False, fwd_scale=1.0):
+def ifftn(x, s=None, axes=None, out=None, fwd_scale=1.0):
     return _c2c_fftnd_impl(
-        x,
-        s=s,
-        axes=axes,
-        out=out,
-        overwrite_x=overwrite_x,
-        direction=-1,
-        fsc=fwd_scale,
+        x, s=s, axes=axes, out=out, direction=-1, fsc=fwd_scale
     )
 
 
