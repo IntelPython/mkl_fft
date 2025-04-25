@@ -124,18 +124,18 @@ class Test_mklfft_vector(TestCase):
     def test_vector5(self):
         """fft in-place is the same as fft out-of-place"""
         x = self.xz1.copy()[::-2]
-        f1 = mkl_fft.fft(x, overwrite_x=True)
+        f1 = mkl_fft.fft(x, out=x)
         f2 = mkl_fft.fft(self.xz1[::-2])
         assert_(np.allclose(f1, f2))
 
     def test_vector6(self):
         """fft in place"""
         x = self.xz1.copy()
-        f1 = mkl_fft.fft(x, overwrite_x=True)
+        f1 = mkl_fft.fft(x, out=x)
         assert_(not _datacopied(f1, x))  # this is in-place
 
         x = self.xz1.copy()
-        f1 = mkl_fft.fft(x[::-2], overwrite_x=True)
+        f1 = mkl_fft.fft(x[::-2], out=x[::-2])
         assert_(not np.allclose(x, self.xz1))  # this is also in-place
         assert_(np.allclose(x[-2::-2], self.xz1[-2::-2]))
         assert_(np.allclose(x[-1::-2], f1))
@@ -239,7 +239,7 @@ class Test_mklfft_matrix(TestCase):
     def test_matrix4(self):
         x = self.az2.copy()
         f1 = mkl_fft.fft(x[::3, ::-1])
-        f2 = mkl_fft.fft(x[::3, ::-1], overwrite_x=True)
+        f2 = mkl_fft.fft(x[::3, ::-1], out=x[::3, ::-1])
         assert_allclose(f1, f2)
 
     def test_matrix5(self):

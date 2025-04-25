@@ -50,78 +50,32 @@ __all__ = [
 ]
 
 
-def fft(x, n=None, axis=-1, norm=None, out=None, overwrite_x=False):
+def fft(x, n=None, axis=-1, norm=None, out=None):
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
-    return _c2c_fft1d_impl(
-        x,
-        n=n,
-        axis=axis,
-        out=out,
-        overwrite_x=overwrite_x,
-        direction=+1,
-        fsc=fsc,
-    )
+    return _c2c_fft1d_impl(x, n=n, axis=axis, out=out, direction=+1, fsc=fsc)
 
 
-def ifft(x, n=None, axis=-1, norm=None, out=None, overwrite_x=False):
+def ifft(x, n=None, axis=-1, norm=None, out=None):
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
-    return _c2c_fft1d_impl(
-        x,
-        n=n,
-        axis=axis,
-        out=out,
-        overwrite_x=overwrite_x,
-        direction=-1,
-        fsc=fsc,
-    )
+    return _c2c_fft1d_impl(x, n=n, axis=axis, out=out, direction=-1, fsc=fsc)
 
 
-def fft2(x, s=None, axes=(-2, -1), norm=None, out=None, overwrite_x=False):
-    return fftn(
-        x,
-        s=s,
-        axes=axes,
-        norm=norm,
-        out=out,
-        overwrite_x=overwrite_x,
-    )
+def fft2(x, s=None, axes=(-2, -1), norm=None, out=None):
+    return fftn(x, s=s, axes=axes, norm=norm, out=out)
 
 
-def ifft2(x, s=None, axes=(-2, -1), norm=None, out=None, overwrite_x=False):
-    return ifftn(
-        x,
-        s=s,
-        axes=axes,
-        norm=norm,
-        out=out,
-        overwrite_x=overwrite_x,
-    )
+def ifft2(x, s=None, axes=(-2, -1), norm=None, out=None):
+    return ifftn(x, s=s, axes=axes, norm=norm, out=out)
 
 
-def fftn(x, s=None, axes=None, norm=None, out=None, overwrite_x=False):
+def fftn(x, s=None, axes=None, norm=None, out=None):
     fsc = _compute_fwd_scale(norm, s, x.shape)
-    return _c2c_fftnd_impl(
-        x,
-        s=s,
-        axes=axes,
-        out=out,
-        overwrite_x=overwrite_x,
-        direction=+1,
-        fsc=fsc,
-    )
+    return _c2c_fftnd_impl(x, s=s, axes=axes, out=out, direction=+1, fsc=fsc)
 
 
-def ifftn(x, s=None, axes=None, norm=None, out=None, overwrite_x=False):
+def ifftn(x, s=None, axes=None, norm=None, out=None):
     fsc = _compute_fwd_scale(norm, s, x.shape)
-    return _c2c_fftnd_impl(
-        x,
-        s=s,
-        axes=axes,
-        out=out,
-        overwrite_x=overwrite_x,
-        direction=-1,
-        fsc=fsc,
-    )
+    return _c2c_fftnd_impl(x, s=s, axes=axes, out=out, direction=-1, fsc=fsc)
 
 
 def rfft(x, n=None, axis=-1, norm=None, out=None):
