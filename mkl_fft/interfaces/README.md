@@ -1,5 +1,5 @@
 # Interfaces
-The `mkl_fft` package provides interfaces that serve as drop-in replacements for equivalent functions in NumPy and SciPy.
+The `mkl_fft` package provides interfaces that serve as drop-in replacements for equivalent functions in NumPy, SciPy, and Dask.
 
 ---
 
@@ -124,4 +124,44 @@ y = scipy.signal.fftconvolve(a, a)  # Note that Nthr:112
 with mkl_fft.set_workers(4):
     y = scipy.signal.fftconvolve(a, a)  # Note that Nthr:4
 # MKL_VERBOSE FFT(dcbo256x128,input_strides:{0,128,1},output_strides:{0,128,1},bScale:3.05176e-05,tLim:4,unaligned_output,desc:0x563aefe86180) 187.37us CNR:OFF Dyn:1 FastMM:1 TID:0  NThr:4
+```
+
+---
+
+## Dask interface - `mkl_fft.interfaces.dask_fft`
+
+This interface is a drop-in replacement for the [`dask.fft`](https://dask.pydata.org/en/latest/array-api.html#fast-fourier-transforms) module and includes **all** the functions available there:
+
+* complex-to-complex FFTs: `fft`, `ifft`, `fft2`, `ifft2`, `fftn`, `ifftn`.
+
+* real-to-complex and complex-to-real FFTs: `rfft`, `irfft`, `rfft2`, `irfft2`, `rfftn`, `irfftn`.
+
+* Hermitian FFTs: `hfft`, `ihfft`.
+
+* Helper routines: `fft_wrap`, `fftfreq`, `rfftfreq`, `fftshift`, `ifftshift`. These routines serve as a fallback to the Dask implementation and are included for completeness.
+
+The following example shows how to use this interface for calculating a 2D FFT.
+
+```python
+import numpy, dask
+import mkl_fft.interfaces.dask_fft as dask_fft
+
+a = numpy.random.randn(128, 64) + 1j*numpy.random.randn(128, 64)
+x = dask.array.from_array(a, chunks=(64, 64))
+lazy_res = dask_fft.fft(x)
+mkl_res = lazy_res.compute()
+np_res = numpy.fft.fft(a)
+numpy.allclose(mkl_res, np_res)
+# True
+
+# There are two chunks in this example based on the size of input array (128, 64) and chunk size (64, 64)
+# to confirm that MKL FFT is called twice, turn on verbosity
+import mkl
+mkl.verbose(1)
+# True
+
+mkl_res = lazy_res.compute()  # MKL_VERBOSE FFT is shown twice below which means MKL FFT is called twice
+# MKL_VERBOSE oneMKL 2024.0 Update 2 Patch 2 Product build 20240823 for Intel(R) 64 architecture Intel(R) Advanced Vector Extensions 512 (Intel(R) AVX-512) with support for INT8, BF16, FP16 (limited) instructions, and Intel(R) Advanced Matrix Extensions (Intel(R) AMX) with INT8 and BF16, Lnx 3.80GHz intel_thread
+# MKL_VERBOSE FFT(dcfo64*64,input_strides:{0,1},output_strides:{0,1},input_distance:64,output_distance:64,bScale:0.015625,tLim:32,unaligned_input,desc:0x7fd000010e40) 432.84us CNR:OFF Dyn:1 FastMM:1 TID:0  NThr:112
+# MKL_VERBOSE FFT(dcfo64*64,input_strides:{0,1},output_strides:{0,1},input_distance:64,output_distance:64,bScale:0.015625,tLim:32,unaligned_input,desc:0x7fd480011300) 499.00us CNR:OFF Dyn:1 FastMM:1 TID:0  NThr:112
 ```

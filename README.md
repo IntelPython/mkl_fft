@@ -47,7 +47,7 @@ More details can be found in [SciPy 2017 conference proceedings](https://github.
 
 ---
 
-The `mkl_fft` package offers interfaces that act as drop-in replacements for equivalent functions in NumPy and SciPy. Learn more about these interfaces [here](https://github.com/IntelPython/mkl_fft/blob/master/mkl_fft/interfaces/README.md).
+The `mkl_fft` package offers interfaces that act as drop-in replacements for equivalent functions in NumPy, SciPy, and Dask. Learn more about these interfaces [here](https://github.com/IntelPython/mkl_fft/blob/master/mkl_fft/interfaces/README.md).
 
 While using these interfaces is the easiest way to leverage `mk_fft`, one can also use `mkl_fft` directly with the following FFT functions:
 

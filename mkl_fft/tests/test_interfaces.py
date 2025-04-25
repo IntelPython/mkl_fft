@@ -167,10 +167,16 @@ def test_axes(func):
 
 
 @pytest.mark.parametrize(
-    "interface", [mfi.scipy_fft, mfi.numpy_fft], ids=["scipy", "numpy"]
+    "interface",
+    [mfi.scipy_fft, mfi.numpy_fft, mfi.dask_fft],
+    ids=["scipy", "numpy", "dask"],
 )
 @pytest.mark.parametrize(
     "func", ["fftshift", "ifftshift", "fftfreq", "rfftfreq"]
 )
 def test_interface_helper_functions(interface, func):
     assert hasattr(interface, func)
+
+
+def test_dask_fftwrap():
+    assert hasattr(mfi.dask_fft, "fft_wrap")
