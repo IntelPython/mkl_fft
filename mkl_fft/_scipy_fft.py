@@ -139,6 +139,9 @@ __all__ = [
     "get_workers",
     "set_workers",
     "DftiBackend",
+    # Following needed for module to be used as scipy fft backend
+    "__ua_domain__",
+    "__ua_function__",
 ]
 
 __ua_domain__ = "numpy.scipy.fft"

@@ -166,3 +166,9 @@ def test_axes(func):
     exp = np.fft.rfft2(x, axes=(1, 2))
     tol = 64 * np.finfo(np.float64).eps
     assert np.allclose(res, exp, atol=tol, rtol=tol)
+
+
+def test_scipy_fft_backend():
+    """scipy_fft exposes properties necessary for use as a scipy fft backend"""
+    assert hasattr(mfi.scipy_fft, "__ua_domain__")
+    assert hasattr(mfi.scipy_fft, "__ua_function__")

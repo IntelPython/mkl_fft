@@ -72,6 +72,23 @@ and similar inverse c2r FFT (`irfft*`) functions.
 
 The package also provides `mkl_fft.interfaces.numpy_fft` and `mkl_fft.interfaces.scipy_fft` interfaces which provide drop-in replacements for equivalent functions in NumPy and SciPy, respectively.
 
+`mkl_fft.interfaces.scipy_fft` can also be used as a backend for `scipy.fft.set_backend()`
+
+```python
+>>> import numpy as np, mkl_fft, mkl_fft.interfaces.scipy_fft as mkl_be, scipy, scipy.fft, mkl
+
+>>> mkl.verbose(1)
+# True
+
+>>> x = np.random.randn(8*7).reshape((7, 8))
+>>> with scipy.fft.set_backend(mkl_be, only=True):
+>>>     ff = scipy.fft.fft2(x, workers=4)
+>>> ff2 = scipy.fft.fft2(x)
+# MKL_VERBOSE oneMKL 2025 Update 1 Product build 20250306 for Intel(R) 64 architecture Intel(R) Advanced Vector Extensions 2 (Intel(R) AVX2) enabled processors, Lnx 2.70GHz intel_thread
+# MKL_VERBOSE FFT(drfo7:8:8x8:1:1,input_strides:{0,8,1},output_strides:{0,8,1},bScale:0.0178571,tLim:1,unaligned_input,unaligned_output,desc:0x561750094440) 15.56us CNR:OFF Dyn:1 FastMM:1 TID:0  NThr:4
+
+>>> np.allclose(ff, ff2)
+```
 ---
 
 To build `mkl_fft` from sources on Linux with Intel® OneMKL:
