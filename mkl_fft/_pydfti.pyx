@@ -224,12 +224,10 @@ cdef cnp.ndarray _process_arguments(
     object x,
     object n,
     object axis,
-    object direction,
     long *axis_,
     long *n_,
     int *in_place,
     int *xnd,
-    int *dir_,
     int realQ,
 ):
     """
@@ -238,11 +236,6 @@ cdef cnp.ndarray _process_arguments(
     cdef int err
     cdef long n_max = 0
     cdef cnp.ndarray x_arr "xx_arrayObject"
-
-    if direction not in [-1, +1]:
-        raise ValueError("Direction of FFT should +1 or -1")
-    else:
-        dir_[0] = -1 if direction is -1 else +1
 
     # convert x to ndarray, ensure that strides are multiples of itemsize
     x_arr = PyArray_CheckFromAny(
@@ -382,7 +375,7 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
     """
     cdef cnp.ndarray x_arr "x_arrayObject"
     cdef cnp.ndarray f_arr "f_arrayObject"
-    cdef int xnd, n_max = 0, in_place, dir_
+    cdef int xnd, n_max = 0, in_place
     cdef long n_, axis_
     cdef int x_type, f_type, status = 0
     cdef int ALL_HARMONICS = 1
@@ -390,10 +383,10 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
     cdef bytes py_error_msg
     cdef DftiCache *_cache
 
-    x_arr = _process_arguments(
-        x, n, axis, direction, &axis_, &n_, &in_place, &xnd, &dir_, 0
-    )
+    if direction not in [-1, +1]:
+        raise ValueError("Direction of FFT should +1 or -1")
 
+    x_arr = _process_arguments(x, n, axis, &axis_, &n_, &in_place, &xnd, 0)
     x_type = cnp.PyArray_TYPE(x_arr)
 
     if out is not None:
@@ -429,7 +422,7 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
             _cache_capsule, capsule_name
         )
         if x_type is cnp.NPY_CDOUBLE:
-            if dir_ < 0:
+            if direction < 0:
                 status = cdouble_mkl_ifft1d_in(
                     x_arr, n_, <int> axis_, fsc, _cache
                 )
@@ -438,7 +431,7 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
                     x_arr, n_, <int> axis_, fsc, _cache
                 )
         elif x_type is cnp.NPY_CFLOAT:
-            if dir_ < 0:
+            if direction < 0:
                 status = cfloat_mkl_ifft1d_in(
                     x_arr, n_, <int> axis_, fsc, _cache
                 )
@@ -487,7 +480,7 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
         )
         if f_type is cnp.NPY_CDOUBLE:
             if x_type is cnp.NPY_DOUBLE:
-                if dir_ < 0:
+                if direction < 0:
                     status = double_cdouble_mkl_ifft1d_out(
                         x_arr,
                         n_,
@@ -508,7 +501,7 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
                         _cache,
                     )
             elif x_type is cnp.NPY_CDOUBLE:
-                if dir_ < 0:
+                if direction < 0:
                     status = cdouble_cdouble_mkl_ifft1d_out(
                         x_arr, n_, <int> axis_, f_arr, fsc, _cache
                     )
@@ -518,7 +511,7 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
                     )
         else:
             if x_type is cnp.NPY_FLOAT:
-                if dir_ < 0:
+                if direction < 0:
                     status = float_cfloat_mkl_ifft1d_out(
                         x_arr,
                         n_,
@@ -539,7 +532,7 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
                         _cache,
                     )
             elif x_type is cnp.NPY_CFLOAT:
-                if dir_ < 0:
+                if direction < 0:
                     status = cfloat_cfloat_mkl_ifft1d_out(
                         x_arr, n_, <int> axis_, f_arr, fsc, _cache
                     )
@@ -571,18 +564,15 @@ def _r2c_fft1d_impl(
     """
     cdef cnp.ndarray x_arr "x_arrayObject"
     cdef cnp.ndarray f_arr "f_arrayObject"
-    cdef int xnd, in_place, dir_
+    cdef int xnd, in_place
     cdef long n_, axis_
     cdef int x_type, f_type, status, requirement
     cdef int HALF_HARMONICS = 0  # give only positive index harmonics
-    cdef int direction = 1  # dummy, only used for the sake of arg-processing
     cdef char * c_error_msg = NULL
     cdef bytes py_error_msg
     cdef DftiCache *_cache
 
-    x_arr = _process_arguments(
-        x, n, axis, direction, &axis_, &n_, &in_place, &xnd, &dir_, 1
-    )
+    x_arr = _process_arguments(x, n, axis, &axis_, &n_, &in_place, &xnd, 1)
 
     x_type = cnp.PyArray_TYPE(x_arr)
 
@@ -672,10 +662,9 @@ def _c2r_fft1d_impl(
     """
     cdef cnp.ndarray x_arr "x_arrayObject"
     cdef cnp.ndarray f_arr "f_arrayObject"
-    cdef int xnd, in_place, dir_, int_n
+    cdef int xnd, in_place, int_n
     cdef long n_, axis_
     cdef int x_type, f_type, status
-    cdef int direction = 1  # dummy, only used for the sake of arg-processing
     cdef char * c_error_msg = NULL
     cdef bytes py_error_msg
     cdef DftiCache *_cache
@@ -683,9 +672,7 @@ def _c2r_fft1d_impl(
     int_n = _is_integral(n)
     # nn gives the number elements along axis of the input that we use
     nn = (n // 2 + 1) if int_n and n > 0 else n
-    x_arr = _process_arguments(
-        x, nn, axis, direction, &axis_, &n_, &in_place, &xnd, &dir_, 0
-    )
+    x_arr = _process_arguments(x, nn, axis, &axis_, &n_, &in_place, &xnd, 0)
     n_ = 2*(n_ - 1)
     if int_n and (n % 2 == 1):
         n_ += 1
@@ -774,12 +761,10 @@ def _direct_fftnd(
     cdef int err
     cdef cnp.ndarray x_arr "xxnd_arrayObject"
     cdef cnp.ndarray f_arr "ffnd_arrayObject"
-    cdef int dir_, in_place, x_type, f_type
+    cdef int in_place, x_type, f_type
 
     if direction not in [-1, +1]:
         raise ValueError("Direction of FFT should +1 or -1")
-    else:
-        dir_ = -1 if direction is -1 else +1
 
     # convert x to ndarray, ensure that strides are multiples of itemsize
     x_arr = PyArray_CheckFromAny(
@@ -824,12 +809,12 @@ def _direct_fftnd(
 
     if in_place:
         if x_type == cnp.NPY_CDOUBLE:
-            if dir_ == 1:
+            if direction == 1:
                 err = cdouble_cdouble_mkl_fftnd_in(x_arr, fsc)
             else:
                 err = cdouble_cdouble_mkl_ifftnd_in(x_arr, fsc)
         elif x_type == cnp.NPY_CFLOAT:
-            if dir_ == 1:
+            if direction == 1:
                 err = cfloat_cfloat_mkl_fftnd_in(x_arr, fsc)
             else:
                 err = cfloat_cfloat_mkl_ifftnd_in(x_arr, fsc)
@@ -856,22 +841,22 @@ def _direct_fftnd(
                 f_arr = _allocate_result(x_arr, -1, 0, f_type)
 
         if x_type == cnp.NPY_CDOUBLE:
-            if dir_ == 1:
+            if direction == 1:
                 err = cdouble_cdouble_mkl_fftnd_out(x_arr, f_arr, fsc)
             else:
                 err = cdouble_cdouble_mkl_ifftnd_out(x_arr, f_arr, fsc)
         elif x_type == cnp.NPY_CFLOAT:
-            if dir_ == 1:
+            if direction == 1:
                 err = cfloat_cfloat_mkl_fftnd_out(x_arr, f_arr, fsc)
             else:
                 err = cfloat_cfloat_mkl_ifftnd_out(x_arr, f_arr, fsc)
         elif x_type == cnp.NPY_DOUBLE:
-            if dir_ == 1:
+            if direction == 1:
                 err = double_cdouble_mkl_fftnd_out(x_arr, f_arr, fsc)
             else:
                 err = double_cdouble_mkl_ifftnd_out(x_arr, f_arr, fsc)
         elif x_type == cnp.NPY_FLOAT:
-            if dir_ == 1:
+            if direction == 1:
                 err = float_cfloat_mkl_fftnd_out(x_arr, f_arr, fsc)
             else:
                 err = float_cfloat_mkl_ifftnd_out(x_arr, f_arr, fsc)
