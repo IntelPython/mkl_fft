@@ -17,7 +17,7 @@ if scipy.__version__ < "1.12":
     # scipy from Intel channel is 1.10 with python 3.9 and 3.10
     pytest.skip("This test file needs scipy>=1.12", allow_module_level=True)
 elif scipy.__version__ < "1.14":
-    # For pytho-3.11 and 3.12, scipy<1.14 is installed from Intel channel
+    # For python-3.11 and 3.12, scipy<1.14 is installed from Intel channel
     # For python<=3.9, scipy<1.14 is installed from conda channel
     # pylint: disable=no-name-in-module
     from scipy._lib._array_api import size as xp_size
