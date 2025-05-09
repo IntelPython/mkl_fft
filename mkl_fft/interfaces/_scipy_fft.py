@@ -560,7 +560,7 @@ def hfft(
     Compute the FFT of a signal that has Hermitian symmetry,
     i.e., a real spectrum.
 
-    For full documentation refer to `scipy.fft.hfft`..
+    For full documentation refer to `scipy.fft.hfft`.
 
     """
     _check_plan(plan)
