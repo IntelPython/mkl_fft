@@ -26,16 +26,10 @@
 
 import numpy as np
 
-__all__ = [
-    "_upcast_float16_array",
-    "_downcast_float128_array",
-    "_supported_array_or_not_implemented",
-]
-
 
 def _upcast_float16_array(x):
     """
-    Used in _scipy_fft to upcast float16 to float32,
+    Used in _scipy_fftpack to upcast float16 to float32,
     instead of float64, as mkl_fft would do
     """
     if hasattr(x, "dtype"):
@@ -81,8 +75,8 @@ def _downcast_float128_array(x):
 
 def _supported_array_or_not_implemented(x):
     """
-    Used in _scipy_fft to convert array to float32,
-    float64, complex64, or complex128 type or raise NotImplementedError
+    Used in _scipy_fft to convert array to float32, float64, complex64,
+    or complex128 type or raise NotImplementedError
     """
     _x = np.asarray(x)
     black_list = [np.half]
