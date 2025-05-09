@@ -63,45 +63,7 @@ __all__ = [
     "ihfftn",
     "get_workers",
     "set_workers",
-    "DftiBackend",
 ]
-
-
-__doc__ = """
-This module implements interfaces mimicking `scipy.fft` module.
-
-It also provides DftiBackend class which can be used to set mkl_fft to be used
-via `scipy.fft` namespace.
-
-:Example:
-    import scipy.fft
-    import mkl_fft.interfaces._scipy_fft as mkl_be
-    # Set mkl_fft to be used as backend of SciPy's FFT functions.
-    scipy.fft.set_global_backend(mkl_be)
-"""
-
-
-__ua_domain__ = "numpy.scipy.fft"
-
-
-def __ua_function__(method, args, kwargs):
-    """Fetch registered UA function."""
-    fn = globals().get(method.__name__, None)
-    if fn is None:
-        return NotImplemented
-    return fn(*args, **kwargs)
-
-
-class DftiBackend:
-    __ua_domain__ = "numpy.scipy.fft"
-
-    @staticmethod
-    def __ua_function__(method, args, kwargs):
-        """Fetch registered UA function."""
-        fn = globals().get(method.__name__, None)
-        if fn is None:
-            return NotImplemented
-        return fn(*args, **kwargs)
 
 
 class _cpu_max_threads_count:
