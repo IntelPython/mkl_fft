@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2025, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -13,7 +13,7 @@
 #       may be used to endorse or promote products derived from this software
 #       without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS """AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
 # DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
@@ -24,42 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from . import _init_helper
-from ._mkl_fft import (
-    fft,
-    fft2,
-    fftn,
-    ifft,
-    ifft2,
-    ifftn,
-    irfft,
-    irfft2,
-    irfftn,
-    rfft,
-    rfft2,
-    rfftn,
+
+import numpy as np
+import pytest
+
+requires_numpy_2 = pytest.mark.skipif(
+    np.lib.NumpyVersion(np.__version__) < "2.0.0",
+    reason="Requires NumPy >= 2.0.0",
 )
-from ._pydfti import irfftpack, rfftpack  # pylint: disable=no-name-in-module
-from ._version import __version__
-
-import mkl_fft.interfaces  # isort: skip
-
-__all__ = [
-    "fft",
-    "ifft",
-    "fft2",
-    "ifft2",
-    "fftn",
-    "ifftn",
-    "rfftpack",
-    "irfftpack",
-    "rfft",
-    "irfft",
-    "rfft2",
-    "irfft2",
-    "rfftn",
-    "irfftn",
-    "interfaces",
-]
-
-del _init_helper

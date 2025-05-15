@@ -1,9 +1,6 @@
 # This file includes tests from scipy.fft module:
 # https://github.com/scipy/scipy/blob/main/scipy/fft/tests/test_basic.py
 
-# TODO: remove when hfft* functions are added
-# pylint: disable=no-member
-
 import multiprocessing
 import queue
 import threading
@@ -57,9 +54,9 @@ def get_expected_input_dtype(func, xp):
         fft.ifft,
         fft.ifftn,
         fft.ifft2,
-        # TODO: fft.hfft,
-        # TODO: fft.hfftn,
-        # TODO: fft.hfft2,
+        fft.hfft,
+        fft.hfftn,
+        fft.hfft2,
         fft.irfft,
         fft.irfftn,
         fft.irfft2,
@@ -69,9 +66,9 @@ def get_expected_input_dtype(func, xp):
         fft.rfft,
         fft.rfftn,
         fft.rfft2,
-        # TODO: fft.ihfft,
-        # TODO: fft.ihfftn,
-        # TODO: fft.ihfft2,
+        fft.ihfft,
+        fft.ihfftn,
+        fft.ihfft2,
     ]:
         dtype = xp.float64
     else:
@@ -321,10 +318,9 @@ class TestFFT:
     def test_axes_standard(self, op, xp):
         self._check_axes(op, xp)
 
-    # TODO: add this test
-    # @pytest.mark.parametrize("op", [fft.hfftn, fft.ihfftn])
-    # def test_axes_non_standard(self, op, xp):
-    #    self._check_axes(op, xp)
+    @pytest.mark.parametrize("op", [fft.hfftn, fft.ihfftn])
+    def test_axes_non_standard(self, op, xp):
+        self._check_axes(op, xp)
 
     @pytest.mark.parametrize("op", [fft.fftn, fft.ifftn, fft.rfftn, fft.irfftn])
     def test_axes_subset_with_shape_standard(self, op, xp):
@@ -352,10 +348,10 @@ class TestFFT:
             fft.ifft2,
             fft.rfft2,
             fft.irfft2,
-            # TODO: fft.hfft2,
-            # TODO: fft.ihfft2,
-            # TODO: fft.hfftn,
-            # TODO: fft.ihfftn,
+            fft.hfft2,
+            fft.ihfft2,
+            fft.hfftn,
+            fft.ihfftn,
         ],
     )
     def test_axes_subset_with_shape_non_standard(self, op, xp):
@@ -386,7 +382,7 @@ class TestFFT:
             (fft.rfft, fft.irfft),
             # hfft: order so the first function takes x.size samples
             #       (necessary for comparison to x_norm above)
-            # TODO: (fft.ihfft, fft.hfft),
+            (fft.ihfft, fft.hfft),
             # functions that expect complex dtypes at the end
             (fft.fft, fft.ifft),
         ]
@@ -410,24 +406,24 @@ class TestFFT:
 
         res_fft = fft.ifft(fft.fft(x))
         res_rfft = fft.irfft(fft.rfft(x))
-        # TODO: res_hfft = fft.hfft(fft.ihfft(x), x.shape[0])
+        res_hfft = fft.hfft(fft.ihfft(x), x.shape[0])
         # Check both numerical results and exact dtype matches
         assert_array_almost_equal(res_fft, x_complex)
         assert_array_almost_equal(res_rfft, x)
-        # TODO: assert_array_almost_equal(res_hfft, x)
+        assert_array_almost_equal(res_hfft, x)
         assert res_fft.dtype == x_complex.dtype
         assert res_rfft.dtype == np.result_type(np.float32, x.dtype)
-        # TODO: assert res_hfft.dtype == np.result_type(np.float32, x.dtype)
+        assert res_hfft.dtype == np.result_type(np.float32, x.dtype)
 
     @pytest.mark.parametrize("dtype", ["float32", "float64"])
     def test_dtypes_real(self, dtype, xp):
         x = xp.asarray(random(30), dtype=getattr(xp, dtype))
 
         res_rfft = fft.irfft(fft.rfft(x))
-        # TODO: res_hfft = fft.hfft(fft.ihfft(x), x.shape[0])
+        res_hfft = fft.hfft(fft.ihfft(x), x.shape[0])
         # Check both numerical results and exact dtype matches
         xp_assert_close(res_rfft, x, rtol=1e-06, atol=1e-06)
-        # TODO: xp_assert_close(res_hfft, x)
+        xp_assert_close(res_hfft, x, rtol=1e-06, atol=1e-06)
 
     @pytest.mark.parametrize("dtype", ["complex64", "complex128"])
     def test_dtypes_complex(self, dtype, xp):
@@ -456,12 +452,12 @@ class TestFFT:
             fft.irfft2,
             fft.rfftn,
             fft.irfftn,
-            # TODO: fft.hfft,
-            # TODO: fft.ihfft,
-            # TODO: fft.hfft2,
-            # TODO: fft.ihfft2,
-            # TODO: fft.hfftn,
-            # TODO: fft.ihfftn,
+            fft.hfft,
+            fft.ihfft,
+            fft.hfft2,
+            fft.ihfft2,
+            fft.hfftn,
+            fft.ihfftn,
         ],
     )
     def test_array_like(self, xp, op):
@@ -563,12 +559,10 @@ class TestFFTThreadSafe:
         a = xp.full(self.input_shape, 1 + 0j)
         self._test_mtsame(fft.irfft, a, xp=xp)
 
-    @pytest.mark.skip("hfft is not supported")
     def test_hfft(self, xp):
         a = xp.ones(self.input_shape, dtype=xp.complex64)
         self._test_mtsame(fft.hfft, a, xp=xp)
 
-    @pytest.mark.skip("ihfft is not supported")
     def test_ihfft(self, xp):
         a = xp.ones(self.input_shape)
         self._test_mtsame(fft.ihfft, a, xp=xp)
@@ -611,12 +605,12 @@ class TestIRFFTN:
         fft.ifftn,
         fft.rfftn,
         fft.irfftn,
-        # TODO: fft.hfft,
-        # TODO: fft.ihfft,
+        fft.hfft,
+        fft.ihfft,
     ],
 )
 def test_non_standard_params(func, xp):
-    if func in [fft.rfft, fft.rfftn]:  # TODO: fft.ihfft
+    if func in [fft.rfft, fft.rfftn, fft.ihfft]:
         dtype = xp.float64
     else:
         dtype = xp.complex128
@@ -644,7 +638,7 @@ def test_non_standard_params(func, xp):
         fft.fftn,
         fft.ifftn,
         fft.irfftn,
-        # TODO: fft.hfft,
+        fft.hfft,
     ],
 )
 def test_real_input(func, dtype, xp):

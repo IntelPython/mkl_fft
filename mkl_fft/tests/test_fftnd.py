@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2017-2025, Intel Corporation
+# Copyright (c) 2017, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,8 @@ from numpy import random as rnd
 from numpy.testing import TestCase, assert_allclose
 
 import mkl_fft
+
+from .helper import requires_numpy_2
 
 reps_64 = (2**11) * np.finfo(np.float64).eps
 reps_32 = (2**11) * np.finfo(np.float32).eps
@@ -156,8 +158,9 @@ class Test_mklfft_matrix(TestCase):
                     s = container(d.shape)
                     kwargs = dict(s=s, axes=axes, norm=norm)
                     r_tol, a_tol = _get_rtol_atol(d)
-                    t = mkl_fft._numpy_fft.fftn(
-                        mkl_fft._numpy_fft.ifftn(d, **kwargs), **kwargs
+                    t = mkl_fft.interfaces.numpy_fft.fftn(
+                        mkl_fft.interfaces.numpy_fft.ifftn(d, **kwargs),
+                        **kwargs,
                     )
                     assert_allclose(
                         d,
@@ -322,3 +325,19 @@ def test_repeated_axes(dtype, axes, func):
 
     rtol, atol = _get_rtol_atol(x)
     assert_allclose(r1, r2, rtol=rtol, atol=atol)
+
+
+@requires_numpy_2
+@pytest.mark.parametrize("axes", [None, (0, 1), (0, 2), (1, 2)])
+@pytest.mark.parametrize("func", ["fftn", "ifftn"])
+def test_out_strided(axes, func):
+    shape = (20, 30, 40)
+    x = rnd.random(shape) + 1j * rnd.random(shape)
+    out = np.empty(shape, dtype=x.dtype)
+
+    x = x[::2, ::3, ::4]
+    out = out[::2, ::3, ::4]
+    result = getattr(mkl_fft, func)(x, axes=axes, out=out)
+    expected = getattr(np.fft, func)(x, axes=axes, out=out)
+
+    assert_allclose(result, expected)
