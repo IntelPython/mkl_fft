@@ -9,9 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added Hermitian FFT functions to SciPy interface `mkl_fft.interfaces.scipy_fft`: `hfft`, `ihfft`, `hfftn`, `ihfftn`, `hfft2`, and `ihfft2` [gh-161](https://github.com/IntelPython/mkl_fft/pull/161)
 * Added support for `out` kwarg to all FFT functions in `mkl_fft` and `mkl_fft.interfaces.numpy_fft` [gh-157](https://github.com/IntelPython/mkl_fft/pull/157)
+* Added `fftfreq`, `fftshift`, `ifftshift`, and `rfftfreq` to both NumPy and SciPy interfaces [gh-179](https://github.com/IntelPython/mkl_fft/pull/179)
 
 ### Changed
-* NumPy interface `mkl_fft.interfaces.numpy_fft` is aligned with numpy-2.* [gh-139](https://github.com/IntelPython/mkl_fft/pull/139), [gh-157](https://github.com/IntelPython/mkl_fft/pull/157)
+* NumPy interface `mkl_fft.interfaces.numpy_fft` is aligned with numpy-2.x.x [gh-139](https://github.com/IntelPython/mkl_fft/pull/139), [gh-157](https://github.com/IntelPython/mkl_fft/pull/157)
+* To set `mkl_fft` as the backend for SciPy is only possible through `mkl_fft.interfaces.scipy_fft` [gh-179](https://github.com/IntelPython/mkl_fft/pull/179)
+* SciPy interface `mkl_fft.interfaces.scipy_fft` uses the same function from SciPy for handling `s` and `axes` for N-D FFTs [gh-181](https://github.com/IntelPython/mkl_fft/pull/181)
 
 ### Fixed
 * Fixed an issue for calling `mkl_fft.interfaces.numpy.fftn` with an empty axes [gh-139](https://github.com/IntelPython/mkl_fft/pull/139)
@@ -90,24 +93,6 @@ transform improves multi-core utilization which may offset the performance loss 
 ## [1.1.0]
 
 Added `scipy.fft` backend, see #42. Fixed #46.
-
-
-```python
->>> import numpy as np, mkl_fft, mkl_fft._scipy_fft as mkl_be, scipy, scipy.fft, mkl
-
->>> mkl.verbose(1)
-# True
-
->>> x = np.random.randn(8*7).reshape((7, 8))
->>> with scipy.fft.set_backend(mkl_be, only=True):
->>>     ff = scipy.fft.fft2(x, workers=4)
->>> ff2 = scipy.fft.fft2(x)
-# MKL_VERBOSE Intel(R) MKL 2020.0 Product build 20191102 for Intel(R) 64 architecture Intel(R) Advanced Vector Extensions 2 (Intel(R) AVX2) enabled processors, Lnx 2.40GHz intel_thread
-# MKL_VERBOSE FFT(drfo7:8:8x8:1:1,bScale:0.0178571,tLim:1,desc:0x5629ad31b800) 24.85ms CNR:OFF Dyn:1 FastMM:1 TID:0  NThr:16,FFT:4
-
->>> np.allclose(ff, ff2)
-# True
-```
 
 ## [1.0.15]
 
