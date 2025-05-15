@@ -24,4 +24,44 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ._numpy_fft import *
+# Added for completing the namespaces
+from numpy.fft import fftfreq, fftshift, ifftshift, rfftfreq
+
+# pylint: disable=no-name-in-module
+from ._numpy_fft import (
+    fft,
+    fft2,
+    fftn,
+    hfft,
+    ifft,
+    ifft2,
+    ifftn,
+    ihfft,
+    irfft,
+    irfft2,
+    irfftn,
+    rfft,
+    rfft2,
+    rfftn,
+)
+
+__all__ = [
+    "fft",
+    "ifft",
+    "fft2",
+    "ifft2",
+    "fftn",
+    "ifftn",
+    "rfft",
+    "irfft",
+    "rfft2",
+    "irfft2",
+    "rfftn",
+    "irfftn",
+    "hfft",
+    "ihfft",
+    "fftshift",
+    "ifftshift",
+    "fftfreq",
+    "rfftfreq",
+]

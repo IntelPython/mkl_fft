@@ -43,34 +43,45 @@ This eliminates the need to copy input array contiguously into an intermediate b
 
 `mkl_fft` directly supports N-dimensional Fourier transforms.
 
-More details can be found in SciPy 2017 conference proceedings:
-     https://github.com/scipy-conference/scipy_proceedings/tree/2017/papers/oleksandr_pavlyk
+More details can be found in [SciPy 2017 conference proceedings](https://github.com/scipy-conference/scipy_proceedings/tree/2017/papers/oleksandr_pavlyk).
 
 ---
 
-`mkl_fft` implements the following functions:
+The `mkl_fft` package offers interfaces that act as drop-in replacements for equivalent functions in NumPy and SciPy. Learn more about these interfaces [here](https://github.com/IntelPython/mkl_fft/blob/master/mkl_fft/interfaces/README.md).
+
+While using these interfaces is the easiest way to leverage `mk_fft`, one can also use `mkl_fft` directly with the following FFT functions:
 
 ### complex-to-complex (c2c) transforms:
 
-`fft(x, n=None, axis=-1, overwrite_x=False, fwd_scale=1.0, out=out)` - 1D FFT, similar to `scipy.fft.fft`
+`fft(x, n=None, axis=-1, overwrite_x=False, fwd_scale=1.0, out=None)` - 1D FFT, similar to `scipy.fft.fft`
 
-`fft2(x, s=None, axes=(-2, -1), overwrite_x=False, fwd_scale=1.0, out=out)` - 2D FFT, similar to `scipy.fft.fft2`
+`fft2(x, s=None, axes=(-2, -1), overwrite_x=False, fwd_scale=1.0, out=None)` - 2D FFT, similar to `scipy.fft.fft2`
 
-`fftn(x, s=None, axes=None, overwrite_x=False, fwd_scale=1.0, out=out)` - ND FFT, similar to `scipy.fft.fftn`
+`fftn(x, s=None, axes=None, overwrite_x=False, fwd_scale=1.0, out=None)` - ND FFT, similar to `scipy.fft.fftn`
 
 and similar inverse FFT (`ifft*`) functions.
 
 ### real-to-complex (r2c) and complex-to-real (c2r) transforms:
 
-`rfft(x, n=None, axis=-1, fwd_scale=1.0, out=out)` - r2c 1D FFT, similar to `numpy.fft.rfft`
+`rfft(x, n=None, axis=-1, fwd_scale=1.0, out=None)` - r2c 1D FFT, similar to `numpy.fft.rfft`
 
-`rfft2(x, s=None, axes=(-2, -1), fwd_scale=1.0, out=out)` - r2c 2D FFT, similar to `numpy.fft.rfft2`
+`rfft2(x, s=None, axes=(-2, -1), fwd_scale=1.0, out=None)` - r2c 2D FFT, similar to `numpy.fft.rfft2`
 
-`rfftn(x, s=None, axes=None, fwd_scale=1.0, out=out)` - r2c ND FFT, similar to `numpy.fft.rfftn`
+`rfftn(x, s=None, axes=None, fwd_scale=1.0, out=None)` - r2c ND FFT, similar to `numpy.fft.rfftn`
 
 and similar inverse c2r FFT (`irfft*`) functions.
 
-The package also provides `mkl_fft.interfaces.numpy_fft` and `mkl_fft.interfaces.scipy_fft` interfaces which provide drop-in replacements for equivalent functions in NumPy and SciPy, respectively.
+The following example shows how to use `mkl_fft` for calculating a 1D FFT.
+
+```python
+import numpy, mkl_fft
+a = numpy.random.randn(10) + 1j*numpy.random.randn(10)
+
+mkl_res = mkl_fft.fft(a)
+np_res = numpy.fft.fft(a)
+numpy.allclose(mkl_res, np_res)
+# True
+```
 
 ---
 
