@@ -465,5 +465,4 @@ def test_irfft_dtype(dt):
     x = np.array(rnd.random((20, 20)), dtype=dt)
     result = mkl_fft.irfft(x)
     expected = np.fft.irfft(x)
-    assert result.dtype == expected.dtype
-    assert_allclose(result, expected, rtol=1e-7, atol=1e-7)
+    assert_allclose(result, expected, rtol=1e-7, atol=1e-7, strict=True)
