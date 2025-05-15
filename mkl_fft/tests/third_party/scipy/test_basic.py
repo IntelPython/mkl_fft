@@ -230,7 +230,6 @@ class TestFFT:
         for norm in ["backward", "ortho", "forward"]:
             xp_assert_close(fft.irfftn(fft.rfftn(x, norm=norm), norm=norm), x)
 
-    @pytest.mark.skip("hfft is not supported")
     def test_hfft(self, xp):
         x = random(14) + 1j * random(14)
         x_herm = np.concatenate((random(1), x, random(1)))
@@ -246,7 +245,6 @@ class TestFFT:
         )
         xp_assert_close(fft.hfft(x_herm, norm="forward"), expect / 30)
 
-    @pytest.mark.skip("ihfft is not supported")
     def test_ihfft(self, xp):
         x = random(14) + 1j * random(14)
         x_herm = np.concatenate((random(1), x, random(1)))
@@ -259,14 +257,12 @@ class TestFFT:
                 fft.ihfft(fft.hfft(x_herm, norm=norm), norm=norm), x_herm
             )
 
-    @pytest.mark.skip("hfft2 is not supported")
     def test_hfft2(self, xp):
         x = xp.asarray(random((30, 20)))
         xp_assert_close(fft.hfft2(fft.ihfft2(x)), x)
         for norm in ["backward", "ortho", "forward"]:
             xp_assert_close(fft.hfft2(fft.ihfft2(x, norm=norm), norm=norm), x)
 
-    @pytest.mark.skip("ihfft2 is not supported")
     def test_ihfft2(self, xp):
         x = xp.asarray(random((30, 20)), dtype=xp.float64)
         expect = fft.ifft2(xp.asarray(x, dtype=xp.complex128))[:, :11]
@@ -278,14 +274,12 @@ class TestFFT:
         )
         xp_assert_close(fft.ihfft2(x, norm="forward"), expect * (30 * 20))
 
-    @pytest.mark.skip("hfftn is not supported")
     def test_hfftn(self, xp):
         x = xp.asarray(random((30, 20, 10)))
         xp_assert_close(fft.hfftn(fft.ihfftn(x)), x)
         for norm in ["backward", "ortho", "forward"]:
             xp_assert_close(fft.hfftn(fft.ihfftn(x, norm=norm), norm=norm), x)
 
-    @pytest.mark.skip("ihfftn is not supported")
     def test_ihfftn(self, xp):
         x = xp.asarray(random((30, 20, 10)), dtype=xp.float64)
         expect = fft.ifftn(xp.asarray(x, dtype=xp.complex128))[:, :, :6]
