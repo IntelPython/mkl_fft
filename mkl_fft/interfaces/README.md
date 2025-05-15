@@ -72,7 +72,7 @@ mkl.verbose(1)
 # True
 
 with scipy.fft.set_backend(mkl_backend, only=True):
-	mkl_res = scipy.fft.fft2(x, workers=4)  # Calls `mkl_fft` backend
+    mkl_res = scipy.fft.fft2(x, workers=4)  # Calls `mkl_fft` backend
 # MKL_VERBOSE oneMKL 2024.0 Update 2 Patch 2 Product build 20240823 for Intel(R) 64 architecture Intel(R) Advanced Vector Extensions 512 (Intel(R) AVX-512) with support for INT8, BF16, FP16 (limited) instructions, and Intel(R) Advanced Matrix Extensions (Intel(R) AMX) with INT8 and BF16, Lnx 2.00GHz intel_thread
 # MKL_VERBOSE FFT(drfo7:8:8x8:1:1,input_strides:{0,8,1},output_strides:{0,8,1},bScale:0.0178571,tLim:1,unaligned_output,desc:0x557affb60d40) 36.11us CNR:OFF Dyn:1 FastMM:1 TID:0  NThr:4
 

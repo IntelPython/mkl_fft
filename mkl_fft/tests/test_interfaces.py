@@ -172,5 +172,5 @@ def test_axes(func):
 @pytest.mark.parametrize(
     "func", ["fftshift", "ifftshift", "fftfreq", "rfftfreq"]
 )
-def test_interfac_helper_functions(interface, func):
+def test_interface_helper_functions(interface, func):
     assert hasattr(interface, func)
