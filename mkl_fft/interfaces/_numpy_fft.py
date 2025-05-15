@@ -295,13 +295,11 @@ def hfft(a, n=None, axis=-1, norm=None, out=None):
     """
     norm = _swap_direction(norm)
     x = _downcast_float128_array(a)
-    x = np.array(x, copy=True)
-    np.conjugate(x, out=x)
     fsc = _compute_fwd_scale(norm, n, 2 * (x.shape[axis] - 1))
 
     return _trycall(
         mkl_fft.irfft,
-        (x,),
+        (np.conjugate(x),),
         {"n": n, "axis": axis, "fwd_scale": fsc, "out": out},
     )
 
@@ -317,9 +315,9 @@ def ihfft(a, n=None, axis=-1, norm=None, out=None):
     x = _downcast_float128_array(a)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
-    output = _trycall(
+    result = _trycall(
         mkl_fft.rfft, (x,), {"n": n, "axis": axis, "fwd_scale": fsc, "out": out}
     )
 
-    np.conjugate(output, out=output)
-    return output
+    np.conjugate(result, out=result)
+    return result

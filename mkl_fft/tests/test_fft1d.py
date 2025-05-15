@@ -457,3 +457,12 @@ def test_irfft_out_strided(axis):
     expected = np.fft.irfft(x, axis=axis, out=out)
 
     assert_allclose(result, expected)
+
+
+@requires_numpy_2
+@pytest.mark.parametrize("dt", ["i4", "f4", "f8", "c8", "c16"])
+def test_irfft_dtype(dt):
+    x = np.array(rnd.random((20, 20)), dtype=dt)
+    result = mkl_fft.irfft(x)
+    expected = np.fft.irfft(x)
+    assert_allclose(result, expected, rtol=1e-7, atol=1e-7, strict=True)

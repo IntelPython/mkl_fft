@@ -665,13 +665,12 @@ def _r2c_fft1d_impl(
         return f_arr
 
 
-# this routine is functionally equivalent to numpy.fft.irfft
 def _c2r_fft1d_impl(
     x, n=None, axis=-1, overwrite_x=False, double fsc=1.0, out=None
 ):
     """
-    Uses MKL to perform 1D FFT on the real input array x along the given axis,
-    producing complex output, but giving only half of the harmonics.
+    Uses MKL to perform 1D FFT on the real/complex input array x along the
+    given axis, producing real output.
 
     cf. numpy.fft.irfft
     """
@@ -704,13 +703,13 @@ def _c2r_fft1d_impl(
     else:
         # we must cast the input and allocate the output,
         # so we cast to complex double and operate in place
-        try:
+        if x_type is cnp.NPY_FLOAT:
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
-                x_arr, cnp.NPY_CDOUBLE, cnp.NPY_BEHAVED)
-        except:
-            raise ValueError(
-                "First argument should be a real or "
-                "a complex sequence of single or double precision"
+                x_arr, cnp.NPY_CFLOAT, cnp.NPY_BEHAVED
+            )
+        else:
+            x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
+                x_arr, cnp.NPY_CDOUBLE, cnp.NPY_BEHAVED
             )
         x_type = cnp.PyArray_TYPE(x_arr)
         in_place = 1
