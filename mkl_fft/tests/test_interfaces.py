@@ -156,9 +156,7 @@ def test_scipy_fft_arg_validate():
 
 
 @pytest.mark.parametrize(
-    "func",
-    [mfi.scipy_fft.rfft2, mfi.numpy_fft.rfft2],
-    ids=["scipy", "numpy"],
+    "func", [mfi.scipy_fft.rfft2, mfi.numpy_fft.rfft2], ids=["scipy", "numpy"]
 )
 def test_axes(func):
     x = np.arange(24.0).reshape(2, 3, 4)
@@ -166,3 +164,13 @@ def test_axes(func):
     exp = np.fft.rfft2(x, axes=(1, 2))
     tol = 64 * np.finfo(np.float64).eps
     assert np.allclose(res, exp, atol=tol, rtol=tol)
+
+
+@pytest.mark.parametrize(
+    "interface", [mfi.scipy_fft, mfi.numpy_fft], ids=["scipy", "numpy"]
+)
+@pytest.mark.parametrize(
+    "func", ["fftshift", "ifftshift", "fftfreq", "rfftfreq"]
+)
+def test_interface_helper_functions(interface, func):
+    assert hasattr(interface, func)
