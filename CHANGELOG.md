@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fixed a bug for N-D FFTs when both `s` and `out` are given [gh-185](https://github.com/IntelPython/mkl_fft/pull/185)
+* Fixed a bug when there is overlapping memory of input and output arrays [gh-???](https://github.com/IntelPython/mkl_fft/pull/???)
 
 ## [2.0.0] (06/DD/2025)
 
