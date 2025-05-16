@@ -384,6 +384,10 @@ def _c2c_fftnd_impl(
         raise ValueError("Direction of FFT should +1 or -1")
 
     valid_dtypes = [np.complex64, np.complex128, np.float32, np.float64]
+    inplace_FFT = 0
+    if x.dtype not in valid_dtypes:
+        x = x.astype(np.complex128, copy=True)
+        inplace_FFT = 1
     # _direct_fftnd requires complex type, and full-dimensional transform
     if isinstance(x, np.ndarray) and x.size != 0 and x.ndim > 1:
         _direct = s is None and axes is None
@@ -393,7 +397,7 @@ def _c2c_fftnd_impl(
             xs, xa = _cook_nd_args(x, s, axes)
             if _check_shapes_for_direct(xs, x.shape, xa):
                 _direct = True
-        _direct = _direct and x.dtype in valid_dtypes
+        _direct = _direct
     else:
         _direct = False
 
@@ -402,10 +406,11 @@ def _c2c_fftnd_impl(
             x,
             direction=direction,
             fsc=fsc,
+            in_place=inplace_FFT,
             out=out,
         )
     else:
-        if s is None and x.dtype in valid_dtypes:
+        if s is None:
             x = np.asarray(x)
             if out is None:
                 res = np.empty_like(x, dtype=_output_dtype(x.dtype))
@@ -417,7 +422,7 @@ def _c2c_fftnd_impl(
                 x,
                 axes,
                 _direct_fftnd,
-                {"direction": direction, "fsc": fsc},
+                {"direction": direction, "fsc": fsc, "in_place": inplace_FFT},
                 res,
             )
         else:
