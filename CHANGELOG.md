@@ -11,8 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Replaced `fwd_scale` parameter with `norm` in `mkl_fft` [gh-189](https://github.com/IntelPython/mkl_fft/pull/189)
+* Dropped support for `scipy.fftpack` interface [gh-185](https://github.com/IntelPython/mkl_fft/pull/185)
+* Dropped support for `overwrite_x` parameter in `mkl_fft` [gh-185](https://github.com/IntelPython/mkl_fft/pull/185)
 
 ### Fixed
+* Fixed a bug for N-D FFTs when both `s` and `out` are given [gh-185](https://github.com/IntelPython/mkl_fft/pull/185)
 
 ## [2.0.0] - 2025-06-03
 
@@ -27,8 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * SciPy interface `mkl_fft.interfaces.scipy_fft` uses the same function from SciPy for handling `s` and `axes` for N-D FFTs [gh-181](https://github.com/IntelPython/mkl_fft/pull/181)
 
 ### Fixed
-* Fixed an issue for calling `mkl_fft.interfaces.numpy.fftn` with an empty axes [gh-139](https://github.com/IntelPython/mkl_fft/pull/139)
-* Fixed an issue for calling `mkl_fft.interfaces.numpy.fftn` with a zero-size array [gh-139](https://github.com/IntelPython/mkl_fft/pull/139)
+* Fixed a bug in `mkl_fft.interfaces.numpy.fftn` when an empty tuple is passed for `axes` [gh-139](https://github.com/IntelPython/mkl_fft/pull/139)
+* Fixed a bug for a case when a zero-size array is passed to `mkl_fft.interfaces.numpy.fftn` [gh-139](https://github.com/IntelPython/mkl_fft/pull/139)
 * Fixed inconsistency of input and output arrays dtype for `irfft` function [gh-180](https://github.com/IntelPython/mkl_fft/pull/180)
 * Fixed issues with `set_workers` function in SciPy interface `mkl_fft.interfaces.scipy_fft` [gh-183](https://github.com/IntelPython/mkl_fft/pull/183)
 
