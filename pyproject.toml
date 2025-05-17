@@ -60,8 +60,9 @@ readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.9,<3.14"
 
 [project.optional-dependencies]
+dask_interface = ["dask"]
 scipy_interface = ["scipy>=1.10"]
-test = ["pytest", "scipy>=1.10"]
+test = ["pytest", "scipy>=1.10", "dask"]
 
 [project.urls]
 Download = "http://github.com/IntelPython/mkl_fft"

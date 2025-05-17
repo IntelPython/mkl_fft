@@ -140,7 +140,7 @@ jobs:
       - name: Install mkl_fft
         run: |
           CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda create -n ${{ env.TEST_ENV_NAME }} $PACKAGE_NAME=${{ env.PACKAGE_VERSION }} python=${{ matrix.python }} pytest $CHANNELS
+          conda create -n ${{ env.TEST_ENV_NAME }} $PACKAGE_NAME=${{ env.PACKAGE_VERSION }} python=${{ matrix.python }} pytest dask $CHANNELS
           if [[ "${{ matrix.python }}" != 3.9* ]]; then
             # Intel channel only has scipy=1.10 for Python 3.9, which needs mkl<2025
             # while scipy needs to install numpy and mkl_random and mkl_random-1.2.11 requires mkl>=2025
@@ -313,7 +313,7 @@ jobs:
           FOR /F "tokens=* USEBACKQ" %%F IN (`python -c "%SCRIPT%"`) DO (
              SET PACKAGE_VERSION=%%F
           )
-          SET "TEST_DEPENDENCIES=pytest"
+          SET "TEST_DEPENDENCIES=pytest dask"
           conda install -n ${{ env.TEST_ENV_NAME }} ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% %TEST_DEPENDENCIES% python=${{ matrix.python }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
           if ("${{ matrix.python }}" -ne "3.9") {
             conda install -n ${{ env.TEST_ENV_NAME }} scipy -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
