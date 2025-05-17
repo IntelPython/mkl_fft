@@ -73,5 +73,5 @@ jobs:
       - name: Run mkl_fft tests
         run: |
           source ${{ env.ONEAPI_ROOT }}/setvars.sh
-          pip install scipy mkl-service pytest
+          pip install pytest mkl-service scipy dask
           pytest -s -v --pyargs mkl_fft
