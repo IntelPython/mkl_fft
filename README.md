@@ -53,11 +53,11 @@ While using these interfaces is the easiest way to leverage `mk_fft`, one can al
 
 ### complex-to-complex (c2c) transforms:
 
-`fft(x, n=None, axis=-1, overwrite_x=False, fwd_scale=1.0, out=None)` - 1D FFT, similar to `scipy.fft.fft`
+`fft(x, n=None, axis=-1, fwd_scale=1.0, out=None)` - 1D FFT, similar to `numpy.fft.fft`
 
-`fft2(x, s=None, axes=(-2, -1), overwrite_x=False, fwd_scale=1.0, out=None)` - 2D FFT, similar to `scipy.fft.fft2`
+`fft2(x, s=None, axes=(-2, -1), fwd_scale=1.0, out=None)` - 2D FFT, similar to `numpy.fft.fft2`
 
-`fftn(x, s=None, axes=None, overwrite_x=False, fwd_scale=1.0, out=None)` - ND FFT, similar to `scipy.fft.fftn`
+`fftn(x, s=None, axes=None, fwd_scale=1.0, out=None)` - ND FFT, similar to `numpy.fft.fftn`
 
 and similar inverse FFT (`ifft*`) functions.
 
