@@ -33,11 +33,13 @@ test:
     requires:
       - pytest
       - scipy >=1.10
+      - dask
     imports:
       - mkl_fft
       - mkl_fft.interfaces
       - mkl_fft.interfaces.numpy_fft
       - mkl_fft.interfaces.scipy_fft
+      - mkl_fft.interfaces.dask_fft
 
 about:
     home: http://github.com/IntelPython/mkl_fft

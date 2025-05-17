@@ -34,13 +34,21 @@ try:
 except AttributeError:
     scipy_fft = None
 
+try:
+    dask_fft = mfi.dask_fft
+except AttributeError:
+    dask_fft = None
+
 interfaces = []
 ids = []
+interfaces.append(mfi.numpy_fft)
+ids.append("numpy")
 if scipy_fft is not None:
     interfaces.append(scipy_fft)
     ids.append("scipy")
-interfaces.append(mfi.numpy_fft)
-ids.append("numpy")
+if dask_fft is not None:
+    interfaces.append(dask_fft)
+    ids.append("dask")
 
 
 @pytest.mark.parametrize("norm", [None, "forward", "backward", "ortho"])
@@ -189,3 +197,8 @@ def test_axes(interface):
 )
 def test_interface_helper_functions(interface, func):
     assert hasattr(interface, func)
+
+
+def test_dask_fftwrap():
+    pytest.importorskip("dask", reason="requires dask")
+    assert hasattr(mfi.dask_fft, "fft_wrap")
