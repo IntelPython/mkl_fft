@@ -26,6 +26,7 @@ requirements:
       - python
       - mkl-service
       - numpy
+      - scipy
 
 test:
     commands:
