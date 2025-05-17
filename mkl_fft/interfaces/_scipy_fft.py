@@ -32,7 +32,6 @@ in the backend.
 import contextlib
 import contextvars
 import operator
-import os
 from numbers import Number
 
 import mkl
@@ -67,31 +66,13 @@ __all__ = [
 ]
 
 
-class _cpu_max_threads_count:
-    def __init__(self):
-        self.cpu_count = None
-        self.max_threads_count = None
-
-    def get_cpu_count(self):
-        if self.cpu_count is None:
-            max_threads = self.get_max_threads_count()
-            self.cpu_count = max_threads
-        return self.cpu_count
-
-    def get_max_threads_count(self):
-        if self.max_threads_count is None:
-            # pylint: disable=no-member
-            self.max_threads_count = mkl.get_max_threads()
-
-        return self.max_threads_count
-
-
 class _workers_data:
     def __init__(self, workers=None):
-        if workers:
-            self.workers_ = workers
+        if workers is not None:  # workers = 0 should be handled
+            self.workers_ = _workers_to_num_threads(workers)
         else:
-            self.workers_ = _cpu_max_threads_count().get_cpu_count()
+            # Unlike SciPy, the default value is maximum number of threads
+            self.workers_ = mkl.get_max_threads()  # pylint: disable=no-member
         self.workers_ = operator.index(self.workers_)
 
     @property
@@ -109,8 +90,9 @@ _workers_global_settings = contextvars.ContextVar(
 
 
 def _workers_to_num_threads(w):
-    """Handle conversion of workers to a positive number of threads in the
-    same way as scipy.fft.helpers._workers.
+    """
+    Handle conversion of workers to a positive number of threads in the
+    same way as scipy.fft._pocketfft.helpers._workers.
     """
     if w is None:
         return _workers_global_settings.get().workers
@@ -118,12 +100,13 @@ def _workers_to_num_threads(w):
     if _w == 0:
         raise ValueError("Number of workers must not be zero")
     if _w < 0:
-        ub = os.cpu_count()
-        _w += ub + 1
+        # SciPy uses os.cpu_count()
+        _cpu_count = mkl.get_max_threads()  # pylint: disable=no-member
+        _w += _cpu_count + 1
         if _w <= 0:
             raise ValueError(
-                "workers value out of range; got {}, must not be"
-                " less than {}".format(w, -ub)
+                f"workers value out of range; got {w}, must not be less "
+                f"than {-_cpu_count}"
             )
     return _w
 
@@ -135,14 +118,16 @@ class _Workers:
 
     def __enter__(self):
         try:
+            # mkl.set_num_threads_local sets the number of threads to the
+            # given input number, and returns the previous number of threads
             # pylint: disable=no-member
             self.prev_num_threads = mkl.set_num_threads_local(self.n_threads)
         except Exception as e:
             raise ValueError(
-                "Class argument {} result in invalid number of threads {}".format(
-                    self.workers, self.n_threads
-                )
+                f"Class argument {self.workers} results in invalid number of "
+                f"threads {self.n_threads}"
             ) from e
+        return self
 
     def __exit__(self, *args):
         # restore old value
@@ -684,21 +669,19 @@ def get_workers():
 
 
 @contextlib.contextmanager
-def set_workers(n_workers):
+def set_workers(workers):
     """
     Set the value of workers used by default, returns the previous value.
 
     For full documentation refer to `scipy.fft.set_workers`.
 
     """
-    nw = operator.index(n_workers)
+    nw = operator.index(workers)
     token = None
     try:
         new_wd = _workers_data(nw)
         token = _workers_global_settings.set(new_wd)
         yield
     finally:
-        if token:
+        if token is not None:
             _workers_global_settings.reset(token)
-        else:
-            raise ValueError
