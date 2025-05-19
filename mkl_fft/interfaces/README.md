@@ -42,6 +42,8 @@ This interface is a drop-in replacement for the [`scipy.fft`](https://scipy.gith
 
 * Helper functions: `fftshift`, `ifftshift`, `fftfreq`, `rfftfreq`, `set_workers`, `get_workers`. All of these functions, except for `set_workers` and `get_workers`, serve as a fallback to the SciPy implementation and are included for completeness.
 
+Note that in computing FFTs, the default value of `workers` parameter is the maximum number of threads available unlike the default behavior of SciPy where only one thread is used.
+
 The following example shows how to use this interface for calculating a 1D FFT.
 
 ```python
@@ -101,4 +103,25 @@ with scipy.fft.set_backend(mkl_backend, only=True):
 
 print(f"Time with OneMKL FFT backend installed: {t2:.1f} seconds")
 # Time with MKL FFT backend installed: 9.1 seconds
+```
+
+In the following example, we use `set_worker` to control the number of threads when `mkl_fft` is being used as a backend for SciPy.
+
+```python
+import numpy, mkl, scipy
+import mkl_fft.interfaces.scipy_fft as mkl_fft
+import scipy
+a = numpy.random.randn(128, 64) + 1j*numpy.random.randn(128, 64)
+scipy.fft.set_global_backend(mkl_fft)  # set mkl_fft as global backend
+
+mkl.verbose(1)
+# True
+mkl.get_max_threads()
+# 112
+y = scipy.signal.fftconvolve(a, a)  # Note that Nthr:112
+# MKL_VERBOSE FFT(dcbo256x128,input_strides:{0,128,1},output_strides:{0,128,1},bScale:3.05176e-05,tLim:56,unaligned_input,unaligned_output,desc:0x563aefe86180) 165.02us CNR:OFF Dyn:1 FastMM:1 TID:0  NThr:112
+
+with mkl_fft.set_workers(4):
+    y = scipy.signal.fftconvolve(a, a)  # Note that Nthr:4
+# MKL_VERBOSE FFT(dcbo256x128,input_strides:{0,128,1},output_strides:{0,128,1},bScale:3.05176e-05,tLim:4,unaligned_output,desc:0x563aefe86180) 187.37us CNR:OFF Dyn:1 FastMM:1 TID:0  NThr:4
 ```

@@ -2,8 +2,8 @@
 # https://github.com/scipy/scipy/blob/main/scipy/fft/tests/test_multithreading.py.py
 
 import multiprocessing
-import os
 
+import mkl
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
@@ -52,7 +52,7 @@ def _mt_fft(x):
     return fft.fft(x, workers=2)
 
 
-@pytest.mark.slow
+# @pytest.mark.slow
 def test_mixed_threads_processes(x):
     # Test that the fft threadpool is safe to use before & after fork
 
@@ -68,36 +68,42 @@ def test_mixed_threads_processes(x):
 
 
 def test_invalid_workers(x):
-    cpus = os.cpu_count()
+    # cpus = os.cpu_count()
+    threads = mkl.get_max_threads()  # pylint: disable=no-member
+    # cpus and threads are usually the same but in CI, cpus = 4 and threads = 2
+    # SciPy uses `os.cpu_count()` to get the number of workers, while
+    # `mkl_fft.interfaces.scipy_fft` uses `mkl.get_max_threads()`
 
-    fft.ifft([1], workers=-cpus)
+    fft.ifft([1], workers=-threads)
 
     with pytest.raises(ValueError, match="workers must not be zero"):
         fft.fft(x, workers=0)
 
     with pytest.raises(ValueError, match="workers value out of range"):
-        fft.ifft(x, workers=-cpus - 1)
+        fft.ifft(x, workers=-threads - 1)
 
 
-@pytest.mark.skip()
 def test_set_get_workers():
-    cpus = os.cpu_count()
-    assert fft.get_workers() == 1
+    # cpus = os.cpu_count()
+    threads = mkl.get_max_threads()  # pylint: disable=no-member
+
+    # default value is max number of threads unlike stock SciPy
+    assert fft.get_workers() == threads
     with fft.set_workers(4):
         assert fft.get_workers() == 4
 
         with fft.set_workers(-1):
-            assert fft.get_workers() == cpus
+            assert fft.get_workers() == threads
 
         assert fft.get_workers() == 4
 
-    assert fft.get_workers() == 1
+    # default value is max number of threads unlike stock SciPy
+    assert fft.get_workers() == threads
 
-    with fft.set_workers(-cpus):
+    with fft.set_workers(-threads):
         assert fft.get_workers() == 1
 
 
-@pytest.mark.skip("mkl_fft does not validate workers")
 def test_set_workers_invalid():
 
     with pytest.raises(ValueError, match="workers must not be zero"):
@@ -105,5 +111,6 @@ def test_set_workers_invalid():
             pass
 
     with pytest.raises(ValueError, match="workers value out of range"):
-        with fft.set_workers(-os.cpu_count() - 1):
+        # pylint: disable=no-member
+        with fft.set_workers(-mkl.get_max_threads() - 1):
             pass
