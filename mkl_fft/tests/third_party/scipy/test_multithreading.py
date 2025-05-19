@@ -2,7 +2,6 @@
 # https://github.com/scipy/scipy/blob/main/scipy/fft/tests/test_multithreading.py.py
 
 import multiprocessing
-import os
 
 import mkl
 import numpy as np
@@ -112,5 +111,6 @@ def test_set_workers_invalid():
             pass
 
     with pytest.raises(ValueError, match="workers value out of range"):
-        with fft.set_workers(-os.cpu_count() - 1):
+        # pylint: disable=no-member
+        with fft.set_workers(-mkl.get_max_threads() - 1):
             pass
