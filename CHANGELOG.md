@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added Hermitian FFT functions to SciPy interface `mkl_fft.interfaces.scipy_fft`: `hfft`, `ihfft`, `hfftn`, `ihfftn`, `hfft2`, and `ihfft2` [gh-161](https://github.com/IntelPython/mkl_fft/pull/161)
 * Added support for `out` kwarg to all FFT functions in `mkl_fft` and `mkl_fft.interfaces.numpy_fft` [gh-157](https://github.com/IntelPython/mkl_fft/pull/157)
 * Added `fftfreq`, `fftshift`, `ifftshift`, and `rfftfreq` to both NumPy and SciPy interfaces [gh-179](https://github.com/IntelPython/mkl_fft/pull/179)
+* Added a new interface for FFT module of Dask accessible through `mkl_fft.interfaces.dask_fft` [gh-184](https://github.com/IntelPython/mkl_fft/pull/184)
 
 ### Changed
 * NumPy interface `mkl_fft.interfaces.numpy_fft` is aligned with numpy-2.x.x [gh-139](https://github.com/IntelPython/mkl_fft/pull/139), [gh-157](https://github.com/IntelPython/mkl_fft/pull/157)
