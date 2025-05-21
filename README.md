@@ -4,8 +4,17 @@
 [![Conda package with conda-forge channel only](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package-cf.yml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package-cf.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/IntelPython/mkl_fft/badge)](https://securityscorecards.dev/viewer/?uri=github.com/IntelPython/mkl_fft)
 
+# Introduction
 `mkl_fft` started as a part of Intel® Distribution for Python* optimizations to NumPy, and is now being released
-as a stand-alone package. It can be installed into conda environment from Intel's channel using:
+as a stand-alone package. It offers a thin layered interface for the Intel® oneAPI Math Kernel Library (OneMKL) FFT functionality that allows efficient access to native FFT optimizations from a range of NumPy and SciPy functions. As a result, its performance is close to the performance of native C/Intel® OneMKL. The optimizations are provided for real and complex data types in both single and double precisions for in-place and out-of-place modes of operation. For analyzing the performance use [FFT benchmarks](https://github.com/intelpython/fft_benchmark).
+
+Thanks to Intel® OneMKL’s flexibility in its supports for arbitrarily strided input and output arrays both one-dimensional and multi-dimensional Fast Fourier Transforms along distinct axes can be performed directly, without the need to copy the input into a contiguous array first. Furthermore, input strides can be arbitrary, including negative or zero, as long as strides remain an integer multiple of array’s item size, otherwise a copy will be made.
+
+More details can be found in ["Accelerating Scientific Python with Intel Optimizations"](https://proceedings.scipy.org/articles/shinma-7f4c6e7-00f) from Proceedings of the 16th Python in Science Conference (SciPy 2017).
+
+---
+# Installation
+`mkl_fft` can be installed into conda environment from Intel's channel using:
 
 ```
    conda install -c https://software.repos.intel.com/python/conda mkl_fft
@@ -34,22 +43,12 @@ If command above installs NumPy package from the PyPI, please use following comm
 Where `<numpy_version>` should be the latest version from https://software.repos.intel.com/python/conda/
 
 ---
+# How to use?
+## `mkl_fft.interfaces` module
+The recommended way to use `mkl_fft` package is through `mkl_fft.interfaces` module. These interfaces act as drop-in replacements for equivalent functions in NumPy and SciPy. Learn more about these interfaces [here](https://github.com/IntelPython/mkl_fft/blob/master/mkl_fft/interfaces/README.md).
 
-Since MKL FFT supports performing discrete Fourier transforms over non-contiguously laid out arrays, OneMKL can be directly
-used on any well-behaved floating point array with no internal overlaps for both in-place and not in-place transforms of
-arrays in single and double floating point precision.
-
-This eliminates the need to copy input array contiguously into an intermediate buffer.
-
-`mkl_fft` directly supports N-dimensional Fourier transforms.
-
-More details can be found in [SciPy 2017 conference proceedings](https://github.com/scipy-conference/scipy_proceedings/tree/2017/papers/oleksandr_pavlyk).
-
----
-
-The `mkl_fft` package offers interfaces that act as drop-in replacements for equivalent functions in NumPy and SciPy. Learn more about these interfaces [here](https://github.com/IntelPython/mkl_fft/blob/master/mkl_fft/interfaces/README.md).
-
-While using these interfaces is the easiest way to leverage `mk_fft`, one can also use `mkl_fft` directly with the following FFT functions:
+## `mkl_fft` package
+While using the interfaces module is the recommended way to leverage `mk_fft`, one can also use `mkl_fft` directly with the following FFT functions:
 
 ### complex-to-complex (c2c) transforms:
 
@@ -84,6 +83,7 @@ numpy.allclose(mkl_res, np_res)
 ```
 
 ---
+# Building from source
 
 To build `mkl_fft` from sources on Linux with Intel® OneMKL:
   - create a virtual environment: `python3 -m venv fft_env`
