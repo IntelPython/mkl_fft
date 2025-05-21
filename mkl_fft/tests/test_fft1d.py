@@ -124,18 +124,18 @@ class Test_mklfft_vector(TestCase):
     def test_vector5(self):
         """fft in-place is the same as fft out-of-place"""
         x = self.xz1.copy()[::-2]
-        f1 = mkl_fft.fft(x, overwrite_x=True)
+        f1 = mkl_fft.fft(x, out=x)
         f2 = mkl_fft.fft(self.xz1[::-2])
         assert_(np.allclose(f1, f2))
 
     def test_vector6(self):
         """fft in place"""
         x = self.xz1.copy()
-        f1 = mkl_fft.fft(x, overwrite_x=True)
+        f1 = mkl_fft.fft(x, out=x)
         assert_(not _datacopied(f1, x))  # this is in-place
 
         x = self.xz1.copy()
-        f1 = mkl_fft.fft(x[::-2], overwrite_x=True)
+        f1 = mkl_fft.fft(x[::-2], out=x[::-2])
         assert_(not np.allclose(x, self.xz1))  # this is also in-place
         assert_(np.allclose(x[-2::-2], self.xz1[-2::-2]))
         assert_(np.allclose(x[-1::-2], f1))
@@ -239,7 +239,7 @@ class Test_mklfft_matrix(TestCase):
     def test_matrix4(self):
         x = self.az2.copy()
         f1 = mkl_fft.fft(x[::3, ::-1])
-        f2 = mkl_fft.fft(x[::3, ::-1], overwrite_x=True)
+        f2 = mkl_fft.fft(x[::3, ::-1], out=x[::3, ::-1])
         assert_allclose(f1, f2)
 
     def test_matrix5(self):
@@ -350,55 +350,6 @@ class Test_mklfft_rank3(TestCase):
         y1 = mkl_fft.fft(z, axis=-1)
         y2 = mkl_fft.fft(self.az3, axis=-1)
         assert_allclose(y1, y2, atol=2e-15)
-
-
-class Test_mklfft_rfftpack(TestCase):
-    def setUp(self):
-        rnd.seed(1234567)
-        self.v1 = rnd.randn(16)
-        self.m2 = rnd.randn(5, 7)
-        self.t3 = rnd.randn(5, 7, 11)
-
-    def test1(self):
-        x = self.v1.copy()
-        f1 = mkl_fft.rfftpack(x)
-        f2 = mkl_fft.irfftpack(f1)
-        assert_allclose(f2, x)
-
-    def test2(self):
-        x = self.v1.copy()
-        f1 = mkl_fft.irfftpack(x)
-        f2 = mkl_fft.rfftpack(f1)
-        assert_allclose(f2, x)
-
-    def test3(self):
-        for a in range(0, 2):
-            for ovwr_x in [True, False]:
-                for dt, atol in zip([np.float32, np.float64], [2e-7, 2e-15]):
-                    x = self.m2.copy().astype(dt)
-                    f1 = mkl_fft.rfftpack(x, axis=a, overwrite_x=ovwr_x)
-                    f2 = mkl_fft.irfftpack(f1, axis=a, overwrite_x=ovwr_x)
-                    assert_allclose(
-                        f2, self.m2.astype(dt), atol=atol, err_msg=(a, ovwr_x)
-                    )
-
-    def test4(self):
-        for a in range(0, 2):
-            for ovwr_x in [True, False]:
-                for dt, atol in zip([np.float32, np.float64], [2e-7, 2e-15]):
-                    x = self.m2.copy().astype(dt)
-                    f1 = mkl_fft.irfftpack(x, axis=a, overwrite_x=ovwr_x)
-                    f2 = mkl_fft.rfftpack(f1, axis=a, overwrite_x=ovwr_x)
-                    assert_allclose(f2, self.m2.astype(dt), atol=atol)
-
-    def test5(self):
-        for a in range(0, 3):
-            for ovwr_x in [True, False]:
-                for dt, atol in zip([np.float32, np.float64], [4e-7, 4e-15]):
-                    x = self.t3.copy().astype(dt)
-                    f1 = mkl_fft.irfftpack(x, axis=a, overwrite_x=ovwr_x)
-                    f2 = mkl_fft.rfftpack(f1, axis=a, overwrite_x=ovwr_x)
-                    assert_allclose(f2, self.t3.astype(dt), atol=atol)
 
 
 @requires_numpy_2
