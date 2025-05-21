@@ -98,6 +98,8 @@ def _cook_nd_args(a, s=None, axes=None, invreal=False):
     # use the whole input array along axis `i` if `s[i] == -1 or None`
     s = [a.shape[_a] if _s in [-1, None] else _s for _s, _a in zip(s, axes)]
 
+    # make axes positive
+    axes = [ax + a.ndim if ax < 0 else ax for ax in axes]
     return s, axes
 
 
