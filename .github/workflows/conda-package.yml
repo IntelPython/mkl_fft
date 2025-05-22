@@ -55,7 +55,7 @@ jobs:
 
       - name: Build conda package
         run: |
-          CHANNELS="-c conda-forge -c https://software.repos.intel.com/python/conda --override-channels"
+          CHANNELS="-c https://software.repos.intel.com/python/conda -c conda-forge --override-channels"
           VERSIONS="--python ${{ matrix.python }}"
           TEST="--no-test"
 
@@ -101,8 +101,17 @@ jobs:
           mkdir -p $GITHUB_WORKSPACE/channel/linux-64
           mv ${PACKAGE_NAME}-*.conda $GITHUB_WORKSPACE/channel/linux-64
           conda index $GITHUB_WORKSPACE/channel
-          # Test channel
-          conda search $PACKAGE_NAME -c $GITHUB_WORKSPACE/channel --override-channels
+
+      - name: Test conda channel
+        run: |
+          conda search $PACKAGE_NAME -c $GITHUB_WORKSPACE/channel --override-channels --info --json > $GITHUB_WORKSPACE/ver.json
+          cat $GITHUB_WORKSPACE/ver.json
+
+      - name: Get package version
+        run: |
+          export PACKAGE_VERSION=$(python -c "${{ env.VER_SCRIPT1 }} ${{ env.VER_SCRIPT2 }}")
+          echo PACKAGE_VERSION=${PACKAGE_VERSION}
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
 
       - name: Collect dependencies
         run: |
@@ -131,8 +140,7 @@ jobs:
       - name: Install mkl_fft
         run: |
           CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda create -n ${{ env.TEST_ENV_NAME }} python=${{ matrix.python }} "scipy>=1.10" $CHANNELS
-          conda install -n ${{ env.TEST_ENV_NAME }} $PACKAGE_NAME pytest $CHANNELS
+          conda create -n ${{ env.TEST_ENV_NAME }} $PACKAGE_NAME=${{ env.PACKAGE_VERSION }} python=${{ matrix.python }} pytest "scipy>=1.10" $CHANNELS
           # Test installed packages
           conda list -n ${{ env.TEST_ENV_NAME }}
 
