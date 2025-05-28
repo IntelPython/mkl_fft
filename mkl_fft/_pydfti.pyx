@@ -203,7 +203,7 @@ cdef cnp.ndarray _pad_array(
     b_shape[axis] = n
 
     # allocating temporary buffer
-    x_arr_is_fortran = cnp.PyArray_CHKFLAGS(x_arr, cnp.NPY_F_CONTIGUOUS)
+    x_arr_is_fortran = cnp.PyArray_CHKFLAGS(x_arr, cnp.NPY_ARRAY_F_CONTIGUOUS)
     b_arr = <cnp.ndarray> cnp.PyArray_EMPTY(
         b_ndim, b_shape, <cnp.NPY_TYPES> b_type, x_arr_is_fortran
     )  # 0 for C-contiguous
@@ -249,9 +249,12 @@ cdef cnp.ndarray _process_arguments(
 
     # convert x to ndarray, ensure that strides are multiples of itemsize
     x_arr = PyArray_CheckFromAny(
-          x, NULL, 0, 0,
-          cnp.NPY_ELEMENTSTRIDES | cnp.NPY_ENSUREARRAY | cnp.NPY_NOTSWAPPED,
-          NULL)
+        x, NULL, 0, 0,
+        cnp.NPY_ARRAY_ELEMENTSTRIDES |
+        cnp.NPY_ARRAY_ENSUREARRAY |
+        cnp.NPY_ARRAY_NOTSWAPPED,
+        NULL
+    )
 
     if (<void *> x_arr) is NULL:
         raise ValueError("An input argument x is not an array-like object")
@@ -319,7 +322,7 @@ cdef cnp.ndarray _allocate_result(
         f_shape[axis_] = n_
 
     # allocating output buffer
-    x_arr_is_fortran = cnp.PyArray_CHKFLAGS(x_arr, cnp.NPY_F_CONTIGUOUS)
+    x_arr_is_fortran = cnp.PyArray_CHKFLAGS(x_arr, cnp.NPY_ARRAY_F_CONTIGUOUS)
     f_arr = <cnp.ndarray> cnp.PyArray_EMPTY(
         f_ndim, f_shape, <cnp.NPY_TYPES> f_type, x_arr_is_fortran
     )  # 0 for C-contiguous
@@ -419,7 +422,9 @@ def _c2c_fft1d_impl(
         # so we cast to complex double and operate in place
         try:
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
-                x_arr, cnp.NPY_CDOUBLE, cnp.NPY_BEHAVED | cnp.NPY_ENSURECOPY)
+                x_arr, cnp.NPY_CDOUBLE,
+                cnp.NPY_ARRAY_BEHAVED | cnp.NPY_ARRAY_ENSURECOPY
+            )
         except:
             raise ValueError(
                 "First argument must be a complex "
@@ -601,9 +606,9 @@ def _r2c_fft1d_impl(
     else:
         # we must cast the input to doubles and allocate the output,
         try:
-            requirement = cnp.NPY_BEHAVED | cnp.NPY_ENSURECOPY
+            requirement = cnp.NPY_ARRAY_BEHAVED | cnp.NPY_ARRAY_ENSURECOPY
             if x_type is cnp.NPY_LONGDOUBLE:
-                requirement = requirement | cnp.NPY_FORCECAST
+                requirement = requirement | cnp.NPY_ARRAY_FORCECAST
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
                 x_arr, cnp.NPY_DOUBLE, requirement)
             x_type = cnp.PyArray_TYPE(x_arr)
@@ -705,11 +710,11 @@ def _c2r_fft1d_impl(
         # so we cast to complex double and operate in place
         if x_type is cnp.NPY_FLOAT:
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
-                x_arr, cnp.NPY_CFLOAT, cnp.NPY_BEHAVED
+                x_arr, cnp.NPY_CFLOAT, cnp.NPY_ARRAY_BEHAVED
             )
         else:
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
-                x_arr, cnp.NPY_CDOUBLE, cnp.NPY_BEHAVED
+                x_arr, cnp.NPY_CDOUBLE, cnp.NPY_ARRAY_BEHAVED
             )
         x_type = cnp.PyArray_TYPE(x_arr)
         in_place = 1
@@ -788,9 +793,12 @@ def _direct_fftnd(
 
     # convert x to ndarray, ensure that strides are multiples of itemsize
     x_arr = PyArray_CheckFromAny(
-          x, NULL, 0, 0,
-          cnp.NPY_ELEMENTSTRIDES | cnp.NPY_ENSUREARRAY | cnp.NPY_NOTSWAPPED,
-          NULL)
+        x, NULL, 0, 0,
+        cnp.NPY_ARRAY_ELEMENTSTRIDES |
+        cnp.NPY_ARRAY_ENSUREARRAY |
+        cnp.NPY_ARRAY_NOTSWAPPED,
+        NULL
+    )
 
     if <void *> x_arr is NULL:
         raise ValueError("An input argument x is not an array-like object")
@@ -808,7 +816,9 @@ def _direct_fftnd(
         pass
     else:
         x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
-            x_arr, cnp.NPY_CDOUBLE, cnp.NPY_BEHAVED | cnp.NPY_ENSURECOPY)
+            x_arr, cnp.NPY_CDOUBLE,
+            cnp.NPY_ARRAY_BEHAVED | cnp.NPY_ARRAY_ENSURECOPY
+        )
         x_type = cnp.PyArray_TYPE(x_arr)
         assert x_type == cnp.NPY_CDOUBLE
         in_place = 1
@@ -1003,7 +1013,9 @@ def _rr_fft1d_impl(x, n=None, axis=-1, overwrite_x=False, double fsc=1.0):
     else:
         try:
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
-                x_arr, cnp.NPY_DOUBLE, cnp.NPY_BEHAVED | cnp.NPY_ENSURECOPY)
+                x_arr, cnp.NPY_DOUBLE,
+                cnp.NPY_ARRAY_BEHAVED | cnp.NPY_ARRAY_ENSURECOPY
+            )
         except:
             raise TypeError("1st argument must be a real sequence")
         x_type = cnp.PyArray_TYPE(x_arr)
@@ -1065,7 +1077,9 @@ def _rr_ifft1d_impl(x, n=None, axis=-1, overwrite_x=False, double fsc=1.0):
         # so we cast to complex double and operate in place
         try:
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
-                x_arr, cnp.NPY_DOUBLE, cnp.NPY_BEHAVED | cnp.NPY_ENSURECOPY)
+                x_arr, cnp.NPY_DOUBLE,
+                cnp.NPY_ARRAY_BEHAVED | cnp.NPY_ARRAY_ENSURECOPY
+            )
         except:
             raise ValueError(
                 "First argument should be a real "
