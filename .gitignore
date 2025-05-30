@@ -7,4 +7,5 @@ __pycache__/
 
 mkl_fft/_pydfti.c
 mkl_fft/_pydfti.cpython*.so
+mkl_fft/_pydfti.*-win_amd64.pyd
 mkl_fft/src/mklfft.c

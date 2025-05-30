@@ -26,13 +26,13 @@ requirements:
       - python
       - mkl-service
       - {{ pin_compatible('numpy') }}
+      - scipy >=1.10.1
 
 test:
     commands:
       - pytest -v --pyargs mkl_fft
     requires:
       - pytest
-      - scipy
     imports:
       - mkl_fft
       - mkl_fft.interfaces
