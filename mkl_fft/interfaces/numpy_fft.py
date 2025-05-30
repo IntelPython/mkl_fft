@@ -24,9 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Added for completing the namespaces
-from numpy.fft import fftfreq, fftshift, ifftshift, rfftfreq
-
 # pylint: disable=no-name-in-module
 from ._numpy_fft import (
     fft,
@@ -60,8 +57,11 @@ __all__ = [
     "irfftn",
     "hfft",
     "ihfft",
-    "fftshift",
-    "ifftshift",
-    "fftfreq",
-    "rfftfreq",
 ]
+
+# It is important to put the following import here to avoid circular imports
+# when patching numpy with mkl_fft
+# Added for completing the namespaces
+from numpy.fft import fftfreq, fftshift, ifftshift, rfftfreq
+
+__all__ += ["fftshift", "ifftshift", "fftfreq", "rfftfreq"]
