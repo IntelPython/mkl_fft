@@ -151,7 +151,7 @@ jobs:
           pytest -v --pyargs $MODULE_NAME
 
   build_windows:
-    runs-on: windows-2019
+    runs-on: windows-latest
 
     strategy:
       matrix:
@@ -191,6 +191,9 @@ jobs:
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python }}-
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
 
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+
       - name: Build conda package
         run: |
           conda activate
@@ -218,7 +221,7 @@ jobs:
       matrix:
         python: ['3.9', '3.10', '3.11', '3.12']
         experimental: [false]
-        runner: [windows-2019]
+        runner: [windows-latest]
     continue-on-error: ${{ matrix.experimental }}
     env:
       workdir: '${{ github.workspace }}'
