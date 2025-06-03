@@ -33,7 +33,7 @@ test:
       - pytest -v --pyargs mkl_fft
     requires:
       - pytest
-      - scipy
+      - scipy >=1.10
     imports:
       - mkl_fft
       - mkl_fft.interfaces

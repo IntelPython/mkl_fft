@@ -7,22 +7,26 @@ import threading
 
 import numpy as np
 import pytest
-import scipy
 from numpy.random import random
 from numpy.testing import assert_allclose, assert_array_almost_equal
 from pytest import raises as assert_raises
 
 # pylint: disable=possibly-used-before-assignment
-if scipy.__version__ < "1.12":
-    # scipy from Intel channel is 1.10 with python 3.9 and 3.10
-    pytest.skip("This test file needs scipy>=1.12", allow_module_level=True)
-elif scipy.__version__ < "1.14":
-    # For python-3.11 and 3.12, scipy<1.14 is installed from Intel channel
-    # For python<=3.9, scipy<1.14 is installed from conda channel
-    # pylint: disable=no-name-in-module
-    from scipy._lib._array_api import size as xp_size
+try:
+    import scipy
+except ImportError:
+    pytest.skip("This test file needs scipy", allow_module_level=True)
 else:
-    from scipy._lib._array_api import xp_size
+    if np.lib.NumpyVersion(scipy.__version__) < "1.12.0":
+        # scipy from Intel channel is 1.10 with python 3.9 and 3.10
+        pytest.skip("This test file needs scipy>=1.12", allow_module_level=True)
+    elif np.lib.NumpyVersion(scipy.__version__) < "1.14.0":
+        # For python-3.11 and 3.12, scipy<1.14 is installed from Intel channel
+        # For python<=3.9, scipy<1.14 is installed from conda channel
+        # pylint: disable=no-name-in-module
+        from scipy._lib._array_api import size as xp_size
+    else:
+        from scipy._lib._array_api import xp_size
 
 from scipy._lib._array_api import is_numpy, xp_assert_close, xp_assert_equal
 
