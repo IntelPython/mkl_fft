@@ -93,6 +93,7 @@ To build `mkl_fft` from sources on Linux with Intel® OneMKL:
   - `git clone https://github.com/IntelPython/mkl_fft.git mkl_fft`
   - `cd mkl_fft`
   - `python -m pip install .`
+  - `pip install scipy` (optional: for using `mkl_fft.interface.scipy_fft` module)
   - `cd ..`
   - `python -c "import mkl_fft"`
 
@@ -103,5 +104,6 @@ To build `mkl_fft` from sources on Linux with conda follow these steps:
   - `git clone https://github.com/IntelPython/mkl_fft.git mkl_fft`
   - `cd mkl_fft`
   - `python -m pip install .`
+  - `conda install scipy` (optional: for using `mkl_fft.interface.scipy_fft` module)
   - `cd ..`
   - `python -c "import mkl_fft"`
