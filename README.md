@@ -52,21 +52,21 @@ While using the interfaces module is the recommended way to leverage `mk_fft`, o
 
 ### complex-to-complex (c2c) transforms:
 
-`fft(x, n=None, axis=-1, fwd_scale=1.0, out=None)` - 1D FFT, similar to `numpy.fft.fft`
+`fft(x, n=None, axis=-1, norm=None, out=None)` - 1D FFT, similar to `numpy.fft.fft`
 
-`fft2(x, s=None, axes=(-2, -1), fwd_scale=1.0, out=None)` - 2D FFT, similar to `numpy.fft.fft2`
+`fft2(x, s=None, axes=(-2, -1), norm=None, out=None)` - 2D FFT, similar to `numpy.fft.fft2`
 
-`fftn(x, s=None, axes=None, fwd_scale=1.0, out=None)` - ND FFT, similar to `numpy.fft.fftn`
+`fftn(x, s=None, axes=None, norm=None, out=None)` - ND FFT, similar to `numpy.fft.fftn`
 
 and similar inverse FFT (`ifft*`) functions.
 
 ### real-to-complex (r2c) and complex-to-real (c2r) transforms:
 
-`rfft(x, n=None, axis=-1, fwd_scale=1.0, out=None)` - r2c 1D FFT, similar to `numpy.fft.rfft`
+`rfft(x, n=None, axis=-1, norm=None, out=None)` - r2c 1D FFT, similar to `numpy.fft.rfft`
 
-`rfft2(x, s=None, axes=(-2, -1), fwd_scale=1.0, out=None)` - r2c 2D FFT, similar to `numpy.fft.rfft2`
+`rfft2(x, s=None, axes=(-2, -1), norm=None, out=None)` - r2c 2D FFT, similar to `numpy.fft.rfft2`
 
-`rfftn(x, s=None, axes=None, fwd_scale=1.0, out=None)` - r2c ND FFT, similar to `numpy.fft.rfftn`
+`rfftn(x, s=None, axes=None, norm=None, out=None)` - r2c ND FFT, similar to `numpy.fft.rfftn`
 
 and similar inverse c2r FFT (`irfft*`) functions.
 
