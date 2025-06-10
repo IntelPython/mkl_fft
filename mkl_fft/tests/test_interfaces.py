@@ -29,12 +29,26 @@ from numpy.testing import assert_raises
 
 import mkl_fft.interfaces as mfi
 
+try:
+    scipy_fft = mfi.scipy_fft
+except AttributeError:
+    scipy_fft = None
+
+interfaces = []
+ids = []
+if scipy_fft is not None:
+    interfaces.append(scipy_fft)
+    ids.append("scipy")
+interfaces.append(mfi.numpy_fft)
+ids.append("numpy")
+
 
 @pytest.mark.parametrize("norm", [None, "forward", "backward", "ortho"])
 @pytest.mark.parametrize(
     "dtype", [np.float32, np.float64, np.complex64, np.complex128]
 )
 def test_scipy_fft(norm, dtype):
+    pytest.importorskip("scipy", reason="requires scipy")
     x = np.ones(511, dtype=dtype)
     w = mfi.scipy_fft.fft(x, norm=norm, workers=None, plan=None)
     xx = mfi.scipy_fft.ifft(w, norm=norm, workers=None, plan=None)
@@ -57,6 +71,7 @@ def test_numpy_fft(norm, dtype):
 @pytest.mark.parametrize("norm", [None, "forward", "backward", "ortho"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_scipy_rfft(norm, dtype):
+    pytest.importorskip("scipy", reason="requires scipy")
     x = np.ones(511, dtype=dtype)
     w = mfi.scipy_fft.rfft(x, norm=norm, workers=None, plan=None)
     xx = mfi.scipy_fft.irfft(
@@ -87,6 +102,7 @@ def test_numpy_rfft(norm, dtype):
     "dtype", [np.float32, np.float64, np.complex64, np.complex128]
 )
 def test_scipy_fftn(norm, dtype):
+    pytest.importorskip("scipy", reason="requires scipy")
     x = np.ones((37, 83), dtype=dtype)
     w = mfi.scipy_fft.fftn(x, norm=norm, workers=None, plan=None)
     xx = mfi.scipy_fft.ifftn(w, norm=norm, workers=None, plan=None)
@@ -109,6 +125,7 @@ def test_numpy_fftn(norm, dtype):
 @pytest.mark.parametrize("norm", [None, "forward", "backward", "ortho"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_scipy_rfftn(norm, dtype):
+    pytest.importorskip("scipy", reason="requires scipy")
     x = np.ones((37, 83), dtype=dtype)
     w = mfi.scipy_fft.rfftn(x, norm=norm, workers=None, plan=None)
     xx = mfi.scipy_fft.irfftn(w, s=x.shape, norm=norm, workers=None, plan=None)
@@ -143,11 +160,13 @@ def _get_blacklisted_dtypes():
 
 @pytest.mark.parametrize("dtype", _get_blacklisted_dtypes())
 def test_scipy_no_support_for(dtype):
+    pytest.importorskip("scipy", reason="requires scipy")
     x = np.ones(16, dtype=dtype)
     assert_raises(NotImplementedError, mfi.scipy_fft.ifft, x)
 
 
 def test_scipy_fft_arg_validate():
+    pytest.importorskip("scipy", reason="requires scipy")
     with pytest.raises(ValueError):
         mfi.scipy_fft.fft([1, 2, 3, 4], norm=b"invalid")
 
@@ -155,20 +174,16 @@ def test_scipy_fft_arg_validate():
         mfi.scipy_fft.fft([1, 2, 3, 4], plan="magic")
 
 
-@pytest.mark.parametrize(
-    "func", [mfi.scipy_fft.rfft2, mfi.numpy_fft.rfft2], ids=["scipy", "numpy"]
-)
-def test_axes(func):
+@pytest.mark.parametrize("interface", interfaces, ids=ids)
+def test_axes(interface):
     x = np.arange(24.0).reshape(2, 3, 4)
-    res = func(x, axes=(1, 2))
+    res = interface.rfft2(x, axes=(1, 2))
     exp = np.fft.rfft2(x, axes=(1, 2))
     tol = 64 * np.finfo(np.float64).eps
     assert np.allclose(res, exp, atol=tol, rtol=tol)
 
 
-@pytest.mark.parametrize(
-    "interface", [mfi.scipy_fft, mfi.numpy_fft], ids=["scipy", "numpy"]
-)
+@pytest.mark.parametrize("interface", interfaces, ids=ids)
 @pytest.mark.parametrize(
     "func", ["fftshift", "ifftshift", "fftfreq", "rfftfreq"]
 )

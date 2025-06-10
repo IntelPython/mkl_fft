@@ -7,24 +7,26 @@ import threading
 
 import numpy as np
 import pytest
-import scipy
 from numpy.random import random
 from numpy.testing import assert_allclose, assert_array_almost_equal
 from pytest import raises as assert_raises
 
 # pylint: disable=possibly-used-before-assignment
-if scipy.__version__ < "1.12":
-    # scipy from Intel channel is 1.10
-    pytest.skip(
-        "This test file needs scipy>=1.12",
-        allow_module_level=True,
-    )
-elif scipy.__version__ < "1.14":
-    # For python<=3.9, scipy<1.14 is installed
-    # pylint: disable=no-name-in-module
-    from scipy._lib._array_api import size as xp_size
+try:
+    import scipy
+except ImportError:
+    pytest.skip("This test file needs scipy", allow_module_level=True)
 else:
-    from scipy._lib._array_api import xp_size
+    if np.lib.NumpyVersion(scipy.__version__) < "1.12.0":
+        # scipy from Intel channel is 1.10 with python 3.9 and 3.10
+        pytest.skip("This test file needs scipy>=1.12", allow_module_level=True)
+    elif np.lib.NumpyVersion(scipy.__version__) < "1.14.0":
+        # For python-3.11 and 3.12, scipy<1.14 is installed from Intel channel
+        # For python<=3.9, scipy<1.14 is installed from conda channel
+        # pylint: disable=no-name-in-module
+        from scipy._lib._array_api import size as xp_size
+    else:
+        from scipy._lib._array_api import xp_size
 
 from scipy._lib._array_api import is_numpy, xp_assert_close, xp_assert_equal
 
@@ -230,7 +232,6 @@ class TestFFT:
         for norm in ["backward", "ortho", "forward"]:
             xp_assert_close(fft.irfftn(fft.rfftn(x, norm=norm), norm=norm), x)
 
-    @pytest.mark.skip("hfft is not supported")
     def test_hfft(self, xp):
         x = random(14) + 1j * random(14)
         x_herm = np.concatenate((random(1), x, random(1)))
@@ -246,7 +247,6 @@ class TestFFT:
         )
         xp_assert_close(fft.hfft(x_herm, norm="forward"), expect / 30)
 
-    @pytest.mark.skip("ihfft is not supported")
     def test_ihfft(self, xp):
         x = random(14) + 1j * random(14)
         x_herm = np.concatenate((random(1), x, random(1)))
@@ -259,14 +259,12 @@ class TestFFT:
                 fft.ihfft(fft.hfft(x_herm, norm=norm), norm=norm), x_herm
             )
 
-    @pytest.mark.skip("hfft2 is not supported")
     def test_hfft2(self, xp):
         x = xp.asarray(random((30, 20)))
         xp_assert_close(fft.hfft2(fft.ihfft2(x)), x)
         for norm in ["backward", "ortho", "forward"]:
             xp_assert_close(fft.hfft2(fft.ihfft2(x, norm=norm), norm=norm), x)
 
-    @pytest.mark.skip("ihfft2 is not supported")
     def test_ihfft2(self, xp):
         x = xp.asarray(random((30, 20)), dtype=xp.float64)
         expect = fft.ifft2(xp.asarray(x, dtype=xp.complex128))[:, :11]
@@ -278,14 +276,12 @@ class TestFFT:
         )
         xp_assert_close(fft.ihfft2(x, norm="forward"), expect * (30 * 20))
 
-    @pytest.mark.skip("hfftn is not supported")
     def test_hfftn(self, xp):
         x = xp.asarray(random((30, 20, 10)))
         xp_assert_close(fft.hfftn(fft.ihfftn(x)), x)
         for norm in ["backward", "ortho", "forward"]:
             xp_assert_close(fft.hfftn(fft.ihfftn(x, norm=norm), norm=norm), x)
 
-    @pytest.mark.skip("ihfftn is not supported")
     def test_ihfftn(self, xp):
         x = xp.asarray(random((30, 20, 10)), dtype=xp.float64)
         expect = fft.ifftn(xp.asarray(x, dtype=xp.complex128))[:, :, :6]
