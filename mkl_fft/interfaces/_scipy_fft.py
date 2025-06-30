@@ -203,6 +203,15 @@ def _init_nd_shape_and_axes(x, shape, axes, invreal=False):
     return tuple(shape), list(axes)
 
 
+def _use_input_as_out(x, overwrite_x):
+    """Check if the input can be used as output."""
+    if overwrite_x and np.issubdtype(x.dtype, np.complexfloating):
+        # pass input as out to overwrite it
+        return x
+    else:
+        return None
+
+
 def _validate_input(x):
     try:
         x = _supported_array_or_not_implemented(x)
@@ -223,12 +232,11 @@ def fft(
     """
     _check_plan(plan)
     x = _validate_input(x)
+    out = _use_input_as_out(x, overwrite_x)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     with _Workers(workers):
-        return mkl_fft.fft(
-            x, n=n, axis=axis, overwrite_x=overwrite_x, fwd_scale=fsc
-        )
+        return mkl_fft.fft(x, n=n, axis=axis, fwd_scale=fsc, out=out)
 
 
 def ifft(
@@ -242,12 +250,11 @@ def ifft(
     """
     _check_plan(plan)
     x = _validate_input(x)
+    out = _use_input_as_out(x, overwrite_x)
     fsc = _compute_fwd_scale(norm, n, x.shape[axis])
 
     with _Workers(workers):
-        return mkl_fft.ifft(
-            x, n=n, axis=axis, overwrite_x=overwrite_x, fwd_scale=fsc
-        )
+        return mkl_fft.ifft(x, n=n, axis=axis, fwd_scale=fsc, out=out)
 
 
 def fft2(
@@ -322,13 +329,12 @@ def fftn(
     """
     _check_plan(plan)
     x = _validate_input(x)
+    out = _use_input_as_out(x, overwrite_x)
     s, axes = _init_nd_shape_and_axes(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
-        return mkl_fft.fftn(
-            x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc
-        )
+        return mkl_fft.fftn(x, s=s, axes=axes, fwd_scale=fsc, out=out)
 
 
 def ifftn(
@@ -349,13 +355,12 @@ def ifftn(
     """
     _check_plan(plan)
     x = _validate_input(x)
+    out = _use_input_as_out(x, overwrite_x)
     s, axes = _init_nd_shape_and_axes(x, s, axes)
     fsc = _compute_fwd_scale(norm, s, x.shape)
 
     with _Workers(workers):
-        return mkl_fft.ifftn(
-            x, s=s, axes=axes, overwrite_x=overwrite_x, fwd_scale=fsc
-        )
+        return mkl_fft.ifftn(x, s=s, axes=axes, fwd_scale=fsc, out=out)
 
 
 def rfft(
