@@ -4,7 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] (05/DD/2025)
+## [dev] - YYYY-MM-DD
+
+### Added
+* Enabled support of Python 3.13 [gh-164](https://github.com/IntelPython/mkl_fft/pull/164)
+
+### Changed
+
+### Fixed
+
+## [2.0.0] - 2025-06-03
 
 ### Added
 * Added Hermitian FFT functions to SciPy interface `mkl_fft.interfaces.scipy_fft`: `hfft`, `ihfft`, `hfftn`, `ihfftn`, `hfft2`, and `ihfft2` [gh-161](https://github.com/IntelPython/mkl_fft/pull/161)
@@ -22,14 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed inconsistency of input and output arrays dtype for `irfft` function [gh-180](https://github.com/IntelPython/mkl_fft/pull/180)
 * Fixed issues with `set_workers` function in SciPy interface `mkl_fft.interfaces.scipy_fft` [gh-183](https://github.com/IntelPython/mkl_fft/pull/183)
 
-## [1.3.14] (04/10/2025)
+## [1.3.14] - 2025-04-10
 
 resolves gh-152 by adding an explicit `mkl-service` dependency to `mkl-fft` when building the wheel
 to ensure the `mkl` Python module is always available at runtime
 
 resolves gh-115, gh-116, gh-119, gh-135
 
-## [1.3.13] (03/25/2025)
+## [1.3.13] - 2025-03-25
 
 Supported python versions are 3.9, 3.10, 3.11, 3.12
 
