@@ -24,9 +24,9 @@ jobs:
           - python: '3.9'
             numpy: '2.0'
           - python: '3.10'
-            numpy: '2.0'
-          - python: '3.11'
             numpy: '2.2'
+          - python: '3.11'
+            numpy: '2.3'
           - python: '3.12'
             numpy: '2.3'
           - python: '3.13'
@@ -61,7 +61,7 @@ jobs:
         run: echo $CONDA/bin >> $GITHUB_PATH
 
       - name: Install conda-build
-        run: conda install conda-build python=3.12
+        run: conda install conda-build
 
       - name: Build conda package with NumPy 2.x
         run: |
@@ -105,7 +105,7 @@ jobs:
         run: echo $CONDA/bin >> $GITHUB_PATH
 
       - name: Install conda-build
-        run: conda install conda-build python=3.12
+        run: conda install conda-build
 
       - name: Create conda channel
         run: |
@@ -161,9 +161,9 @@ jobs:
           - python: '3.9'
             numpy: '2.0'
           - python: '3.10'
-            numpy: '2.0'
-          - python: '3.11'
             numpy: '2.2'
+          - python: '3.11'
+            numpy: '2.3'
           - python: '3.12'
             numpy: '2.3'
           - python: '3.13'
@@ -187,7 +187,7 @@ jobs:
           conda-remove-defaults: 'true'
 
       - name: Install conda-build
-        run: conda install -n base conda-build python=3.12
+        run: conda install -n base conda-build
 
       - name: Cache conda packages
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
