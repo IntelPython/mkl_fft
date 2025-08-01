@@ -22,7 +22,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12']
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
         use_pre: ["", "--pre"]
 
     steps:
@@ -53,7 +53,7 @@ jobs:
 
       - name: Build conda package
         run: |
-          pip install --no-cache-dir cython
+          pip install --no-cache-dir cython setuptools
           pip install --no-cache-dir numpy ${{ matrix.use_pre }}
           echo "CONDA_PREFFIX is '${CONDA_PREFIX}'"
           export MKLROOT=${CONDA_PREFIX}
