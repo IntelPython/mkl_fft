@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12']
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@85880fa0301c86cca9da44039ee3bb12d3bedbfa # 0.12.1
@@ -51,7 +51,7 @@ jobs:
         run: echo $CONDA/bin >> $GITHUB_PATH
 
       - name: Install conda-build
-        run: conda install conda-build python=3.12
+        run: conda install conda-build
 
       - name: Build conda package
         run: |
@@ -77,7 +77,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12']
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
         experimental: [false]
         runner: [ubuntu-latest]
     continue-on-error: ${{ matrix.experimental }}
@@ -94,7 +94,7 @@ jobs:
         run: echo $CONDA/bin >> $GITHUB_PATH
 
       - name: Install conda-build
-        run: conda install conda-build python=3.12
+        run: conda install conda-build
 
       - name: Create conda channel
         run: |
@@ -155,7 +155,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12']
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@85880fa0301c86cca9da44039ee3bb12d3bedbfa # 0.12.1
@@ -177,7 +177,7 @@ jobs:
       - name: Install conda-build
         run: |
            conda activate
-           conda install -n base conda-build python=3.12
+           conda install -n base conda-build
 
       - name: Cache conda packages
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
@@ -219,7 +219,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12']
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
         experimental: [false]
         runner: [windows-latest]
     continue-on-error: ${{ matrix.experimental }}

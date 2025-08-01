@@ -20,7 +20,17 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12']
+        include:
+          - python: '3.9'
+            numpy: '2.0'
+          - python: '3.10'
+            numpy: '2.2'
+          - python: '3.11'
+            numpy: '2.3'
+          - python: '3.12'
+            numpy: '2.3'
+          - python: '3.13'
+            numpy: '2.3'
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@85880fa0301c86cca9da44039ee3bb12d3bedbfa # 0.12.1
@@ -51,12 +61,12 @@ jobs:
         run: echo $CONDA/bin >> $GITHUB_PATH
 
       - name: Install conda-build
-        run: conda install conda-build python=3.12
+        run: conda install conda-build
 
-      - name: Build conda package with NumPy 2.0
+      - name: Build conda package with NumPy 2.x
         run: |
           CHANNELS="-c conda-forge --override-channels"
-          VERSIONS="--python ${{ matrix.python }} --numpy 2.0"
+          VERSIONS="--python ${{ matrix.python }} --numpy ${{ matrix.numpy }}"
           TEST="--no-test"
 
           conda build \
@@ -77,8 +87,8 @@ jobs:
 
     strategy:
       matrix:
-        python_ver: ['3.9', '3.10', '3.11', '3.12']
-        numpy: ['numpy"<2"', 'numpy">=2"']
+        python_ver: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        numpy: ['numpy">=2"']
         experimental: [false]
         runner: [ubuntu-latest]
     continue-on-error: ${{ matrix.experimental }}
@@ -95,7 +105,7 @@ jobs:
         run: echo $CONDA/bin >> $GITHUB_PATH
 
       - name: Install conda-build
-        run: conda install conda-build python=3.12
+        run: conda install conda-build
 
       - name: Create conda channel
         run: |
@@ -147,7 +157,17 @@ jobs:
 
     strategy:
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12']
+        include:
+          - python: '3.9'
+            numpy: '2.0'
+          - python: '3.10'
+            numpy: '2.2'
+          - python: '3.11'
+            numpy: '2.3'
+          - python: '3.12'
+            numpy: '2.3'
+          - python: '3.13'
+            numpy: '2.3'
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@85880fa0301c86cca9da44039ee3bb12d3bedbfa # 0.12.1
@@ -167,7 +187,7 @@ jobs:
           conda-remove-defaults: 'true'
 
       - name: Install conda-build
-        run: conda install -n base conda-build python=3.12
+        run: conda install -n base conda-build
 
       - name: Cache conda packages
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
@@ -184,10 +204,10 @@ jobs:
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
-      - name: Build conda package with NumPy 2.0
+      - name: Build conda package with NumPy 2.x
         run: |
           conda activate
-          conda build --no-test --python ${{ matrix.python }} --numpy 2.0 -c conda-forge --override-channels conda-recipe-cf
+          conda build --no-test --python ${{ matrix.python }} --numpy ${{ matrix.numpy }} -c conda-forge --override-channels conda-recipe-cf
 
       - name: Store conda paths as envs
         shell: bash -l {0}
@@ -209,8 +229,8 @@ jobs:
 
     strategy:
       matrix:
-        python_ver: ['3.9', '3.10', '3.11', '3.12']
-        numpy: ['numpy"<2"', 'numpy">=2"']
+        python_ver: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        numpy: ['numpy">=2"']
         experimental: [false]
         runner: [windows-latest]
     continue-on-error: ${{ matrix.experimental }}
