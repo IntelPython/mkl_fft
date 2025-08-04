@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Dropped support for `scipy.fftpack` interface [gh-185](https://github.com/IntelPython/mkl_fft/pull/185)
 * Dropped support for `overwrite_x` parameter in `mkl_fft` [gh-185](https://github.com/IntelPython/mkl_fft/pull/185)
+* Replaced `fwd_scale` parameter with `norm` in `mkl_fft` [gh-189](https://github.com/IntelPython/mkl_fft/pull/189)
 
 ### Fixed
 * Fixed a bug for N-D FFTs when both `s` and `out` are given [gh-185](https://github.com/IntelPython/mkl_fft/pull/185)
