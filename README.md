@@ -1,14 +1,15 @@
-## `mkl_fft` --  a NumPy-based Python interface to Intel® oneAPI Math Kernel Library (OneMKL) FFT functionality
 [![Conda package](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package.yml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package.yml)
 [![Editable build using pip and pre-release NumPy](https://github.com/IntelPython/mkl_fft/actions/workflows/build_pip.yaml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/build_pip.yaml)
 [![Conda package with conda-forge channel only](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package-cf.yml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package-cf.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/IntelPython/mkl_fft/badge)](https://securityscorecards.dev/viewer/?uri=github.com/IntelPython/mkl_fft)
 
-# Introduction
-`mkl_fft` started as a part of Intel® Distribution for Python* optimizations to NumPy, and is now being released
-as a stand-alone package. It offers a thin layered interface for the Intel® oneAPI Math Kernel Library (OneMKL) FFT functionality that allows efficient access to native FFT optimizations from a range of NumPy and SciPy functions. As a result, its performance is close to the performance of native C/Intel® OneMKL. The optimizations are provided for real and complex data types in both single and double precisions for in-place and out-of-place modes of operation. For analyzing the performance use [FFT benchmarks](https://github.com/intelpython/fft_benchmark).
+## `mkl_fft` --  a NumPy-based Python interface to Intel® oneAPI Math Kernel Library (oneMKL) Fourier Transform Functions
 
-Thanks to Intel® OneMKL’s flexibility in its supports for arbitrarily strided input and output arrays both one-dimensional and multi-dimensional Fast Fourier Transforms along distinct axes can be performed directly, without the need to copy the input into a contiguous array first. Furthermore, input strides can be arbitrary, including negative or zero, as long as strides remain an integer multiple of array’s item size, otherwise a copy will be made.
+# Introduction
+`mkl_fft` is part of [Intel® Distribution for Python*](https://www.intel.com/content/www/us/en/developer/tools/oneapi/distribution-for-python.html) optimizations to NumPy.
+It offers a thin layered python interface to the [Intel® oneAPI Math Kernel Library (oneMKL) Fourier Transform Functions](https://www.intel.com/content/www/us/en/docs/onemkl/developer-reference-c/2025-2/fourier-transform-functions.html) that allows efficient access to computing a discrete Fourier transform through the fast Fourier transform (FFT) algorithm. As a result, its performance is close to the performance of native C/Intel® oneMKL. The optimizations are provided for real and complex data types in both single and double precisions for in-place and out-of-place modes of operation. For analyzing the performance use [FFT benchmarks](https://github.com/intelpython/fft_benchmark).
+
+Thanks to Intel® oneMKL’s flexibility in its supports for arbitrarily strided input and output arrays both one-dimensional and multi-dimensional FFTs along distinct axes can be performed directly, without the need to copy the input into a contiguous array first. Furthermore, input strides can be arbitrary, including negative or zero, as long as strides remain an integer multiple of array’s item size, otherwise a copy will be made.
 
 More details can be found in ["Accelerating Scientific Python with Intel Optimizations"](https://proceedings.scipy.org/articles/shinma-7f4c6e7-00f) from Proceedings of the 16th Python in Science Conference (SciPy 2017).
 
@@ -26,9 +27,7 @@ or from conda-forge channel:
    conda install -c conda-forge mkl_fft
 ```
 
----
-
-To install `mkl_fft` PyPI package please use following command:
+To install `mkl_fft` PyPI package please use the following command:
 
 ```
    python -m pip install --index-url https://software.repos.intel.com/python/pypi --extra-index-url https://pypi.org/simple mkl_fft
@@ -40,7 +39,7 @@ If command above installs NumPy package from the PyPI, please use following comm
    python -m pip install --index-url https://software.repos.intel.com/python/pypi --extra-index-url https://pypi.org/simple mkl_fft numpy==<numpy_version>
 ```
 
-Where `<numpy_version>` should be the latest version from https://software.repos.intel.com/python/conda/
+where `<numpy_version>` should be the latest version from https://software.repos.intel.com/python/conda/.
 
 ---
 # How to use?
@@ -85,10 +84,10 @@ numpy.allclose(mkl_res, np_res)
 ---
 # Building from source
 
-To build `mkl_fft` from sources on Linux with Intel® OneMKL:
+To build `mkl_fft` from sources on Linux with Intel® oneMKL:
   - create a virtual environment: `python3 -m venv fft_env`
   - activate the environment: `source fft_env/bin/activate`
-  - install a recent version of OneMKL, if necessary
+  - install a recent version of oneMKL, if necessary
   - execute `source /path_to_oneapi/mkl/latest/env/vars.sh`
   - `git clone https://github.com/IntelPython/mkl_fft.git mkl_fft`
   - `cd mkl_fft`

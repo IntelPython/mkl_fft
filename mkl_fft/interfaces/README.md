@@ -101,7 +101,7 @@ print(f"Time with scipy.fft default backend: {t1:.1f} seconds")
 with scipy.fft.set_backend(mkl_backend, only=True):
     t2 = timeit.timeit(lambda: scipy.signal.fftconvolve(a, b), number=10)
 
-print(f"Time with OneMKL FFT backend installed: {t2:.1f} seconds")
+print(f"Time with oneMKL FFT backend installed: {t2:.1f} seconds")
 # Time with MKL FFT backend installed: 9.1 seconds
 ```
 
@@ -110,7 +110,6 @@ In the following example, we use `set_worker` to control the number of threads w
 ```python
 import numpy, mkl, scipy
 import mkl_fft.interfaces.scipy_fft as mkl_fft
-import scipy
 a = numpy.random.randn(128, 64) + 1j*numpy.random.randn(128, 64)
 scipy.fft.set_global_backend(mkl_fft)  # set mkl_fft as global backend
 
