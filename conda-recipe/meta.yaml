@@ -20,13 +20,12 @@ requirements:
       - python
       - setuptools >=77
       - mkl-devel
-      - mkl-devel 2024.2.*  # [py==39]
       - cython
       - numpy-base
     run:
       - python
       - mkl-service
-      - {{ pin_compatible('numpy') }}
+      - {{ pin_compatible('numpy-base') }}
 
 test:
     commands:
