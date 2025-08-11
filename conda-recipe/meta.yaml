@@ -10,6 +10,8 @@ source:
 
 build:
     number: {{ buildnumber }}
+    script_env:
+      - WHEELS_OUTPUT_FOLDER
     ignore_run_exports:
       - blas
 
