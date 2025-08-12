@@ -10,19 +10,24 @@ source:
 
 build:
     number: {{ buildnumber }}
+    script_env:
+      - WHEELS_OUTPUT_FOLDER
     ignore_run_exports:
       - blas
 
 requirements:
     build:
       - {{ compiler('c') }}
+      - {{ stdlib('c') }}
     host:
       - python
+      - pip
       - setuptools >=77
       - mkl-devel
       - mkl-devel 2024.2.*  # [py==39]
       - cython
       - numpy-base
+      - wheel  >=0.41.3
     run:
       - python
       - mkl-service
