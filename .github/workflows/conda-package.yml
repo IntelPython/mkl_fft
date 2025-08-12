@@ -36,7 +36,7 @@ jobs:
           echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
 
       - name: Cache conda packages
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
@@ -86,7 +86,7 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
 
@@ -126,7 +126,7 @@ jobs:
           echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
 
       - name: Cache conda packages
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
@@ -140,7 +140,13 @@ jobs:
       - name: Install mkl_fft
         run: |
           CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda create -n ${{ env.TEST_ENV_NAME }} $PACKAGE_NAME=${{ env.PACKAGE_VERSION }} python=${{ matrix.python }} pytest "scipy>=1.10" $CHANNELS
+          conda create -n ${{ env.TEST_ENV_NAME }} $PACKAGE_NAME=${{ env.PACKAGE_VERSION }} python=${{ matrix.python }} pytest $CHANNELS
+          if [[ "${{ matrix.python }}" != 3.9* ]]; then
+            # Intel channel only has scipy=1.10 for Python 3.9, which needs mkl<2025
+            # while scipy needs to install numpy and mkl_random and mkl_random-1.2.11 requires mkl>=2025
+            # so avoid installing scipy for Python 3.9 which means third_party/scipy tests will not run
+            conda install -n ${{ env.TEST_ENV_NAME }} "scipy>=1.10" $CHANNELS
+          fi
           # Test installed packages
           conda list -n ${{ env.TEST_ENV_NAME }}
 
@@ -180,7 +186,7 @@ jobs:
            conda install -n base conda-build
 
       - name: Cache conda packages
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         env:
           CACHE_NUMBER: 3  # Increase to reset cache
         with:
@@ -229,7 +235,7 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
 
@@ -285,7 +291,7 @@ jobs:
         run: Get-Content -Path .\lockfile
 
       - name: Cache conda packages
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
@@ -307,8 +313,11 @@ jobs:
           FOR /F "tokens=* USEBACKQ" %%F IN (`python -c "%SCRIPT%"`) DO (
              SET PACKAGE_VERSION=%%F
           )
-          SET "TEST_DEPENDENCIES=pytest scipy"
+          SET "TEST_DEPENDENCIES=pytest"
           conda install -n ${{ env.TEST_ENV_NAME }} ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% %TEST_DEPENDENCIES% python=${{ matrix.python }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
+          if ("${{ matrix.python }}" -ne "3.9") {
+            conda install -n ${{ env.TEST_ENV_NAME }} scipy -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
+          }
 
       - name: Report content of test environment
         shell: cmd /C CALL {0}
