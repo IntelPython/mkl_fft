@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Enabled support of Python 3.13 [gh-164](https://github.com/IntelPython/mkl_fft/pull/164)
 
 ### Changed
+* Replaced `fwd_scale` parameter with `norm` in `mkl_fft` [gh-189](https://github.com/IntelPython/mkl_fft/pull/189)
 
 ### Fixed
 

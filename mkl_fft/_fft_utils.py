@@ -198,16 +198,12 @@ def _init_nd_shape_and_axes(x, shape, axes):
         raise ValueError("when given, shape values must be integers")
     if axes.shape != shape.shape:
         raise ValueError(
-            "when given, axes and shape arguments"
-            " have to be of the same length"
+            "when given, axes and shape arguments have to be of the same length"
         )
 
     shape = np.where(shape == -1, np.array(x.shape)[axes], shape)
-
     if shape.size != 0 and (shape < 1).any():
-        raise ValueError(
-            "invalid number of data points ({0}) specified".format(shape)
-        )
+        raise ValueError(f"invalid number of data points ({shape}) specified")
 
     return shape, axes
 
@@ -299,7 +295,7 @@ def _pad_array(arr, s, axes):
         try:
             shp_i = arr_shape[ai]
         except IndexError:
-            raise ValueError("Invalid axis (%d) specified" % ai)
+            raise ValueError(f"Invalid axis {ai} specified")
         if si > shp_i:
             no_padding = False
             pad_widths[ai] = (0, si - shp_i)
@@ -335,7 +331,7 @@ def _trim_array(arr, s, axes):
         try:
             shp_i = arr_shape[ai]
         except IndexError:
-            raise ValueError("Invalid axis (%d) specified" % ai)
+            raise ValueError(f"Invalid axis {ai} specified")
         if si < shp_i:
             no_trim = False
             ind[ai] = slice(None, si, None)

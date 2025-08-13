@@ -152,16 +152,13 @@ class Test_mklfft_matrix(TestCase):
         """fftn with tuple, list and ndarray axes and s"""
         for ar in [self.md, self.mz, self.mf, self.mc]:
             d = ar.copy()
-            for norm in ["forward", "backward", "ortho"]:
+            for norm in [None, "forward", "backward", "ortho"]:
                 for container in [tuple, list, np.array]:
                     axes = container(range(d.ndim))
                     s = container(d.shape)
                     kwargs = dict(s=s, axes=axes, norm=norm)
                     r_tol, a_tol = _get_rtol_atol(d)
-                    t = mkl_fft.interfaces.numpy_fft.fftn(
-                        mkl_fft.interfaces.numpy_fft.ifftn(d, **kwargs),
-                        **kwargs,
-                    )
+                    t = mkl_fft.fftn(mkl_fft.ifftn(d, **kwargs), **kwargs)
                     assert_allclose(
                         d,
                         t,
@@ -194,7 +191,6 @@ class Test_Regressions(TestCase):
                 assert_allclose(f1, f2, rtol=r_tol, atol=a_tol)
 
     def test_rfftn(self):
-        """Test that rfftn works as expected"""
         axes = [
             (0, 1, 2),
             (0, 2, 1),
@@ -211,82 +207,20 @@ class Test_Regressions(TestCase):
                 assert_allclose(rfft_tr, tr_rfft, rtol=r_tol, atol=a_tol)
 
     def test_gh64(self):
-        """Test example from #64"""
         a = np.arange(12).reshape((3, 4))
         x = a.astype(np.cdouble)
-        # should executed successfully
         r1 = mkl_fft.fftn(a, s=None, axes=(-2, -1))
         r2 = mkl_fft.fftn(x)
         r_tol, a_tol = _get_rtol_atol(x)
         assert_allclose(r1, r2, rtol=r_tol, atol=a_tol)
 
 
-class Test_Scales(TestCase):
-    def setUp(self):
-        pass
-
-    def test_scale_1d_vector(self):
-        X = np.ones(128, dtype="d")
-        f1 = mkl_fft.fft(X, fwd_scale=0.25)
-        f2 = mkl_fft.fft(X)
-        r_tol, a_tol = _get_rtol_atol(X)
-        assert_allclose(4 * f1, f2, rtol=r_tol, atol=a_tol)
-
-        X1 = mkl_fft.ifft(f1, fwd_scale=0.25)
-        assert_allclose(X, X1, rtol=r_tol, atol=a_tol)
-
-        f3 = mkl_fft.rfft(X, fwd_scale=0.5)
-        X2 = mkl_fft.irfft(f3, fwd_scale=0.5)
-        assert_allclose(X, X2, rtol=r_tol, atol=a_tol)
-
-    def test_scale_1d_array(self):
-        X = np.ones(
-            (
-                8,
-                4,
-                4,
-            ),
-            dtype="d",
-        )
-        f1 = mkl_fft.fft(X, axis=1, fwd_scale=0.25)
-        f2 = mkl_fft.fft(X, axis=1)
-        r_tol, a_tol = _get_rtol_atol(X)
-        assert_allclose(4 * f1, f2, rtol=r_tol, atol=a_tol)
-
-        X1 = mkl_fft.ifft(f1, axis=1, fwd_scale=0.25)
-        assert_allclose(X, X1, rtol=r_tol, atol=a_tol)
-
-        f3 = mkl_fft.rfft(X, axis=0, fwd_scale=0.5)
-        X2 = mkl_fft.irfft(f3, axis=0, fwd_scale=0.5)
-        assert_allclose(X, X2, rtol=r_tol, atol=a_tol)
-
-    def test_scale_nd(self):
-        X = np.empty((2, 4, 8, 16), dtype="d")
-        X.flat[:] = np.cbrt(np.arange(0, X.size, dtype=X.dtype))
-        f = mkl_fft.fftn(X)
-        f_scale = mkl_fft.fftn(X, fwd_scale=0.2)
-
-        r_tol, a_tol = _get_rtol_atol(X)
-        assert_allclose(f, 5 * f_scale, rtol=r_tol, atol=a_tol)
-
-    def test_scale_nd_axes(self):
-        X = np.empty((4, 2, 16, 8), dtype="d")
-        X.flat[:] = np.cbrt(np.arange(X.size, dtype=X.dtype))
-        f = mkl_fft.fftn(X, axes=(0, 1, 2, 3))
-        f_scale = mkl_fft.fftn(X, axes=(0, 1, 2, 3), fwd_scale=0.2)
-
-        r_tol, a_tol = _get_rtol_atol(X)
-        assert_allclose(f, 5 * f_scale, rtol=r_tol, atol=a_tol)
-
-
 def test_gh109():
     b_int = np.array([[5, 7, 6, 5], [4, 6, 4, 8], [9, 3, 7, 5]], dtype=np.int64)
     b = np.asarray(b_int, dtype=np.float32)
 
-    r1 = mkl_fft.fftn(b, s=None, axes=(0,), overwrite_x=False, fwd_scale=1 / 3)
-    r2 = mkl_fft.fftn(
-        b_int, s=None, axes=(0,), overwrite_x=False, fwd_scale=1 / 3
-    )
+    r1 = mkl_fft.fftn(b, s=None, axes=(0,), overwrite_x=False, norm="ortho")
+    r2 = mkl_fft.fftn(b_int, s=None, axes=(0,), overwrite_x=False, norm="ortho")
 
     rtol, atol = _get_rtol_atol(b)
     assert_allclose(r1, r2, rtol=rtol, atol=atol)
