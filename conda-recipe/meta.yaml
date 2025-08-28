@@ -1,15 +1,12 @@
-{% set version = "2.1.0dev0" %}
-{% set buildnumber = 0 %}
-
 package:
     name: mkl_fft
-    version: {{ version }}
+    version: {{ GIT_DESCRIBE_TAG }}
 
 source:
     path: ../
 
 build:
-    number: {{ buildnumber }}
+    number: {{ GIT_DESCRIBE_NUMBER }}
     script_env:
       - WHEELS_OUTPUT_FOLDER
     ignore_run_exports:
@@ -48,4 +45,13 @@ about:
     home: http://github.com/IntelPython/mkl_fft
     license: BSD-3-Clause
     license_file: LICENSE.txt
-    summary: NumPy-based implementation of Fast Fourier Transform using Intel® oneAPI Math Kernel Library (OneMKL)
+    summary: NumPy-based implementation of Fast Fourier Transform using Intel® oneAPI Math Kernel Library (oneMKL)
+    description: |
+        <strong>LEGAL NOTICE: Use of this software package is subject to the
+        software license agreement (as set forth above, in the license section of
+        the installed Conda package and/or the README file) and all notices,
+        disclaimers or license terms for third party or open source software
+        included in or with the software.</strong>
+        <br/><br/>
+        EULA: <a href="https://opensource.org/licenses/BSD-3-Clause" target="_blank">BSD-3-Clause</a>
+        <br/><br/>
