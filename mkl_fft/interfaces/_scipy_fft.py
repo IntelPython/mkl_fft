@@ -208,8 +208,7 @@ def _use_input_as_out(x, overwrite_x):
     if overwrite_x and np.issubdtype(x.dtype, np.complexfloating):
         # pass input as out to overwrite it
         return x
-    else:
-        return None
+    return None
 
 
 def _validate_input(x):
