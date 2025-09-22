@@ -39,9 +39,16 @@ from ._mkl_fft import (
     rfft2,
     rfftn,
 )
+from ._patch_numpy import (
+    is_patched,
+    mkl_fft,
+    patch_numpy_fft,
+    restore_numpy_fft,
+)
 from ._version import __version__
 
 import mkl_fft.interfaces  # isort: skip
+
 
 __all__ = [
     "fft",
@@ -57,6 +64,10 @@ __all__ = [
     "rfftn",
     "irfftn",
     "interfaces",
+    "mkl_fft",
+    "patch_numpy_fft",
+    "restore_numpy_fft",
+    "is_patched",
 ]
 
 del _init_helper
