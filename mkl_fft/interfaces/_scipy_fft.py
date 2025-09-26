@@ -669,7 +669,7 @@ def fftfreq(n, d=1.0, *, xp=None, device=None):
 def rfftfreq(n, d=1.0, *, xp=None, device=None):
     """
     Return the Discrete Fourier Transform sample frequencies (for usage with
-    rfft, irfft).
+    `rfft`, `irfft`).
 
     For full documentation refer to `scipy.fft.rfftfreq`.
 
