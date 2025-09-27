@@ -31,7 +31,7 @@ from numpy.testing import TestCase, assert_allclose
 
 import mkl_fft
 
-from .helper import requires_numpy_2
+from .helper import requires_numpy_2, requires_numpy_2_1
 
 reps_64 = (2**11) * np.finfo(np.float64).eps
 reps_32 = (2**11) * np.finfo(np.float32).eps
@@ -267,7 +267,7 @@ def test_s_axes_out(dtype, s, axes, func):
 
 @pytest.mark.parametrize("dtype", [complex, float])
 @pytest.mark.parametrize("axes", [(2, 0, 2, 0), (0, 1, 1), (2, 0, 1, 3, 2, 1)])
-@pytest.mark.parametrize("func", ["rfftn", "irfftn"])
+@pytest.mark.parametrize("func", ["fftn", "ifftn", "rfftn", "irfftn"])
 def test_repeated_axes(dtype, axes, func):
     shape = (2, 3, 4, 5)
     if dtype is complex and func != "rfftn":
@@ -277,6 +277,25 @@ def test_repeated_axes(dtype, axes, func):
 
     r1 = getattr(np.fft, func)(x, axes=axes)
     r2 = getattr(mkl_fft, func)(x, axes=axes)
+
+    rtol, atol = _get_rtol_atol(x)
+    assert_allclose(r1, r2, rtol=rtol, atol=atol)
+
+
+@requires_numpy_2_1
+@pytest.mark.parametrize("dtype", [complex, float])
+@pytest.mark.parametrize("axes", [(2, 3, 3, 2), (0, 0, 3, 3)])
+@pytest.mark.parametrize("s", [(5, 4, 3, 3), (7, 8, 10, 9)])
+@pytest.mark.parametrize("func", ["fftn", "ifftn", "rfftn", "irfftn"])
+def test_repeated_axes_with_s(dtype, axes, s, func):
+    shape = (2, 3, 4, 5)
+    if dtype is complex and func != "rfftn":
+        x = np.random.random(shape) + 1j * np.random.random(shape)
+    else:
+        x = np.random.random(shape)
+
+    r1 = getattr(np.fft, func)(x, axes=axes, s=s)
+    r2 = getattr(mkl_fft, func)(x, axes=axes, s=s)
 
     rtol, atol = _get_rtol_atol(x)
     assert_allclose(r1, r2, rtol=rtol, atol=atol)
