@@ -1,4 +1,5 @@
-# Copyright (c) 2017, Intel Corporation
+#!/usr/bin/env python
+# Copyright (c) 2025, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -23,20 +24,44 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from . import numpy_fft
+from dask.array.fft import fft_wrap, fftfreq, fftshift, ifftshift, rfftfreq
 
-try:
-    # check to see if scipy is installed
-    import scipy
-except ImportError:
-    pass
-else:
-    from . import scipy_fft
+from . import numpy_fft as _numpy_fft
 
-try:
-    # check to see if dask is installed
-    import dask
-except ImportError:
-    pass
-else:
-    from . import dask_fft
+__all__ = [
+    "fft",
+    "ifft",
+    "fft2",
+    "ifft2",
+    "fftn",
+    "ifftn",
+    "rfft",
+    "irfft",
+    "rfft2",
+    "irfft2",
+    "rfftn",
+    "irfftn",
+    "hfft",
+    "ihfft",
+    "fftshift",
+    "ifftshift",
+    "fftfreq",
+    "rfftfreq",
+    "fft_wrap",
+]
+
+
+fft = fft_wrap(_numpy_fft.fft)
+ifft = fft_wrap(_numpy_fft.ifft)
+fft2 = fft_wrap(_numpy_fft.fft2)
+ifft2 = fft_wrap(_numpy_fft.ifft2)
+fftn = fft_wrap(_numpy_fft.fftn)
+ifftn = fft_wrap(_numpy_fft.ifftn)
+rfft = fft_wrap(_numpy_fft.rfft)
+irfft = fft_wrap(_numpy_fft.irfft)
+rfft2 = fft_wrap(_numpy_fft.rfft2)
+irfft2 = fft_wrap(_numpy_fft.irfft2)
+rfftn = fft_wrap(_numpy_fft.rfftn)
+irfftn = fft_wrap(_numpy_fft.irfftn)
+hfft = fft_wrap(_numpy_fft.hfft)
+ihfft = fft_wrap(_numpy_fft.ihfft)
