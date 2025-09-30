@@ -83,11 +83,17 @@ def fftfreq(n, d=1.0, device=None):
     if not isinstance(n, (int, np.integer)):
         raise ValueError("n should be an integer")
     val = 1.0 / (n * d)
+    # pylint: disable=unexpected-keyword-arg
     results = np.empty(n, int, device=device)
+    # pylint: enable=unexpected-keyword-arg
     N = (n - 1) // 2 + 1
+    # pylint: disable=unexpected-keyword-arg
     p1 = np.arange(0, N, dtype=int, device=device)
+    # pylint: enable=unexpected-keyword-arg
     results[:N] = p1
+    # pylint: disable=unexpected-keyword-arg
     p2 = np.arange(-(n // 2), 0, dtype=int, device=device)
+    # pylint: enable=unexpected-keyword-arg
     results[N:] = p2
     return results * val
 
@@ -104,5 +110,7 @@ def rfftfreq(n, d=1.0, device=None):
         raise ValueError("n should be an integer")
     val = 1.0 / (n * d)
     N = n // 2 + 1
+    # pylint: disable=unexpected-keyword-arg
     results = np.arange(0, N, dtype=int, device=device)
+    # pylint: enable=unexpected-keyword-arg
     return results * val
