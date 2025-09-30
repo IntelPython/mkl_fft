@@ -25,8 +25,9 @@
 
 from . import numpy_fft
 
+# find scipy, not scipy.fft, to avoid circular dependency
 try:
-    import scipy.fft
+    import scipy
 except ImportError:
     pass
 else:

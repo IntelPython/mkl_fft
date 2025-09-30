@@ -41,6 +41,7 @@ from ._numpy_fft import (
     rfft2,
     rfftn,
 )
+from ._numpy_helper import fftfreq, fftshift, ifftshift, rfftfreq
 
 __all__ = [
     "fft",
@@ -57,11 +58,8 @@ __all__ = [
     "irfftn",
     "hfft",
     "ihfft",
+    "fftshift",
+    "fftfreq",
+    "rfftfreq",
+    "ifftshift",
 ]
-
-# It is important to put the following import here to avoid circular imports
-# when patching numpy with mkl_fft
-# Added for completing the namespaces
-from numpy.fft import fftfreq, fftshift, ifftshift, rfftfreq
-
-__all__ += ["fftshift", "ifftshift", "fftfreq", "rfftfreq"]
