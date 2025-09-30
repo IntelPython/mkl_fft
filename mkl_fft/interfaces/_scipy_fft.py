@@ -36,7 +36,6 @@ from numbers import Number
 
 import mkl
 import numpy as np
-import scipy
 
 import mkl_fft
 
@@ -62,10 +61,6 @@ __all__ = [
     "ihfft2",
     "hfftn",
     "ihfftn",
-    "fftshift",
-    "ifftshift",
-    "fftfreq",
-    "rfftfreq",
     "get_workers",
     "set_workers",
 ]
@@ -653,49 +648,6 @@ def ihfftn(
 
     np.conjugate(result, out=result)
     return result
-
-
-# define thin wrappers for scipy functions to avoid circular dependencies
-def fftfreq(n, d=1.0, *, xp=None, device=None):
-    """
-    Return the Discrete Fourier Transform sample frequencies.
-
-    For full documentation refer to `scipy.fft.fftfreq`.
-
-    """
-    return scipy.fft.fftfreq(n, d=d, xp=xp, device=device)
-
-
-def rfftfreq(n, d=1.0, *, xp=None, device=None):
-    """
-    Return the Discrete Fourier Transform sample frequencies (for usage with
-    `rfft`, `irfft`).
-
-    For full documentation refer to `scipy.fft.rfftfreq`.
-
-    """
-    return scipy.fft.rfftfreq(n, d=d, xp=xp, device=device)
-
-
-def fftshift(x, axes=None):
-    """
-    Shift the zero-frequency component to the center of the spectrum.
-
-    For full documentation refer to `scipy.fft.fftshift`.
-
-    """
-    return scipy.fft.fftshift(x, axes=axes)
-
-
-def ifftshift(x, axes=None):
-    """
-    The inverse of `fftshift`. Although identical for even-length `x`, the
-    functions differ by one sample for odd-length `x`.
-
-    For full documentation refer to `scipy.fft.ifftshift`.
-
-    """
-    return scipy.fft.ifftshift(x, axes=axes)
 
 
 def get_workers():
