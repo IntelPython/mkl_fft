@@ -10,10 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Enabled support of Python 3.13 [gh-164](https://github.com/IntelPython/mkl_fft/pull/164)
 
 ### Changed
-* Replaced `fwd_scale` parameter with `norm` in `mkl_fft` [gh-189](https://github.com/IntelPython/mkl_fft/pull/189)
 * Dropped support for `scipy.fftpack` interface [gh-185](https://github.com/IntelPython/mkl_fft/pull/185)
 * Dropped support for `overwrite_x` parameter in `mkl_fft` [gh-185](https://github.com/IntelPython/mkl_fft/pull/185)
-* Added thin wrappers for `fftfreq`, `rfftfreq`, `fftshift`, and `ifftshift` to `scipy_fft` and `numpy_fft` interfaces [gh-226](https://github.com/IntelPython/mkl_fft/pull/226)
+* Replaced `fwd_scale` parameter with `norm` in `mkl_fft` [gh-189](https://github.com/IntelPython/mkl_fft/pull/189)
+* Conditionally import `scipy_fft` only if `scipy` is installed [gh-195](https://github.com/IntelPython/mkl_fft/pull/195)
+* Added thin wrappers for `fftfreq`, `rfftfreq`, `fftshift`, and `ifftshift` to `scipy_fft` and `numpy_fft` interfaces [gh-226](https://github.com/IntelPython/mkl_fft/pull/226), [gh=229](https://github.com/IntelPython/mkl_fft/pull/229)
 
 ### Fixed
 * Fixed a bug for N-D FFTs when both `s` and `out` are given [gh-185](https://github.com/IntelPython/mkl_fft/pull/185)
