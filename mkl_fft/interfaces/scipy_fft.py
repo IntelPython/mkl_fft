@@ -28,7 +28,9 @@
 from ._scipy_fft import (
     fft,
     fft2,
+    fftfreq,
     fftn,
+    fftshift,
     get_workers,
     hfft,
     hfft2,
@@ -36,6 +38,7 @@ from ._scipy_fft import (
     ifft,
     ifft2,
     ifftn,
+    ifftshift,
     ihfft,
     ihfft2,
     ihfftn,
@@ -44,10 +47,10 @@ from ._scipy_fft import (
     irfftn,
     rfft,
     rfft2,
+    rfftfreq,
     rfftn,
     set_workers,
 )
-from ._scipy_helper import fftfreq, fftshift, ifftshift, rfftfreq
 
 __all__ = [
     "fft",
