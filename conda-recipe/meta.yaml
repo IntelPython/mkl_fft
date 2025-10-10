@@ -34,7 +34,8 @@ test:
       - pytest -v --pyargs mkl_fft
     requires:
       - pytest
-      - scipy >=1.10
+      # This is a temporary python restriction
+      - scipy >=1.10   # [py<314]
     imports:
       - mkl_fft
       - mkl_fft.interfaces
