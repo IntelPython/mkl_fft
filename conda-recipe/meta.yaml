@@ -17,7 +17,7 @@ requirements:
       - {{ compiler('c') }}
       - {{ stdlib('c') }}
     host:
-      - python         # [py<314]
+      - python
       - python-gil     # [py>=314]
       - pip
       - setuptools >=77
@@ -26,7 +26,7 @@ requirements:
       - numpy-base
       - wheel  >=0.41.3
     run:
-      - python         # [py<314]
+      - python
       - python-gil     # [py>=314]
       - mkl-service
       - {{ pin_compatible('numpy-base') }}
