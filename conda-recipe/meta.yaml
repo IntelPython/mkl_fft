@@ -41,8 +41,6 @@ test:
     imports:
       - mkl_fft
       - mkl_fft.interfaces
-      - mkl_fft.interfaces.numpy_fft
-      - mkl_fft.interfaces.scipy_fft
 
 about:
     home: http://github.com/IntelPython/mkl_fft
