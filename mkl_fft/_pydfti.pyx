@@ -763,9 +763,6 @@ def _direct_fftnd(
     cdef cnp.ndarray f_arr "ffnd_arrayObject"
     cdef int in_place, x_type, f_type
 
-    if direction not in [-1, +1]:
-        raise ValueError("Direction of FFT should +1 or -1")
-
     # convert x to ndarray, ensure that strides are multiples of itemsize
     x_arr = PyArray_CheckFromAny(
         x, NULL, 0, 0,
