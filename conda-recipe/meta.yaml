@@ -18,6 +18,7 @@ requirements:
       - {{ stdlib('c') }}
     host:
       - python
+      - python-gil     # [py>=314]
       - pip
       - setuptools >=77
       - mkl-devel
@@ -26,6 +27,7 @@ requirements:
       - wheel  >=0.41.3
     run:
       - python
+      - python-gil     # [py>=314]
       - mkl-service
       - {{ pin_compatible('numpy-base') }}
 
@@ -34,7 +36,8 @@ test:
       - pytest -v --pyargs mkl_fft
     requires:
       - pytest
-      - scipy >=1.10
+      # This is a temporary python restriction
+      - scipy >=1.10   # [py<314]
     imports:
       - mkl_fft
       - mkl_fft.interfaces
