@@ -13,8 +13,8 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-        numpy_version: ["numpy'<2'", "numpy'>=2'"]
+        python: ["3.10", "3.11", "3.12", "3.13"]
+        numpy_version: ["numpy'>=2'"]
 
     env:
       ONEAPI_ROOT: /opt/intel/oneapi

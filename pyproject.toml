@@ -38,7 +38,6 @@ classifiers = [
   "Programming Language :: C",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -57,7 +56,7 @@ keywords = ["DFTI", "FFT", "Fourier", "MKL"]
 license = "BSD-3-Clause"
 name = "mkl_fft"
 readme = {file = "README.md", content-type = "text/markdown"}
-requires-python = ">=3.9,<3.14"
+requires-python = ">=3.10,<3.14"
 
 [project.optional-dependencies]
 scipy_interface = ["scipy>=1.10"]
