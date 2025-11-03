@@ -21,8 +21,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - python: '3.9'
-            numpy: '2.0'
           - python: '3.10'
             numpy: '2.2'
           - python: '3.11'
@@ -76,7 +74,7 @@ jobs:
             conda-recipe-cf
 
       - name: Upload artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
           path: /usr/share/miniconda/conda-bld/linux-64/${{ env.PACKAGE_NAME }}-*.conda
@@ -87,7 +85,7 @@ jobs:
 
     strategy:
       matrix:
-        python_ver: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python_ver: ['3.10', '3.11', '3.12', '3.13']
         numpy: ['numpy">=2"']
         experimental: [false]
         runner: [ubuntu-latest]
@@ -97,7 +95,7 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python_ver }}
 
@@ -158,8 +156,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - python: '3.9'
-            numpy: '2.0'
           - python: '3.10'
             numpy: '2.2'
           - python: '3.11'
@@ -215,7 +211,7 @@ jobs:
           echo "CONDA_BLD=$CONDA/conda-bld/win-64/" | tr "\\\\" '/' >> $GITHUB_ENV
 
       - name: Upload artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
           path: ${{ env.CONDA_BLD }}${{ env.PACKAGE_NAME }}-*.conda
@@ -229,7 +225,7 @@ jobs:
 
     strategy:
       matrix:
-        python_ver: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python_ver: ['3.10', '3.11', '3.12', '3.13']
         numpy: ['numpy">=2"']
         experimental: [false]
         runner: [windows-latest]
@@ -240,7 +236,7 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python_ver }}
 
