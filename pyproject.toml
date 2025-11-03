@@ -59,7 +59,6 @@ name = "mkl_fft"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10,<3.15"
 
-
 [project.optional-dependencies]
 scipy_interface = ["scipy>=1.10"]
 test = ["pytest", "scipy>=1.10"]
