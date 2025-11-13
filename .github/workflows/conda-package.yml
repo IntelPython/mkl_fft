@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python: ['3.10', '3.11', '3.12', '3.13']
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@85880fa0301c86cca9da44039ee3bb12d3bedbfa # 0.12.1
@@ -66,7 +66,7 @@ jobs:
             conda-recipe
 
       - name: Upload artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
           path: /usr/share/miniconda/conda-bld/linux-64/${{ env.PACKAGE_NAME }}-*.conda
@@ -77,7 +77,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python: ['3.10', '3.11', '3.12', '3.13']
         experimental: [false]
         runner: [ubuntu-latest]
     continue-on-error: ${{ matrix.experimental }}
@@ -86,7 +86,7 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
 
@@ -141,12 +141,7 @@ jobs:
         run: |
           CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
           conda create -n ${{ env.TEST_ENV_NAME }} $PACKAGE_NAME=${{ env.PACKAGE_VERSION }} python=${{ matrix.python }} pytest $CHANNELS
-          if [[ "${{ matrix.python }}" != 3.9* ]]; then
-            # Intel channel only has scipy=1.10 for Python 3.9, which needs mkl<2025
-            # while scipy needs to install numpy and mkl_random and mkl_random-1.2.11 requires mkl>=2025
-            # so avoid installing scipy for Python 3.9 which means third_party/scipy tests will not run
-            conda install -n ${{ env.TEST_ENV_NAME }} "scipy>=1.10" $CHANNELS
-          fi
+          conda install -n ${{ env.TEST_ENV_NAME }} "scipy>=1.10" $CHANNELS
           # Test installed packages
           conda list -n ${{ env.TEST_ENV_NAME }}
 
@@ -161,7 +156,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python: ['3.10', '3.11', '3.12', '3.13']
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@85880fa0301c86cca9da44039ee3bb12d3bedbfa # 0.12.1
@@ -211,7 +206,7 @@ jobs:
           echo "CONDA_BLD=$CONDA/conda-bld/win-64/" | tr "\\\\" '/' >> $GITHUB_ENV
 
       - name: Upload artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
           path: ${{ env.CONDA_BLD }}${{ env.PACKAGE_NAME }}-*.conda
@@ -225,7 +220,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python: ['3.10', '3.11', '3.12', '3.13']
         experimental: [false]
         runner: [windows-latest]
     continue-on-error: ${{ matrix.experimental }}
@@ -235,7 +230,7 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
 
@@ -315,10 +310,8 @@ jobs:
           )
           SET "TEST_DEPENDENCIES=pytest"
           conda install -n ${{ env.TEST_ENV_NAME }} ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% %TEST_DEPENDENCIES% python=${{ matrix.python }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
-          if ("${{ matrix.python }}" -ne "3.9") {
-            conda install -n ${{ env.TEST_ENV_NAME }} scipy -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
+          conda install -n ${{ env.TEST_ENV_NAME }} scipy -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
           }
-
       - name: Report content of test environment
         shell: cmd /C CALL {0}
         run: |
