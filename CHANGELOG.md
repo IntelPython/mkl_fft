@@ -4,10 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [dev] (MM/DD/YYYY)
+## [2.1.2] - 2025-12-02
 
 ### Added
 * Enabled support of Python 3.14 [gh-234](https://github.com/IntelPython/mkl_fft/pull/234)
+
+### Changed
+* Removed test for importing `mkl_fft.interfaces.numpy_fft` and `mkl_fft.interfaces.scipy_fft` from Conda recipe
 
 ## [2.1.1] - 2025-10-09
 
