@@ -6,11 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [dev] - YYYY-MM-DD
 
+### Removed
+* Dropped support for Python 3.9 [gh-243](https://github.com/IntelPython/mkl_fft/pull/243)
+
+## [2.1.2] - 2025-12-02
+
 ### Added
 * Enabled support of Python 3.14 [gh-234](https://github.com/IntelPython/mkl_fft/pull/234)
 
-### Removed
-* Dropped support for Python 3.9 [gh-243](https://github.com/IntelPython/mkl_fft/pull/243)
+### Changed
+* Removed test for importing `mkl_fft.interfaces.numpy_fft` and `mkl_fft.interfaces.scipy_fft` from Conda recipe
 
 ## [2.1.1] - 2025-10-09
 
