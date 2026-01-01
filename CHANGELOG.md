@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Enabled support of Python 3.14 [gh-234](https://github.com/IntelPython/mkl_fft/pull/234)
 
 ### Changed
-* Removed test for importing `mkl_fft.interfaces.numpy_fft` and `mkl_fft.interfaces.scipy_fft` from Conda recipe
+* Removed test for importing `mkl_fft.interfaces.numpy_fft` and `mkl_fft.interfaces.scipy_fft` from Conda recipe [gh-241](https://github.com/IntelPython/mkl_fft/pull/241)
 
 ## [2.1.1] - 2025-10-09
 
