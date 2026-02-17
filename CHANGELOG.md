@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fixed a bug for N-D FFTs when both `s` and `out` are given [gh-185](https://github.com/IntelPython/mkl_fft/pull/185)
+* Fixed a bug for a case when a repeated indices is passed for axes keyword in N-dimensional FFT [gh-215](https://github.com/IntelPython/mkl_fft/pull/215)
 
 ## [2.0.0] - 2025-06-03
 
