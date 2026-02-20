@@ -92,7 +92,9 @@ def _is_tls_initialized():
 def patch_numpy_fft(verbose=False):
     if verbose:
         print("Now patching NumPy FFT submodule with mkl_fft NumPy interface.")
-        print("Please direct bug reports to https://github.com/IntelPython/mkl_fft")
+        print(
+            "Please direct bug reports to https://github.com/IntelPython/mkl_fft"
+        )
     if not _is_tls_initialized():
         _initialize_tls()
     _tls.patch.do_patch()

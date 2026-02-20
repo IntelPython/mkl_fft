@@ -30,14 +30,13 @@ import mkl_fft.interfaces.numpy_fft as _nfft
 
 
 def test_patch():
-    mkl_fft.restore_numpy_fft()
+    old_module = np.fft.fft.__module__
     assert not mkl_fft.is_patched()
-    assert (np.fft.fft.__module__ == "numpy.fft")
 
     mkl_fft.patch_numpy_fft()  # Enable mkl_fft in Numpy
     assert mkl_fft.is_patched()
-    assert (np.fft.fft.__module__ == _nfft.fft.__module__)
+    assert np.fft.fft.__module__ == _nfft.fft.__module__
 
     mkl_fft.restore_numpy_fft()  # Disable mkl_fft in Numpy
     assert not mkl_fft.is_patched()
-    assert (np.fft.fft.__module__ == "numpy.fft")
+    assert np.fft.fft.__module__ == old_module
