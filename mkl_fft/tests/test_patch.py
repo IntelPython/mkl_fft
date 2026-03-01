@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright (c) 2017, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,50 +23,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from . import _init_helper
-from ._mkl_fft import (
-    fft,
-    fft2,
-    fftn,
-    ifft,
-    ifft2,
-    ifftn,
-    irfft,
-    irfft2,
-    irfftn,
-    rfft,
-    rfft2,
-    rfftn,
-)
-from ._patch_numpy import (
-    is_patched,
-    mkl_fft,
-    patch_numpy_fft,
-    restore_numpy_fft,
-)
-from ._version import __version__
+import numpy as np
 
-import mkl_fft.interfaces  # isort: skip
+import mkl_fft
+import mkl_fft.interfaces.numpy_fft as _nfft
 
 
-__all__ = [
-    "fft",
-    "ifft",
-    "fft2",
-    "ifft2",
-    "fftn",
-    "ifftn",
-    "rfft",
-    "irfft",
-    "rfft2",
-    "irfft2",
-    "rfftn",
-    "irfftn",
-    "interfaces",
-    "mkl_fft",
-    "patch_numpy_fft",
-    "restore_numpy_fft",
-    "is_patched",
-]
+def test_patch():
+    old_module = np.fft.fft.__module__
+    assert not mkl_fft.is_patched()
 
-del _init_helper
+    mkl_fft.patch_numpy_fft()  # Enable mkl_fft in Numpy
+    assert mkl_fft.is_patched()
+    assert np.fft.fft.__module__ == _nfft.fft.__module__
+
+    mkl_fft.restore_numpy_fft()  # Disable mkl_fft in Numpy
+    assert not mkl_fft.is_patched()
+    assert np.fft.fft.__module__ == old_module
