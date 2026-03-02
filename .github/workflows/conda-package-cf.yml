@@ -63,14 +63,14 @@ jobs:
 
       - name: Build conda package with NumPy 2.x
         run: |
-          CHANNELS="-c conda-forge --override-channels"
-          VERSIONS="--python ${{ matrix.python }} --numpy ${{ matrix.numpy }}"
-          TEST="--no-test"
+          CHANNELS=(-c conda-forge --override-channels)
+          VERSIONS=(--python "${{ matrix.python }}" --numpy "${{ matrix.numpy }}")
+          TEST=(--no-test)
 
           conda build \
-            $TEST \
-            "$VERSIONS" \
-            "$CHANNELS" \
+            "${TEST[@]}" \
+            "${VERSIONS[@]}" \
+            "${CHANNELS[@]}" \
             conda-recipe-cf
 
       - name: Upload artifact

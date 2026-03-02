@@ -55,14 +55,14 @@ jobs:
 
       - name: Build conda package
         run: |
-          CHANNELS="-c https://software.repos.intel.com/python/conda -c conda-forge --override-channels"
-          VERSIONS="--python ${{ matrix.python }}"
-          TEST="--no-test"
+          CHANNELS=(-c https://software.repos.intel.com/python/conda -c conda-forge --override-channels)
+          VERSIONS=(--python "${{ matrix.python }}")
+          TEST=(--no-test)
 
           conda build \
-            $TEST \
-            "$VERSIONS" \
-            "$CHANNELS" \
+            "${TEST[@]}" \
+            "${VERSIONS[@]}" \
+            "${CHANNELS[@]}" \
             conda-recipe
 
       - name: Upload artifact
