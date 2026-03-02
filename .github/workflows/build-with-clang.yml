@@ -65,7 +65,7 @@ jobs:
       - name: Build mkl_fft
         run: |
           source ${{ env.ONEAPI_ROOT }}/setvars.sh
-          echo $CMPLR_ROOT
+          echo "$CMPLR_ROOT"
           export CC=$CMPLR_ROOT/bin/icx
           export CFLAGS="${CFLAGS} -fno-fast-math -O2"
           pip install -e . --no-build-isolation --no-deps --verbose
