@@ -86,12 +86,22 @@ class _workers_data:
 
     @workers.setter
     def workers(self, workers_val):
-        self.workerks_ = operator.index(workers_val)
+        self.workers_ = operator.index(workers_val)
 
 
+# Use an immutable default (i.e. None) and create the object when needed
 _workers_global_settings = contextvars.ContextVar(
-    "scipy_backend_workers", default=_workers_data()
+    "scipy_backend_workers", default=None
 )
+
+
+def _get_workers_settings():
+    """Lazy initialization"""
+    value = _workers_global_settings.get()
+    if value is None:
+        value = _workers_data()
+        _workers_global_settings.set(value)
+    return value
 
 
 def _workers_to_num_threads(w):
@@ -100,7 +110,7 @@ def _workers_to_num_threads(w):
     same way as scipy.fft._pocketfft.helpers._workers.
     """
     if w is None:
-        return _workers_global_settings.get().workers
+        return _get_workers_settings().workers
     _w = operator.index(w)
     if _w == 0:
         raise ValueError("Number of workers must not be zero")
@@ -707,7 +717,7 @@ def get_workers():
     For full documentation refer to `scipy.fft.get_workers`.
 
     """
-    return _workers_global_settings.get().workers
+    return _get_workers_settings().workers
 
 
 @contextlib.contextmanager
