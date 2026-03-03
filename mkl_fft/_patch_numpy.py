@@ -27,7 +27,7 @@
 """Define functions for patching NumPy with MKL-based NumPy interface."""
 
 from contextlib import ContextDecorator
-from threading import Lock
+from threading import Lock, local
 
 import numpy as np
 
@@ -41,6 +41,7 @@ class _GlobalPatch(ContextDecorator):
         self._restore_dict = {}
         # make _patched_functions a tuple (immutable)
         self._patched_functions = tuple(_nfft.__all__)
+        self._tls = local()
 
     def _register_func(self, name, func):
         if name not in self._patched_functions:
@@ -65,20 +66,34 @@ class _GlobalPatch(ContextDecorator):
 
     def do_patch(self, verbose=False):
         with self._lock:
+            local_count = getattr(self._tls, "local_count", 0)
             if self._patch_count == 0:
                 if verbose:
-                    print("Now patching NumPy FFT submodule with mkl_fft NumPy interface.")
                     print(
-                        "Please direct bug reports to https://github.com/IntelPython/mkl_fft"
+                        "Now patching NumPy FFT submodule with mkl_fft NumPy "
+                        "interface."
+                    )
+                    print(
+                        "Please direct bug reports to "
+                        "https://github.com/IntelPython/mkl_fft"
                     )
                 for f in self._patched_functions:
                     self._register_func(f, getattr(_nfft, f))
             self._patch_count += 1
+            self._tls.local_count = local_count + 1
 
     def do_restore(self, verbose=False):
         with self._lock:
-            if self._patch_count > 0:
-                self._patch_count -= 1
+            local_count = getattr(self._tls, "local_count", 0)
+            if local_count <= 0:
+                if verbose:
+                    print(
+                        "Warning: restore_numpy_fft called more times than "
+                        "patch_numpy_fft in this thread."
+                    )
+                return
+            self._tls.local_count -= 1
+            self._patch_count -= 1
             if self._patch_count == 0:
                 if verbose:
                     print("Now restoring original NumPy FFT submodule.")
@@ -103,12 +118,21 @@ _patch = _GlobalPatch()
 
 
 def patch_numpy_fft(verbose=False):
-    """Patch NumPy's fft submodule with mkl_fft's numpy_interface.
+    """
+    Patch NumPy's fft submodule with mkl_fft's numpy_interface.
 
     Parameters
     ----------
     verbose : bool, optional
         print message when starting the patching process.
+
+    Notes
+    -----
+    This function uses reference-counted semantics. Each call increments a
+    global patch counter. Restoration requires a matching number of calls
+    between `patch_numpy_fft` and `restore_numpy_fft`.
+
+    In multi-threaded programs, prefer the `mkl_fft` context manager.
 
     """
     _patch.do_patch(verbose=verbose)
@@ -122,6 +146,14 @@ def restore_numpy_fft(verbose=False):
     ----------
     verbose : bool, optional
         print message when starting restoration process.
+
+    Notes
+    -----
+    This function uses reference-counted semantics. Each call decrements a
+    global patch counter. Restoration requires a matching number of calls
+    between `patch_numpy_fft` and `restore_numpy_fft`.
+
+    In multi-threaded programs, prefer the `mkl_fft` context manager.
 
     """
     _patch.do_restore(verbose=verbose)
