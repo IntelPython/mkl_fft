@@ -27,94 +27,131 @@
 """Define functions for patching NumPy with MKL-based NumPy interface."""
 
 from contextlib import ContextDecorator
-from threading import local as threading_local
+from threading import Lock
 
 import numpy as np
 
 import mkl_fft.interfaces.numpy_fft as _nfft
 
-_tls = threading_local()
 
-
-class _Patch:
-    """Internal object for patching NumPy with mkl_fft interfaces."""
-
-    _is_patched = False
-    __patched_functions__ = _nfft.__all__
-    _restore_dict = {}
+class _GlobalPatch(ContextDecorator):
+    def __init__(self):
+        self._lock = Lock()
+        self._patch_count = 0
+        self._restore_dict = {}
+        # make _patched_functions a tuple (immutable)
+        self._patched_functions = tuple(_nfft.__all__)
 
     def _register_func(self, name, func):
-        if name not in self.__patched_functions__:
-            raise ValueError("%s not an mkl_fft function." % name)
-        f = getattr(np.fft, name)
-        self._restore_dict[name] = f
+        if name not in self._patched_functions:
+            raise ValueError(f"{name} not an mkl_fft function.")
+        if name not in self._restore_dict:
+            self._restore_dict[name] = getattr(np.fft, name)
         setattr(np.fft, name, func)
 
     def _restore_func(self, name, verbose=False):
-        if name not in self.__patched_functions__:
-            raise ValueError("%s not an mkl_fft function." % name)
+        if name not in self._patched_functions:
+            raise ValueError(f"{name} not an mkl_fft function.")
         try:
             val = self._restore_dict[name]
         except KeyError:
             if verbose:
-                print("failed to restore")
+                print(f"failed to restore {name}")
             return
         else:
             if verbose:
-                print("found and restoring...")
+                print(f"found and restoring {name}...")
             setattr(np.fft, name, val)
 
-    def restore(self, verbose=False):
-        for name in self._restore_dict.keys():
-            self._restore_func(name, verbose=verbose)
-        self._is_patched = False
+    def do_patch(self, verbose=False):
+        with self._lock:
+            if self._patch_count == 0:
+                if verbose:
+                    print("Now patching NumPy FFT submodule with mkl_fft NumPy interface.")
+                    print(
+                        "Please direct bug reports to https://github.com/IntelPython/mkl_fft"
+                    )
+                for f in self._patched_functions:
+                    self._register_func(f, getattr(_nfft, f))
+            self._patch_count += 1
 
-    def do_patch(self):
-        for f in self.__patched_functions__:
-            self._register_func(f, getattr(_nfft, f))
-        self._is_patched = True
+    def do_restore(self, verbose=False):
+        with self._lock:
+            if self._patch_count > 0:
+                self._patch_count -= 1
+            if self._patch_count == 0:
+                if verbose:
+                    print("Now restoring original NumPy FFT submodule.")
+                for name in tuple(self._restore_dict):
+                    self._restore_func(name, verbose=verbose)
+                self._restore_dict.clear()
 
     def is_patched(self):
-        return self._is_patched
+        with self._lock:
+            return self._patch_count > 0
+
+    def __enter__(self):
+        self.do_patch()
+        return self
+
+    def __exit__(self, *exc):
+        self.do_restore()
+        return False
 
 
-def _initialize_tls():
-    _tls.patch = _Patch()
-    _tls.initialized = True
-
-
-def _is_tls_initialized():
-    return (getattr(_tls, "initialized", None) is not None) and (
-        _tls.initialized is True
-    )
+_patch = _GlobalPatch()
 
 
 def patch_numpy_fft(verbose=False):
-    if verbose:
-        print("Now patching NumPy FFT submodule with mkl_fft NumPy interface.")
-        print(
-            "Please direct bug reports to https://github.com/IntelPython/mkl_fft"
-        )
-    if not _is_tls_initialized():
-        _initialize_tls()
-    _tls.patch.do_patch()
+    """Patch NumPy's fft submodule with mkl_fft's numpy_interface.
+
+    Parameters
+    ----------
+    verbose : bool, optional
+        print message when starting the patching process.
+
+    """
+    _patch.do_patch(verbose=verbose)
 
 
 def restore_numpy_fft(verbose=False):
-    if verbose:
-        print("Now restoring original NumPy FFT submodule.")
-    if not _is_tls_initialized():
-        _initialize_tls()
-    _tls.patch.restore(verbose=verbose)
+    """
+    Restore NumPy's fft submodule to its original implementations.
+
+    Parameters
+    ----------
+    verbose : bool, optional
+        print message when starting restoration process.
+
+    """
+    _patch.do_restore(verbose=verbose)
 
 
 def is_patched():
-    if not _is_tls_initialized():
-        _initialize_tls()
-    return _tls.patch.is_patched()
+    """Return True if NumPy's fft submodule is currently patched by mkl_fft."""
+    return _patch.is_patched()
 
 
 class mkl_fft(ContextDecorator):
+    """
+    Context manager and decorator to temporarily patch NumPy fft submodule
+    with MKL-based implementations.
+
+    Examples
+    --------
+    >>> import mkl_fft
+    >>> mkl_fft.is_patched()
+    # False
+
+    >>> with mkl_fft.mkl_fft():  # Enable mkl_fft in Numpy
+    >>>     print(mkl_fft.is_patched())
+    # True
+
+    >>> mkl_fft.is_patched()
+    # False
+
+    """
+
     def __enter__(self):
         patch_numpy_fft()
         return self

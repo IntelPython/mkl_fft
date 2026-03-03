@@ -40,3 +40,22 @@ def test_patch():
     mkl_fft.restore_numpy_fft()  # Disable mkl_fft in Numpy
     assert not mkl_fft.is_patched()
     assert np.fft.fft.__module__ == old_module
+
+
+def test_patch_redundant_patching():
+    old_module = np.fft.fft.__module__
+    assert not mkl_fft.is_patched()
+
+    mkl_fft.patch_numpy_fft()
+    mkl_fft.patch_numpy_fft()
+
+    assert mkl_fft.is_patched()
+    assert np.fft.fft.__module__ == _nfft.fft.__module__
+
+    mkl_fft.restore_numpy_fft()
+    assert mkl_fft.is_patched()
+    assert np.fft.fft.__module__ == _nfft.fft.__module__
+
+    mkl_fft.restore_numpy_fft()
+    assert not mkl_fft.is_patched()
+    assert np.fft.fft.__module__ == old_module

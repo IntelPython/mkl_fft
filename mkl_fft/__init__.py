@@ -49,7 +49,6 @@ from ._version import __version__
 
 import mkl_fft.interfaces  # isort: skip
 
-
 __all__ = [
     "fft",
     "ifft",
