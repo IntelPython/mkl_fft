@@ -48,21 +48,21 @@ jobs:
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
 
       - name: Add conda to system path
-        run: echo $CONDA/bin >> $GITHUB_PATH
+        run: echo "$CONDA"/bin >> "$GITHUB_PATH"
 
       - name: Install conda-build
         run: conda install conda-build
 
       - name: Build conda package
         run: |
-          CHANNELS="-c https://software.repos.intel.com/python/conda -c conda-forge --override-channels"
-          VERSIONS="--python ${{ matrix.python }}"
-          TEST="--no-test"
+          CHANNELS=(-c https://software.repos.intel.com/python/conda -c conda-forge --override-channels)
+          VERSIONS=(--python "${{ matrix.python }}")
+          TEST=(--no-test)
 
           conda build \
-            $TEST \
-            $VERSIONS \
-            $CHANNELS \
+            "${TEST[@]}" \
+            "${VERSIONS[@]}" \
+            "${CHANNELS[@]}" \
             conda-recipe
 
       - name: Upload artifact
@@ -91,32 +91,34 @@ jobs:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
 
       - name: Add conda to system path
-        run: echo $CONDA/bin >> $GITHUB_PATH
+        run: echo "$CONDA"/bin >> "$GITHUB_PATH"
 
       - name: Install conda-build
         run: conda install conda-build
 
       - name: Create conda channel
         run: |
-          mkdir -p $GITHUB_WORKSPACE/channel/linux-64
-          mv ${PACKAGE_NAME}-*.conda $GITHUB_WORKSPACE/channel/linux-64
-          conda index $GITHUB_WORKSPACE/channel
+          mkdir -p "$GITHUB_WORKSPACE"/channel/linux-64
+          mv "$PACKAGE_NAME"-*.conda "$GITHUB_WORKSPACE"/channel/linux-64
+          conda index "$GITHUB_WORKSPACE"/channel
 
       - name: Test conda channel
         run: |
-          conda search $PACKAGE_NAME -c $GITHUB_WORKSPACE/channel --override-channels --info --json > $GITHUB_WORKSPACE/ver.json
-          cat $GITHUB_WORKSPACE/ver.json
+          conda search "$PACKAGE_NAME" -c "$GITHUB_WORKSPACE"/channel --override-channels --info --json > "$GITHUB_WORKSPACE"/ver.json
+          cat "$GITHUB_WORKSPACE"/ver.json
 
       - name: Get package version
         run: |
-          export PACKAGE_VERSION=$(python -c "${{ env.VER_SCRIPT1 }} ${{ env.VER_SCRIPT2 }}")
-          echo PACKAGE_VERSION=${PACKAGE_VERSION}
-          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
+          PACKAGE_VERSION=$(python -c "${{ env.VER_SCRIPT1 }} ${{ env.VER_SCRIPT2 }}")
+          export PACKAGE_VERSION
+
+          echo PACKAGE_VERSION="${PACKAGE_VERSION}"
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
 
       - name: Collect dependencies
         run: |
-          CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda create -n ${{ env.TEST_ENV_NAME }} $PACKAGE_NAME python=${{ matrix.python }} $CHANNELS --only-deps --dry-run > lockfile
+          CHANNELS=(-c "$GITHUB_WORKSPACE"/channel ${{ env.CHANNELS }})
+          conda create -n ${{ env.TEST_ENV_NAME }} "$PACKAGE_NAME" python=${{ matrix.python }} "${CHANNELS[@]}" --only-deps --dry-run > lockfile
 
       - name: Display lockfile
         run: cat lockfile
@@ -139,17 +141,17 @@ jobs:
 
       - name: Install mkl_fft
         run: |
-          CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda create -n ${{ env.TEST_ENV_NAME }} $PACKAGE_NAME=${{ env.PACKAGE_VERSION }} python=${{ matrix.python }} pytest $CHANNELS
-          conda install -n ${{ env.TEST_ENV_NAME }} "scipy>=1.10" $CHANNELS
+          CHANNELS=(-c "$GITHUB_WORKSPACE"/channel ${{ env.CHANNELS }})
+          conda create -n ${{ env.TEST_ENV_NAME }} "$PACKAGE_NAME"=${{ env.PACKAGE_VERSION }} python=${{ matrix.python }} pytest "${CHANNELS[@]}"
+          conda install -n ${{ env.TEST_ENV_NAME }} "scipy>=1.10" "${CHANNELS[@]}"
           # Test installed packages
           conda list -n ${{ env.TEST_ENV_NAME }}
 
       - name: Run tests
         run: |
-          source $CONDA/etc/profile.d/conda.sh
+          source "$CONDA"/etc/profile.d/conda.sh
           conda activate ${{ env.TEST_ENV_NAME }}
-          pytest -v --pyargs $MODULE_NAME
+          pytest -v --pyargs "$MODULE_NAME"
 
   build_windows:
     runs-on: windows-latest
@@ -203,7 +205,7 @@ jobs:
       - name: Store conda paths as envs
         shell: bash -l {0}
         run: |
-          echo "CONDA_BLD=$CONDA/conda-bld/win-64/" | tr "\\\\" '/' >> $GITHUB_ENV
+          echo "CONDA_BLD=$CONDA/conda-bld/win-64/" | tr "\\\\" '/' >> "$GITHUB_ENV"
 
       - name: Upload artifact
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
