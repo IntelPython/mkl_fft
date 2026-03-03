@@ -62,6 +62,17 @@ def _check_shapes_for_direct(xs, shape, axes):
             return False
     return True
 
+def _check_shapes_equiv_s_none(s, shape, axes):
+    for si, ai in zip(s, axes):
+        try:
+            sh_ai = shape[ai]
+        except IndexError:
+            raise ValueError("Invalid axis (%d) specified" % ai)
+
+        if si != sh_ai:
+            return False
+    return True
+
 
 def _compute_fwd_scale(norm, n, shape):
     _check_norm(norm)
@@ -382,6 +393,7 @@ def _c2c_fftnd_impl(
     if direction not in [-1, +1]:
         raise ValueError("Direction of FFT should +1 or -1")
 
+    s_equiv_to_none = s is None
     valid_dtypes = [np.complex64, np.complex128, np.float32, np.float64]
     # _direct_fftnd requires complex type, and full-dimensional transform
     if isinstance(x, np.ndarray) and x.size != 0 and x.ndim > 1:
@@ -392,6 +404,10 @@ def _c2c_fftnd_impl(
             xs, xa = _cook_nd_args(x, s, axes)
             if _check_shapes_for_direct(xs, x.shape, xa):
                 _direct = True
+            # See if s matches the shape of x along the given axes.
+            # If it does, we can use _iter_complementary rather than _iter_fftnd.
+            if _check_shapes_equiv_s_none(xs, x.shape, xa):
+                s_equiv_to_none = True
         _direct = _direct and x.dtype in valid_dtypes
     else:
         _direct = False
@@ -404,7 +420,7 @@ def _c2c_fftnd_impl(
             out=out,
         )
     else:
-        if s is None and x.dtype in valid_dtypes:
+        if s_equiv_to_none and x.dtype in valid_dtypes:
             x = np.asarray(x)
             if out is None:
                 res = np.empty_like(x, dtype=_output_dtype(x.dtype))
