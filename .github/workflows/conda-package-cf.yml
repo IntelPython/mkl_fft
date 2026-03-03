@@ -21,14 +21,17 @@ jobs:
     strategy:
       matrix:
         include:
-          - python: '3.10'
-            numpy: '2.2'
-          - python: '3.11'
-            numpy: '2.3'
-          - python: '3.12'
-            numpy: '2.3'
-          - python: '3.13'
-            numpy: '2.3'
+          - python: "3.10"
+            numpy: "2.2"
+          - python: "3.11"
+            numpy: "2.3"
+          - python: "3.12"
+            numpy: "2.3"
+          - python: "3.13"
+            numpy: "2.3"
+          - python: "3.14"
+            numpy: "2.3"
+
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@3155a141048f8f89c06b4cdae32e7853e97536bc # 0.13.0
@@ -85,7 +88,7 @@ jobs:
 
     strategy:
       matrix:
-        python_ver: ['3.10', '3.11', '3.12', '3.13']
+        python_ver: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         numpy: ['numpy">=2"']
         experimental: [false]
         runner: [ubuntu-latest]
@@ -156,14 +159,17 @@ jobs:
     strategy:
       matrix:
         include:
-          - python: '3.10'
-            numpy: '2.2'
-          - python: '3.11'
-            numpy: '2.3'
-          - python: '3.12'
-            numpy: '2.3'
-          - python: '3.13'
-            numpy: '2.3'
+          - python: "3.10"
+            numpy: "2.2"
+          - python: "3.11"
+            numpy: "2.3"
+          - python: "3.12"
+            numpy: "2.3"
+          - python: "3.13"
+            numpy: "2.3"
+          - python: "3.14"
+            numpy: "2.3"
+
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@3155a141048f8f89c06b4cdae32e7853e97536bc # 0.13.0
@@ -225,7 +231,7 @@ jobs:
 
     strategy:
       matrix:
-        python_ver: ['3.10', '3.11', '3.12', '3.13']
+        python_ver: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         numpy: ['numpy">=2"']
         experimental: [false]
         runner: [windows-latest]
