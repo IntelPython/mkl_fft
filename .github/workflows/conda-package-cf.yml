@@ -115,8 +115,8 @@ jobs:
 
       - name: Collect dependencies
         run: |
-          CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda create -n ${{ env.TEST_ENV_NAME }} "$PACKAGE_NAME" python=${{ matrix.python_ver }} ${{ matrix.numpy }} "$CHANNELS" --only-deps --dry-run > lockfile
+          CHANNELS=(-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }})
+          conda create -n ${{ env.TEST_ENV_NAME }} "$PACKAGE_NAME" python=${{ matrix.python_ver }} ${{ matrix.numpy }} "${CHANNELS[@]}" --only-deps --dry-run > lockfile
 
       - name: Display lockfile
         run: cat lockfile
@@ -139,8 +139,8 @@ jobs:
 
       - name: Install mkl_fft
         run: |
-          CHANNELS="-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }}"
-          conda create -n ${{ env.TEST_ENV_NAME }} python=${{ matrix.python_ver }} ${{ matrix.numpy }} "$PACKAGE_NAME" pytest scipy "$CHANNELS"
+          CHANNELS=(-c $GITHUB_WORKSPACE/channel ${{ env.CHANNELS }})
+          conda create -n ${{ env.TEST_ENV_NAME }} python=${{ matrix.python_ver }} ${{ matrix.numpy }} "$PACKAGE_NAME" pytest scipy "${CHANNELS[@]}"
           # Test installed packages
           conda list -n ${{ env.TEST_ENV_NAME }}
 
