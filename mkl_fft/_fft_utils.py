@@ -62,6 +62,7 @@ def _check_shapes_for_direct(xs, shape, axes):
             return False
     return True
 
+
 def _check_shapes_equiv_s_none(s, shape, axes):
     for si, ai in zip(s, axes):
         try:
