@@ -34,7 +34,7 @@ import numpy as np
 import mkl_fft.interfaces.numpy_fft as _nfft
 
 
-class _GlobalPatch(ContextDecorator):
+class _GlobalPatch:
     def __init__(self):
         self._lock = Lock()
         self._patch_count = 0
@@ -104,14 +104,6 @@ class _GlobalPatch(ContextDecorator):
     def is_patched(self):
         with self._lock:
             return self._patch_count > 0
-
-    def __enter__(self):
-        self.do_patch()
-        return self
-
-    def __exit__(self, *exc):
-        self.do_restore()
-        return False
 
 
 _patch = _GlobalPatch()
