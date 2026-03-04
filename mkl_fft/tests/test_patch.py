@@ -59,3 +59,22 @@ def test_patch_redundant_patching():
     mkl_fft.restore_numpy_fft()
     assert not mkl_fft.is_patched()
     assert np.fft.fft.__module__ == old_module
+
+
+def test_patch_reentrant():
+    old_module = np.fft.fft.__module__
+    assert not mkl_fft.is_patched()
+
+    with mkl_fft.mkl_fft():
+        assert mkl_fft.is_patched()
+        assert np.fft.fft.__module__ == _nfft.fft.__module__
+
+        with mkl_fft.mkl_fft():
+            assert mkl_fft.is_patched()
+            assert np.fft.fft.__module__ == _nfft.fft.__module__
+
+        assert mkl_fft.is_patched()
+        assert np.fft.fft.__module__ == _nfft.fft.__module__
+
+    assert not mkl_fft.is_patched()
+    assert np.fft.fft.__module__ == old_module

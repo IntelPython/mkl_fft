@@ -46,7 +46,7 @@ from ._patch_numpy import (
 )
 from ._version import __version__
 
-import mkl_fft.interfaces  # isort: skip
+from mkl_fft import interfaces  # isort: skip
 
 __all__ = [
     "fft",
