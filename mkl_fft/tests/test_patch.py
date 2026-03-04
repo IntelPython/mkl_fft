@@ -23,68 +23,58 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# pylint: disable=no-name-in-module
-from ._scipy_fft import (
-    fft,
-    fft2,
-    fftfreq,
-    fftn,
-    fftshift,
-    get_workers,
-    hfft,
-    hfft2,
-    hfftn,
-    ifft,
-    ifft2,
-    ifftn,
-    ifftshift,
-    ihfft,
-    ihfft2,
-    ihfftn,
-    irfft,
-    irfft2,
-    irfftn,
-    rfft,
-    rfft2,
-    rfftfreq,
-    rfftn,
-    set_workers,
-)
+import numpy as np
 
-__all__ = [
-    "fft",
-    "ifft",
-    "fft2",
-    "ifft2",
-    "fftn",
-    "ifftn",
-    "rfft",
-    "irfft",
-    "rfft2",
-    "irfft2",
-    "rfftn",
-    "irfftn",
-    "hfft",
-    "ihfft",
-    "hfft2",
-    "ihfft2",
-    "hfftn",
-    "ihfftn",
-    "fftshift",
-    "ifftshift",
-    "fftfreq",
-    "rfftfreq",
-    "get_workers",
-    "set_workers",
-]
+import mkl_fft
+import mkl_fft.interfaces.numpy_fft as _nfft
 
 
-__ua_domain__ = "numpy.scipy.fft"
+def test_patch():
+    old_module = np.fft.fft.__module__
+    assert not mkl_fft.is_patched()
+
+    mkl_fft.patch_numpy_fft()  # Enable mkl_fft in Numpy
+    assert mkl_fft.is_patched()
+    assert np.fft.fft.__module__ == _nfft.fft.__module__
+
+    mkl_fft.restore_numpy_fft()  # Disable mkl_fft in Numpy
+    assert not mkl_fft.is_patched()
+    assert np.fft.fft.__module__ == old_module
 
 
-def __ua_function__(method, args, kwargs):
-    """Fetch registered UA function."""
-    fn = globals().get(method.__name__, None)
-    if fn is None:
-        return NotImplemented
-    return fn(*args, **kwargs)
+def test_patch_redundant_patching():
+    old_module = np.fft.fft.__module__
+    assert not mkl_fft.is_patched()
+
+    mkl_fft.patch_numpy_fft()
+    mkl_fft.patch_numpy_fft()
+
+    assert mkl_fft.is_patched()
+    assert np.fft.fft.__module__ == _nfft.fft.__module__
+
+    mkl_fft.restore_numpy_fft()
+    assert mkl_fft.is_patched()
+    assert np.fft.fft.__module__ == _nfft.fft.__module__
+
+    mkl_fft.restore_numpy_fft()
+    assert not mkl_fft.is_patched()
+    assert np.fft.fft.__module__ == old_module
+
+
+def test_patch_reentrant():
+    old_module = np.fft.fft.__module__
+    assert not mkl_fft.is_patched()
+
+    with mkl_fft.mkl_fft():
+        assert mkl_fft.is_patched()
+        assert np.fft.fft.__module__ == _nfft.fft.__module__
+
+        with mkl_fft.mkl_fft():
+            assert mkl_fft.is_patched()
+            assert np.fft.fft.__module__ == _nfft.fft.__module__
+
+        assert mkl_fft.is_patched()
+        assert np.fft.fft.__module__ == _nfft.fft.__module__
+
+    assert not mkl_fft.is_patched()
+    assert np.fft.fft.__module__ == old_module
