@@ -171,11 +171,13 @@ jobs:
 
       - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
         with:
+          miniforge-variant: Miniforge3
           miniforge-version: latest
-          activate-environment: build
-          python-version: ${{ matrix.python }}
+          auto-activate: true
+          activate-environment: base
           channels: conda-forge
-          conda-remove-defaults: 'true'
+          conda-remove-defaults: true
+          python-version: ${{ matrix.python }}
 
       - name: Install conda-build
         run: |
@@ -236,10 +238,10 @@ jobs:
       - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
         with:
           miniforge-version: latest
+          channels: conda-forge
+          conda-remove-defaults: true
           activate-environment: ${{ env.TEST_ENV_NAME }}
           python-version: ${{ matrix.python }}
-          channels: conda-forge
-          conda-remove-defaults: 'true'
 
       - name: Create conda channel with the artifact bit
         shell: cmd /C CALL {0}
