@@ -43,11 +43,12 @@ def _check_norm(norm):
         )
 
 
-def _check_shapes_for_direct(xs, shape, axes):
+def _check_shapes_for_direct(xs, shape, axes, check_complimentary=False):
     if len(axes) > 7:  # Intel MKL supports up to 7D
         return False
-    if not (len(xs) == len(shape)):
-        # full-dimensional transform
+    if not (len(xs) == len(shape)) and not check_complimentary:
+        # full-dimensional transform is required for direct,
+        # but less than full is OK for complimentary.
         return False
     if not (len(set(axes)) == len(axes)):
         # repeated axes
@@ -59,18 +60,6 @@ def _check_shapes_for_direct(xs, shape, axes):
             raise ValueError("Invalid axis (%d) specified" % ai)
 
         if not (xsi == sh_ai):
-            return False
-    return True
-
-
-def _check_shapes_equiv_s_none(s, shape, axes):
-    for si, ai in zip(s, axes):
-        try:
-            sh_ai = shape[ai]
-        except IndexError:
-            raise ValueError("Invalid axis (%d) specified" % ai)
-
-        if si != sh_ai:
             return False
     return True
 
@@ -394,7 +383,7 @@ def _c2c_fftnd_impl(
     if direction not in [-1, +1]:
         raise ValueError("Direction of FFT should +1 or -1")
 
-    s_equiv_to_none = s is None
+    _complementary = s is None
     valid_dtypes = [np.complex64, np.complex128, np.float32, np.float64]
     # _direct_fftnd requires complex type, and full-dimensional transform
     if isinstance(x, np.ndarray) and x.size != 0 and x.ndim > 1:
@@ -407,8 +396,10 @@ def _c2c_fftnd_impl(
                 _direct = True
             # See if s matches the shape of x along the given axes.
             # If it does, we can use _iter_complementary rather than _iter_fftnd.
-            if _check_shapes_equiv_s_none(xs, x.shape, xa):
-                s_equiv_to_none = True
+            if _check_shapes_for_direct(
+                xs, x.shape, xa, check_complimentary=True
+            ):
+                _complementary = True
         _direct = _direct and x.dtype in valid_dtypes
     else:
         _direct = False
@@ -421,7 +412,7 @@ def _c2c_fftnd_impl(
             out=out,
         )
     else:
-        if s_equiv_to_none and x.dtype in valid_dtypes:
+        if _complementary and x.dtype in valid_dtypes:
             x = np.asarray(x)
             if out is None:
                 res = np.empty_like(x, dtype=_output_dtype(x.dtype))
