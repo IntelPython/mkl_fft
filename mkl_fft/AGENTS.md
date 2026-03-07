@@ -13,4 +13,5 @@ Core package implementation for MKL-backed FFT operations.
 ## Guardrails
 - Preserve NumPy/SciPy-compatible behavior by default.
 - Keep adapter, binding, and backend changes coordinated with tests.
+- Treat interface wrappers as patch/integration points: behavior changes must stay explicit and reversible.
 - Prefer minimal isolated edits around changed API paths.

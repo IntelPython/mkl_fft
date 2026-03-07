@@ -24,13 +24,14 @@ It provides accelerated FFT transforms while aiming to preserve upstream API beh
 - Preserve NumPy/SciPy FFT API compatibility unless change is explicitly requested.
 - Edit template sources (`*.c.src`), not generated C artifacts.
 - Pair behavior changes with tests and keep diffs minimal.
+- If interface-level patching/wrapping behavior is changed, keep it explicit, reversible, and documented.
 - Avoid hardcoding mutable versions/matrices/channels in docs.
 
 ## Where truth lives
 - Build/config: `pyproject.toml`, `setup.py`
 - Dependencies: `pyproject.toml`, `conda-recipe*/meta.yaml`
 - CI/workflows: `.github/workflows/*.{yml,yaml}`
-- Public API: `mkl_fft/__init__.py`, `mkl_fft/interfaces/`
+- Public API: `mkl_fft/__init__.py`, `mkl_fft/interfaces/` (including wrapper/patch adapter modules)
 - Tests: `mkl_fft/tests/`
 
 For behavior policy, see `.github/copilot-instructions.md`.

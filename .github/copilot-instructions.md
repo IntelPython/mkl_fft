@@ -20,6 +20,7 @@ Higher-precedence file overrides lower-precedence context.
 ## Contribution expectations
 - Keep changes atomic and single-purpose.
 - Preserve NumPy/SciPy FFT compatibility by default.
+- If touching interface wrappers/patch adapters, preserve reversible behavior and update interface tests.
 - For behavior changes: update/add tests in `mkl_fft/tests/` in the same change.
 - For bug fixes: include a regression test.
 - Run `pre-commit run --all-files` when `.pre-commit-config.yaml` is present.
@@ -36,7 +37,7 @@ Higher-precedence file overrides lower-precedence context.
 - Build/config: `pyproject.toml`, `setup.py`
 - Dependencies: `pyproject.toml`, `conda-recipe/meta.yaml`, `conda-recipe-cf/meta.yaml`
 - CI: `.github/workflows/*.{yml,yaml}`
-- API: `mkl_fft/__init__.py`, `mkl_fft/interfaces/*.py`, `mkl_fft/_pydfti.pyx`
+- API: `mkl_fft/__init__.py`, `mkl_fft/interfaces/*.py`, `mkl_fft/_pydfti.pyx` (interface wrappers are integration/patch entry points)
 - Tests: `mkl_fft/tests/`
 
 ## Intel-specific constraints
