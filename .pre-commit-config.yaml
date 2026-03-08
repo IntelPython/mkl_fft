@@ -38,7 +38,7 @@ repos:
     - id: text-unicode-replacement-char
 
 - repo: https://github.com/codespell-project/codespell
-  rev: v2.4.1
+  rev: v2.4.2
   hooks:
   - id: codespell
     args: ["-L", "nd"]  # ignore "nd" used for n-dimensional
@@ -46,7 +46,7 @@ repos:
     - tomli
 
 - repo: https://github.com/psf/black
-  rev: 26.1.0
+  rev: 26.3.0
   hooks:
   - id: black
     exclude: "_vendored/conv_template.py"
@@ -73,7 +73,7 @@ repos:
       - flake8-bugbear==25.11.29
 
 - repo: https://github.com/pycqa/isort
-  rev: 8.0.0
+  rev: 8.0.1
   hooks:
   - id: isort
     name: isort (python)
