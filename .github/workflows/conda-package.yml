@@ -155,7 +155,9 @@ jobs:
 
   build_windows:
     runs-on: windows-latest
-
+    defaults:
+      run:
+        shell: cmd /C CALL {0}
     strategy:
       matrix:
         python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
@@ -171,18 +173,15 @@ jobs:
 
       - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
         with:
-          miniforge-variant: Miniforge3
           miniforge-version: latest
-          auto-activate: true
-          activate-environment: base
+          activate-environment: build
           channels: conda-forge
-          conda-remove-defaults: true
           python-version: ${{ matrix.python }}
 
       - name: Install conda-build
         run: |
-           conda activate
-           conda install -n base conda-build
+          conda install -n base -y conda-build
+          conda list -n base
 
       - name: Cache conda packages
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
@@ -198,7 +197,6 @@ jobs:
 
       - name: Build conda package
         run: |
-          conda activate
           conda build --no-test --python ${{ matrix.python }} -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels conda-recipe
 
       - name: Store conda paths as envs
@@ -239,7 +237,6 @@ jobs:
         with:
           miniforge-version: latest
           channels: conda-forge
-          conda-remove-defaults: true
           activate-environment: ${{ env.TEST_ENV_NAME }}
           python-version: ${{ matrix.python }}
 
