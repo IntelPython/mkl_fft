@@ -143,7 +143,7 @@ jobs:
       - name: Install mkl_fft
         run: |
           CHANNELS=(-c "$GITHUB_WORKSPACE"/channel ${{ env.CHANNELS }})
-          conda create -n ${{ env.TEST_ENV_NAME }} python=${{ matrix.python }} ${{ matrix.numpy }} "$PACKAGE_NAME" pytest scipy "${CHANNELS[@]}"
+          conda create -n ${{ env.TEST_ENV_NAME }} python=${{ matrix.python }} ${{ matrix.numpy }} "$PACKAGE_NAME" pytest scipy dask "${CHANNELS[@]}"
           # Test installed packages
           conda list -n ${{ env.TEST_ENV_NAME }}
 
