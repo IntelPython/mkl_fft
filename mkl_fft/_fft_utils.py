@@ -43,10 +43,10 @@ def _check_norm(norm):
         )
 
 
-def _check_shapes_for_direct(xs, shape, axes, check_complimentary=False):
+def _check_shapes_for_direct(xs, shape, axes, check_complementary=False):
     if len(axes) > 7:  # Intel MKL supports up to 7D
         return False
-    if not (len(xs) == len(shape)) and not check_complimentary:
+    if not (len(xs) == len(shape)) and not check_complementary:
         # full-dimensional transform is required for direct,
         # but less than full is OK for complimentary.
         return False
@@ -397,7 +397,7 @@ def _c2c_fftnd_impl(
             # See if s matches the shape of x along the given axes.
             # If it does, we can use _iter_complementary rather than _iter_fftnd.
             if _check_shapes_for_direct(
-                xs, x.shape, xa, check_complimentary=True
+                xs, x.shape, xa, check_complementary=True
             ):
                 _complementary = True
         _direct = _direct and x.dtype in valid_dtypes
