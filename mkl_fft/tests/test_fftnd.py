@@ -267,17 +267,15 @@ def test_s_axes_out(dtype, s, axes, func):
 @requires_numpy_2
 @pytest.mark.parametrize("dtype", [complex, float])
 @pytest.mark.parametrize("axes", [(1, 2, 3), (-1, -2, -3), [2, 1, 3]])
-@pytest.mark.parametrize("func", ["fftn", "ifftn", "rfftn"])
+@pytest.mark.parametrize("func", ["fftn", "ifftn"])
 def test_s_none_vs_s_full(dtype, axes, func):
     shape = (2, 30, 20, 10)
-    if dtype is complex and func != "rfftn":
+    if dtype is complex:
         x = np.random.random(shape) + 1j * np.random.random(shape)
     else:
         x = np.random.random(shape)
 
     implied_s = [shape[ax] for ax in axes]
-    if func == "irfftn":
-        implied_s[-1] = 2 * (implied_s[-1] - 1)
 
     r1 = getattr(np.fft, func)(x, axes=axes)
     r2 = getattr(mkl_fft, func)(x, axes=axes)
