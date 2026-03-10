@@ -43,11 +43,12 @@ def _check_norm(norm):
         )
 
 
-def _check_shapes_for_direct(xs, shape, axes):
+def _check_shapes_for_direct(xs, shape, axes, check_complementary=False):
     if len(axes) > 7:  # Intel MKL supports up to 7D
         return False
-    if not (len(xs) == len(shape)):
-        # full-dimensional transform
+    if not (len(xs) == len(shape)) and not check_complementary:
+        # full-dimensional transform is required for direct,
+        # but less than full is OK for complimentary.
         return False
     if not (len(set(axes)) == len(axes)):
         # repeated axes
@@ -382,6 +383,7 @@ def _c2c_fftnd_impl(
     if direction not in [-1, +1]:
         raise ValueError("Direction of FFT should +1 or -1")
 
+    _complementary = s is None
     valid_dtypes = [np.complex64, np.complex128, np.float32, np.float64]
     # _direct_fftnd requires complex type, and full-dimensional transform
     if isinstance(x, np.ndarray) and x.size != 0 and x.ndim > 1:
@@ -392,6 +394,12 @@ def _c2c_fftnd_impl(
             xs, xa = _cook_nd_args(x, s, axes)
             if _check_shapes_for_direct(xs, x.shape, xa):
                 _direct = True
+            # See if s matches the shape of x along the given axes.
+            # If it does, we can use _iter_complementary rather than _iter_fftnd.
+            if _check_shapes_for_direct(
+                xs, x.shape, xa, check_complementary=True
+            ):
+                _complementary = True
         _direct = _direct and x.dtype in valid_dtypes
     else:
         _direct = False
@@ -404,7 +412,7 @@ def _c2c_fftnd_impl(
             out=out,
         )
     else:
-        if s is None and x.dtype in valid_dtypes:
+        if _complementary and x.dtype in valid_dtypes:
             x = np.asarray(x)
             if out is None:
                 res = np.empty_like(x, dtype=_output_dtype(x.dtype))
