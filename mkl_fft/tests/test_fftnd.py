@@ -353,8 +353,8 @@ def test_empty_axes_with_out(dtype, func):
     else:
         x = rnd.random((3, 4)).astype(dtype)
 
-    out_dtype = np.dtype(dtype).char.upper()
-    out = np.empty_like(x, dtype=out_dtype)
+    # For axes=(), output dtype should match input dtype (identity transform)
+    out = np.empty_like(x, dtype=dtype)
     result = getattr(mkl_fft, func)(x, axes=(), out=out)
     expected = getattr(np.fft, func)(x, axes=())
 
