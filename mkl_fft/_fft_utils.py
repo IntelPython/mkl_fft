@@ -233,8 +233,10 @@ def _iter_complementary(x, axes, func, kwargs, result):
         m_ind = _flat_to_multi(ind, sub_shape)
         for k1, k2 in zip(dual_ind, m_ind):
             sl[k1] = k2
+        tsl = tuple(sl)
+
         if np.issubdtype(x.dtype, np.complexfloating):
-            func(x[tuple(sl)], **kwargs, out=result[tuple(sl)])
+            func(x[tsl], **kwargs, out=result[tsl])
         else:
             # For c2c FFT, if the input is real, half of the output is the
             # complex conjugate of the other half. Instead of upcasting the
@@ -247,7 +249,7 @@ def _iter_complementary(x, axes, func, kwargs, result):
             # array appeared in the second half of the NumPy output array,
             # while the equivalent element in the NumPy array was the conjugate
             # of the mkl_fft output array.
-            np.copyto(result[tuple(sl)], func(x[tuple(sl)], **kwargs))
+            np.copyto(result[tsl], func(x[tsl], **kwargs))
 
     return result
 
@@ -260,7 +262,6 @@ def _iter_fftnd(
     direction=+1,
     scale_function=lambda ind: 1.0,
 ):
-    a = np.asarray(a)
     s, axes = _init_nd_shape_and_axes(a, s, axes)
 
     # Combine the two, but in reverse, to end with the first axis given.
@@ -412,8 +413,20 @@ def _c2c_fftnd_impl(
             out=out,
         )
     else:
+        x = np.asarray(x)
+
+        # Fast path: FFT over no axes is identity (just type conversion, no scaling)
+        _, xa = _cook_nd_args(x, s, axes)
+        if len(xa) == 0:
+            if out is None:
+                out = x.astype(dtype=_output_dtype(x.dtype), copy=True)
+            else:
+                _validate_out_array(out, x, _output_dtype(x.dtype))
+                np.copyto(out, x)
+            # No scaling applied - identity transform has no normalization
+            return out
+
         if _complementary and x.dtype in valid_dtypes:
-            x = np.asarray(x)
             if out is None:
                 res = np.empty_like(x, dtype=_output_dtype(x.dtype))
             else:
