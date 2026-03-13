@@ -209,6 +209,67 @@ def _init_nd_shape_and_axes(x, shape, axes):
 
 
 def _iter_complementary(x, axes, func, kwargs, result):
+    """
+    Apply FFT function by iterating over complementary axes.
+
+    This function applies an FFT operation to slices of the input array
+    by iterating over all axes that are NOT in the `axes` parameter
+    (the complementary axes). For each position in the complementary axes,
+    it applies the FFT function to a slice along the specified axes.
+
+    Parameters
+    ----------
+    x : ndarray
+        Input array.
+    axes : int, sequence of ints, or None
+        Axes along which to perform the FFT operation. The function iterates
+        over the complementary axes (axes not in this parameter). If ``None``,
+        performs direct N-D FFT without iteration.
+        Default: None
+    func : callable
+        FFT function to apply to each slice. Should accept array input and
+        return transformed output.
+    kwargs : dict
+        Additional keyword arguments to pass to `func`.
+    result : ndarray
+        Pre-allocated output array where results are stored.
+
+    Returns
+    -------
+    ndarray
+        The transformed array (same as `result`).
+
+    Notes
+    -----
+    For complex input, the function uses in-place operations with the `out`
+    parameter passed for better performance. For real input, `np.copyto` is
+    used instead to avoid element ordering issues that can occur with the
+    `out` parameter in certain FFT operations.
+
+    Examples
+    --------
+    Consider an input array with shape (3, 4, 5) and performing FFT
+    along axis 2 only:
+
+    >>> x = np.random.random((3, 4, 5))
+    >>> result = np.empty((3, 4, 5), dtype=np.complex128)
+    >>> _iter_complementary(
+    ...     x, axes=(2,), func=_direct_fftnd,
+    ...     kwargs={'direction': 1, 'fsc': 1.0}, result=result
+    ... )
+
+    The function will iterate over axes 0 and 1 (complementary axes)
+    and apply `_direct_fftnd` to each 1-D slice along axis 2:
+
+    - Iteration 0: func(x[0, 0, :]) -> result[0, 0, :]
+    - Iteration 1: func(x[0, 1, :]) -> result[0, 1, :]
+    - ...
+    - Iteration 11: func(x[2, 3, :]) -> result[2, 3, :]
+
+    Total: 3 * 4 = 12 FFT operations on arrays of shape (5,).
+
+    """
+
     if axes is None:
         # s and axes are None, direct N-D FFT
         return func(x, **kwargs, out=result)
