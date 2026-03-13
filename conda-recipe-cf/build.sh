@@ -1,5 +1,6 @@
 #!/bin/bash -x
 
-export MKLROOT=$PREFIX
-export CFLAGS="-I$PREFIX/include $CFLAGS"
-$PYTHON -m pip install --no-build-isolation --no-deps .
+# make sure that compiler has been sourced, if necessary
+
+export MKLROOT=${PREFIX}
+$PYTHON setup.py build --force install --old-and-unmanageable
