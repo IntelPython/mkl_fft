@@ -317,3 +317,48 @@ def test_out_strided(axes, func):
     expected = getattr(np.fft, func)(x, axes=axes, out=out)
 
     assert_allclose(result, expected, strict=True)
+
+
+@pytest.mark.parametrize(
+    "dtype", [np.float32, np.float64, np.complex64, np.complex128]
+)
+@pytest.mark.parametrize("shape", [(3, 4), (5,), (2, 3, 4), (10, 20)])
+@pytest.mark.parametrize("norm", [None, "ortho", "forward", "backward"])
+@pytest.mark.parametrize("func", ["fftn", "ifftn", "fft2", "ifft2"])
+def test_empty_axes(dtype, shape, norm, func):
+    if np.issubdtype(dtype, np.complexfloating):
+        x = rnd.random(shape).astype(dtype) + 1j * rnd.random(shape).astype(
+            dtype
+        )
+    else:
+        x = rnd.random(shape).astype(dtype)
+
+    # Test fftn with axes=()
+    result = getattr(mkl_fft, func)(x, axes=(), norm=norm)
+    expected = getattr(np.fft, func)(x, axes=(), norm=norm)
+
+    rtol, atol = _get_rtol_atol(result)
+    assert_allclose(result, expected, rtol=rtol, atol=atol, strict=True)
+
+
+@pytest.mark.parametrize(
+    "dtype", [np.float32, np.float64, np.complex64, np.complex128]
+)
+@pytest.mark.parametrize("func", ["fftn", "ifftn", "fft2", "ifft2"])
+def test_empty_axes_with_out(dtype, func):
+    if np.issubdtype(dtype, np.complexfloating):
+        x = rnd.random((3, 4)).astype(dtype) + 1j * rnd.random((3, 4)).astype(
+            dtype
+        )
+    else:
+        x = rnd.random((3, 4)).astype(dtype)
+
+    # For axes=(), output dtype should match input dtype (identity transform)
+    out = np.empty_like(x, dtype=dtype)
+    result = getattr(mkl_fft, func)(x, axes=(), out=out)
+    expected = getattr(np.fft, func)(x, axes=())
+
+    # Result should be written to out
+    assert result is out
+    rtol, atol = _get_rtol_atol(result)
+    assert_allclose(result, expected, rtol=rtol, atol=atol, strict=True)
