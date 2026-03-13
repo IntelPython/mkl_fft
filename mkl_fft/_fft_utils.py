@@ -262,6 +262,49 @@ def _iter_fftnd(
     direction=+1,
     scale_function=lambda ind: 1.0,
 ):
+    """
+    Perform N-D FFT as a series of 1-D FFTs along specified axes.
+
+    This function implements N-D FFT by applying 1-D FFT iteratively along each
+    axis. The axes are processed in reverse order to end with the first axis
+    given.
+
+    Parameters
+    ----------
+    a : ndarray
+        Input array.
+    s : sequence of ints, optional
+        Shape of the FFT output along each axis in `axes`. If not provided, the
+        shape is inferred from the input array.
+        Default: ``None``
+    axes : sequence of ints, optional
+        Axes along which to compute the FFT. If not provided, all axes are used.
+        Default: ``None``
+    out : ndarray, optional
+        Output array to store the result. Used for in-place operations when
+        possible.
+        Default: ``None``
+    direction : int, optional
+        FFT direction: ``+1`` for forward FFT, ``-1`` for inverse FFT.
+        Default: ``+1``
+    scale_function : callable, optional
+        Function that takes iteration index and returns the scaling factor for
+        that step. Used to apply normalization at specific iteration steps.
+        Default: ``lambda ind: 1.0``
+
+    Returns
+    -------
+    ndarray
+        The transformed array.
+
+    Notes
+    -----
+    The function optimizes memory usage by performing in-place calculations
+    when possible. In-place operations are used everywhere except when the
+    array size changes after the first FFT along an axis.
+
+    """
+
     s, axes = _init_nd_shape_and_axes(a, s, axes)
 
     # Combine the two, but in reverse, to end with the first axis given.
