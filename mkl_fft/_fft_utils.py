@@ -519,16 +519,13 @@ def _c2c_fftnd_impl(
     else:
         x = np.asarray(x)
 
-        # Fast path: FFT over no axes is complete identity (preserve dtype)
+        # Fast path: FFT over no axes is a complete identity operation.
+        # Returns the input unchanged (same object, no copy), preserving
+        # dtype and avoiding any FFT computation. The out parameter is
+        # ignored to match NumPy behavior.
         _, xa = _cook_nd_args(x, s, axes)
         if len(xa) == 0:
-            if out is None:
-                out = x.copy()
-            else:
-                _validate_out_array(out, x, x.dtype)
-                np.copyto(out, x)
-            # No scaling applied - identity transform has no normalization
-            return out
+            return x
 
         if _complementary and x.dtype in valid_dtypes:
             if out is None:
