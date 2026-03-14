@@ -353,12 +353,33 @@ def test_empty_axes_with_out(dtype, func):
     else:
         x = rnd.random((3, 4)).astype(dtype)
 
-    # For axes=(), output dtype should match input dtype (identity transform)
+    # NumPy ignores out parameter when axes=() and returns input
     out = np.empty_like(x, dtype=dtype)
     result = getattr(mkl_fft, func)(x, axes=(), out=out)
-    expected = getattr(np.fft, func)(x, axes=())
+    expected = getattr(np.fft, func)(x, axes=(), out=out)
 
-    # Result should be written to out
-    assert result is out
-    rtol, atol = _get_rtol_atol(result)
-    assert_allclose(result, expected, rtol=rtol, atol=atol, strict=True)
+    # Result should be the input array (out parameter ignored)
+    assert result is x, f"{func} with axes=() should return input (ignore out)"
+    assert expected is x, "NumPy should also return input"
+    assert result is expected
+
+
+@pytest.mark.parametrize(
+    "dtype", [np.float32, np.float64, np.complex64, np.complex128]
+)
+@pytest.mark.parametrize("func", ["fftn", "ifftn", "fft2", "ifft2"])
+def test_empty_axes_returns_same_object(dtype, func):
+    if np.issubdtype(dtype, np.complexfloating):
+        x = rnd.random((3, 4)).astype(dtype) + 1j * rnd.random((3, 4)).astype(
+            dtype
+        )
+    else:
+        x = rnd.random((3, 4)).astype(dtype)
+
+    # Without out parameter, should return the same object
+    result = getattr(mkl_fft, func)(x, axes=())
+
+    # Verify it's the exact same object (identity check)
+    assert (
+        result is x
+    ), f"{func} with axes=() should return the same object, not a copy"
