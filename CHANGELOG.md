@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 * Dropped support for Python 3.9 [gh-243](https://github.com/IntelPython/mkl_fft/pull/243)
 
+### Fixed
+* Fix `TypeError` exception raised with empty axes [gh-288](https://github.com/IntelPython/mkl_fft/pull/288)
+* To return input array unchanged when `axes=()` (ignore `out` parameter) [gh-293](https://github.com/IntelPython/mkl_fft/pull/293)
+
 ## [2.1.2] - 2025-12-02
 
 ### Added
