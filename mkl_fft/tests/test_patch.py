@@ -24,6 +24,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
+import pytest
 
 import mkl_fft
 import mkl_fft.interfaces.numpy_fft as _nfft
@@ -78,3 +79,10 @@ def test_patch_reentrant():
 
     assert not mkl_fft.is_patched()
     assert np.fft.fft.__module__ == old_module
+
+
+def test_patch_warning():
+    if mkl_fft.is_patched():
+        pytest.skip("This test should not be run with a pre-patched NumPy.")
+    with pytest.warns(RuntimeWarning, match="restore_numpy_fft*"):
+        mkl_fft.restore_numpy_fft()
