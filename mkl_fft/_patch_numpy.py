@@ -25,6 +25,7 @@
 
 """Define functions for patching NumPy with MKL-based NumPy interface."""
 
+import warnings
 from contextlib import ContextDecorator
 from threading import Lock, local
 
@@ -85,11 +86,12 @@ class _GlobalPatch:
         with self._lock:
             local_count = getattr(self._tls, "local_count", 0)
             if local_count <= 0:
-                if verbose:
-                    print(
-                        "Warning: restore_numpy_fft called more times than "
-                        "patch_numpy_fft in this thread."
-                    )
+                warnings.warn(
+                    "restore_numpy_fft called more times than "
+                    "patch_numpy_fft in this thread.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
                 return
             self._tls.local_count -= 1
             self._patch_count -= 1
