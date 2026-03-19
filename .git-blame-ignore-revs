@@ -5,3 +5,6 @@
 
 # Add cython-lint to pre-commit config
 5df98187dda56f6d340f0824570fe5080d0b4f05
+
+# Move from clang-format-15 to clang-format-22
+ffe413c18571422f4b974e780ea19f83f1f776bf
