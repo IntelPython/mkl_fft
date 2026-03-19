@@ -7,8 +7,6 @@ source:
 
 build:
     number: {{ GIT_DESCRIBE_NUMBER }}
-    script_env:
-      - WHEELS_OUTPUT_FOLDER
     ignore_run_exports:
       - blas
 
