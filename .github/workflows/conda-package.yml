@@ -36,7 +36,7 @@ jobs:
           echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
 
       - name: Cache conda packages
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
@@ -128,7 +128,7 @@ jobs:
           echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
 
       - name: Cache conda packages
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
@@ -184,7 +184,7 @@ jobs:
           conda list -n base
 
       - name: Cache conda packages
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         env:
           CACHE_NUMBER: 3  # Increase to reset cache
         with:
@@ -284,7 +284,7 @@ jobs:
         run: Get-Content -Path .\lockfile
 
       - name: Cache conda packages
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
