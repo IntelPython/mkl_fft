@@ -1,3 +1,5 @@
+{% set use_numpy_base = environ.get('USE_NUMPY_BASE', 'true').lower() == 'true' %}
+
 package:
     name: mkl_fft
     version: {{ GIT_DESCRIBE_TAG }}
@@ -23,13 +25,21 @@ requirements:
       - setuptools >=77
       - mkl-devel
       - cython
+      {% if use_numpy_base %}
       - numpy-base
+      {% else %}
+      - numpy
+      {% endif %}
       - wheel  >=0.41.3
     run:
       - python
       - python-gil     # [py>=314]
       - mkl-service
-      - {{ pin_compatible('numpy-base') }}
+      {% if use_numpy_base %}
+      - numpy-base
+      {% else %}
+      - numpy >=1.26.4
+      {% endif %}
 
 test:
     commands:
