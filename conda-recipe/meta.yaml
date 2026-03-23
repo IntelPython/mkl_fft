@@ -16,7 +16,7 @@ build:
       {% if use_numpy_base %}
       - numpy-base
       {% else %}
-      - numpy >=1.26.4
+      - numpy
       {% endif %}
 
 requirements:
