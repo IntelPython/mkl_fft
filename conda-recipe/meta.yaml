@@ -13,6 +13,11 @@ build:
       - WHEELS_OUTPUT_FOLDER
     ignore_run_exports:
       - blas
+      {% if use_numpy_base %}
+      - numpy-base
+      {% else %}
+      - numpy >=1.26.4
+      {% endif %}
 
 requirements:
     build:
