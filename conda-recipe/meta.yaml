@@ -1,3 +1,4 @@
+# Intel numpy-base is still needed for internal wheels CI, so we control its use with this optional toggle
 {% set use_numpy_base = environ.get('USE_NUMPY_BASE', 'true').lower() == 'true' %}
 
 package:
