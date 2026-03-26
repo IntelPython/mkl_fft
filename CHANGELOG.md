@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * In `mkl_fft.fftn` and `mkl_fft.ifftn`, improved checking of the shape argument `s` to use faster direct transforms more often. This makes performance more consistent between `mkl_fft.fftn/ifftn` and `mkl.interfaces`. [gh-283](https://github.com/IntelPython/mkl_fft/pull/283)
+* Made conda recipe dependency on numpy configurable through `USE_NUMPY_BASE` environment variable [gh-299](https://github.com/IntelPython/mkl_fft/pull/299)
 
 ### Removed
 * Dropped support for Python 3.9 [gh-243](https://github.com/IntelPython/mkl_fft/pull/243)
