@@ -15,10 +15,12 @@ requirements:
       - {{ compiler('c') }}
       - {{ stdlib('c') }}
     host:
+      - meson-python >=0.13.0
+      - meson
+      - pkg-config
       - python
       - python-gil     # [py>=314]
       - pip
-      - setuptools >=77
       - mkl-devel
       - cython
       - numpy
