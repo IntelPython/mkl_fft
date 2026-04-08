@@ -18,6 +18,7 @@ requirements:
       - meson-python >=0.13.0
       - meson
       - cmake
+      - ninja
       - python
       - python-gil     # [py>=314]
       - pip
