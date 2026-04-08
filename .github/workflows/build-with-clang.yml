@@ -40,7 +40,6 @@ jobs:
       - name: Install Intel OneAPI
         run: |
           sudo apt-get install intel-oneapi-compiler-dpcpp-cpp
-          sudo apt-get install intel-oneapi-tbb
           sudo apt-get install intel-oneapi-mkl-devel
 
       - name: Setup Python
@@ -56,7 +55,7 @@ jobs:
 
       - name: Install mkl_fft dependencies
         run: |
-          pip install cython setuptools">=77"
+          pip install meson-python ninja cython cmake
           pip install ${{ matrix.numpy_version }}
 
       - name: List oneAPI folder content

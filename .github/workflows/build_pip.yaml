@@ -48,7 +48,7 @@ jobs:
 
       - name: Build conda package
         run: |
-          pip install --no-cache-dir cython setuptools
+          pip install --no-cache-dir meson-python ninja cmake cython
           pip install --no-cache-dir numpy ${{ matrix.use_pre }}
           echo "CONDA_PREFFIX is '${CONDA_PREFIX}'"
           export MKLROOT=${CONDA_PREFIX}
