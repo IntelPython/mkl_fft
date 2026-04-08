@@ -27,7 +27,7 @@ requirements:
     host:
       - meson-python >=0.13.0
       - meson
-      - pkg-config
+      - cmake
       - python
       - python-gil     # [py>=314]
       - pip
