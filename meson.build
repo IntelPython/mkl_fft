@@ -22,6 +22,8 @@ np_dir = run_command(py,
 inc_np = include_directories(np_dir, 'mkl_fft/src', 'mkl_fft')
 
 # compiler/linker
+# this looks like dead code, but it isn't: removing get_compiler call
+# can cause segfaults at runtime (most notably when building with Intel clang)
 cc = meson.get_compiler('c')
 c_args = ['-DNDEBUG']
 
