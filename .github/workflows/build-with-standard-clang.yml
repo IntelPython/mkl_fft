@@ -47,7 +47,7 @@ jobs:
 
       - name: Install mkl_fft dependencies
         run: |
-          pip install meson-python ninja cmake cython mkl mkl-devel
+          pip install meson-python ninja cmake cython mkl-devel
           pip install ${{ matrix.numpy_version }}
 
       - name: Build mkl_fft
