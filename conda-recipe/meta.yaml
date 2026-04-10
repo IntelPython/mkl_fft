@@ -33,6 +33,7 @@ requirements:
       - python-gil     # [py>=314]
       - pip
       - mkl-devel
+      - intel-openmp
       - cython
       {% if use_numpy_base %}
       - numpy-base
@@ -44,6 +45,7 @@ requirements:
       - python
       - python-gil     # [py>=314]
       - {{ pin_compatible('mkl') }}
+      - {{ pin_compatible('intel-openmp') }}
       {% if use_numpy_base %}
       - numpy-base
       {% else %}
