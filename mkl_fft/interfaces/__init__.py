@@ -23,21 +23,25 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import importlib.util
-
 from . import numpy_fft
 
 __all__ = ["numpy_fft"]
 
-_has_scipy = importlib.util.find_spec("scipy") is not None
-_has_mkl_service = importlib.util.find_spec("mkl") is not None
+try:
+    import scipy
+
+    _has_scipy = True
+except ImportError:
+    _has_scipy = False
 
 if _has_scipy:
-    if not _has_mkl_service:
+    try:
+        import mkl
+
+        from . import scipy_fft
+    except ImportError:
         pass
     else:
-        from . import scipy_fft
-
         __all__.append("scipy_fft")
 
-del importlib, _has_scipy, _has_mkl_service
+del _has_scipy
