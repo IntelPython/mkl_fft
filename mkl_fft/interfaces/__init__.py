@@ -30,18 +30,17 @@ __all__ = ["numpy_fft"]
 try:
     import scipy
 
-    _has_scipy = True
+    del scipy
 except ImportError:
-    _has_scipy = False
-
-if _has_scipy:
+    pass
+else:
     try:
         import mkl
 
-        from . import scipy_fft
+        del mkl
     except ImportError:
         pass
     else:
-        __all__.append("scipy_fft")
+        from . import scipy_fft
 
-del _has_scipy
+        __all__.append("scipy_fft")
