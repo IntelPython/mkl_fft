@@ -26,7 +26,7 @@ requirements:
     run:
       - python
       - python-gil     # [py>=314]
-      - mkl-service
+      - {{ pin_compatible('mkl') }}
       - numpy
 
 test:
@@ -35,6 +35,7 @@ test:
     requires:
       - pytest
       - scipy >=1.10
+      - mkl-service
     imports:
       - mkl_fft
       - mkl_fft.interfaces

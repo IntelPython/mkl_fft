@@ -40,7 +40,7 @@ requirements:
     run:
       - python
       - python-gil     # [py>=314]
-      - mkl-service
+      - {{ pin_compatible('mkl') }}
       {% if use_numpy_base %}
       - numpy-base
       {% else %}
@@ -52,8 +52,8 @@ test:
       - pytest -v --pyargs mkl_fft
     requires:
       - pytest
-      # This is a temporary python restriction
-      - scipy >=1.10   # [py<314]
+      - scipy >=1.10
+      - mkl-service
     imports:
       - mkl_fft
       - mkl_fft.interfaces

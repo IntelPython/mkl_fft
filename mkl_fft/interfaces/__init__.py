@@ -25,10 +25,22 @@
 
 from . import numpy_fft
 
-# find scipy, not scipy.fft, to avoid circular dependency
+__all__ = ["numpy_fft"]
+
 try:
     import scipy
+
+    del scipy
 except ImportError:
     pass
 else:
-    from . import scipy_fft
+    try:
+        import mkl
+
+        del mkl
+    except ImportError:
+        pass
+    else:
+        from . import scipy_fft
+
+        __all__.append("scipy_fft")
