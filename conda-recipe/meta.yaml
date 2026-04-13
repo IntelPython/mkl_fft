@@ -25,11 +25,15 @@ requirements:
       - {{ compiler('c') }}
       - {{ stdlib('c') }}
     host:
+      - meson-python >=0.13.0
+      - meson
+      - cmake
+      - ninja
       - python
       - python-gil     # [py>=314]
       - pip
-      - setuptools >=77
       - mkl-devel
+      - intel-openmp
       - cython
       {% if use_numpy_base %}
       - numpy-base
@@ -41,6 +45,7 @@ requirements:
       - python
       - python-gil     # [py>=314]
       - {{ pin_compatible('mkl') }}
+      - {{ pin_compatible('intel-openmp') }}
       {% if use_numpy_base %}
       - numpy-base
       {% else %}
