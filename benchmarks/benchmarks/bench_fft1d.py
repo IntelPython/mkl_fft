@@ -1,7 +1,10 @@
 """Benchmarks for 1-D FFT operations using the mkl_fft root API."""
 
 import numpy as np
+
 import mkl_fft
+
+_RNG_SEED = 42
 
 
 def _make_input(rng, n, dtype):
@@ -12,13 +15,14 @@ def _make_input(rng, n, dtype):
     """
     dt = np.dtype(dtype)
     if dt.kind == "c":
-        return (rng.randn(n) + 1j * rng.randn(n)).astype(dt)
-    return rng.randn(n).astype(dt)
+        return (rng.standard_normal(n) + 1j * rng.standard_normal(n)).astype(dt)
+    return rng.standard_normal(n).astype(dt)
 
 
 # ---------------------------------------------------------------------------
 # Complex-to-complex 1-D (power-of-two sizes)
 # ---------------------------------------------------------------------------
+
 
 class TimeFFT1D:
     """Forward and inverse complex FFT — power-of-two sizes."""
@@ -30,7 +34,7 @@ class TimeFFT1D:
     param_names = ["n", "dtype"]
 
     def setup(self, n, dtype):
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(_RNG_SEED)
         self.x = _make_input(rng, n, dtype)
 
     def time_fft(self, n, dtype):
@@ -44,6 +48,7 @@ class TimeFFT1D:
 # Real-to-complex / complex-to-real 1-D (power-of-two sizes)
 # ---------------------------------------------------------------------------
 
+
 class TimeRFFT1D:
     """Forward rfft and inverse irfft — power-of-two sizes."""
 
@@ -54,12 +59,13 @@ class TimeRFFT1D:
     param_names = ["n", "dtype"]
 
     def setup(self, n, dtype):
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(_RNG_SEED)
         cdtype = "complex64" if dtype == "float32" else "complex128"
-        self.x_real = rng.randn(n).astype(dtype)
+        self.x_real = rng.standard_normal(n).astype(dtype)
         # irfft input: complex half-spectrum of length n//2+1
         self.x_complex = (
-            rng.randn(n // 2 + 1) + 1j * rng.randn(n // 2 + 1)
+            rng.standard_normal(n // 2 + 1)
+            + 1j * rng.standard_normal(n // 2 + 1)
         ).astype(cdtype)
 
     def time_rfft(self, n, dtype):
@@ -72,6 +78,7 @@ class TimeRFFT1D:
 # ---------------------------------------------------------------------------
 # Complex-to-complex 1-D (non-power-of-two sizes)
 # ---------------------------------------------------------------------------
+
 
 class TimeFFT1DNonPow2:
     """Forward and inverse complex FFT — non-power-of-two sizes.
@@ -87,7 +94,7 @@ class TimeFFT1DNonPow2:
     param_names = ["n", "dtype"]
 
     def setup(self, n, dtype):
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(_RNG_SEED)
         self.x = _make_input(rng, n, dtype)
 
     def time_fft(self, n, dtype):
@@ -101,6 +108,7 @@ class TimeFFT1DNonPow2:
 # Real-to-complex / complex-to-real 1-D (non-power-of-two sizes)
 # ---------------------------------------------------------------------------
 
+
 class TimeRFFT1DNonPow2:
     """Forward rfft and inverse irfft — non-power-of-two sizes."""
 
@@ -111,11 +119,12 @@ class TimeRFFT1DNonPow2:
     param_names = ["n", "dtype"]
 
     def setup(self, n, dtype):
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(_RNG_SEED)
         cdtype = "complex64" if dtype == "float32" else "complex128"
-        self.x_real = rng.randn(n).astype(dtype)
+        self.x_real = rng.standard_normal(n).astype(dtype)
         self.x_complex = (
-            rng.randn(n // 2 + 1) + 1j * rng.randn(n // 2 + 1)
+            rng.standard_normal(n // 2 + 1)
+            + 1j * rng.standard_normal(n // 2 + 1)
         ).astype(cdtype)
 
     def time_rfft(self, n, dtype):

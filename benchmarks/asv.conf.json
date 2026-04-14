@@ -4,12 +4,16 @@
     "project_url": "https://github.com/IntelPython/mkl_fft",
     "show_commit_url": "https://github.com/IntelPython/mkl_fft/commit/",
     "repo": "..",
-    "branches": ["master"],
+    "branches": [
+        "master"
+    ],
     "benchmark_dir": "benchmarks",
     "env_dir": ".asv/env",
     "results_dir": ".asv/results",
     "html_dir": ".asv/html",
     "build_cache_size": 2,
     "default_benchmark_timeout": 500,
-    "regressions_thresholds": {".*": 0.3}
+    "regressions_thresholds": {
+        ".*": 0.3
+    }
 }
