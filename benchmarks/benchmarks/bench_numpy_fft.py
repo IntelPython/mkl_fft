@@ -11,7 +11,10 @@ Covers every function exported by the interface:
 """
 
 import numpy as np
+
 from mkl_fft.interfaces import numpy_fft
+
+_RNG_SEED = 42
 
 
 def _make_input(rng, shape, dtype):
@@ -23,13 +26,14 @@ def _make_input(rng, shape, dtype):
     dt = np.dtype(dtype)
     s = (shape,) if isinstance(shape, int) else shape
     if dt.kind == "c":
-        return (rng.randn(*s) + 1j * rng.randn(*s)).astype(dt)
-    return rng.randn(*s).astype(dt)
+        return (rng.standard_normal(s) + 1j * rng.standard_normal(s)).astype(dt)
+    return rng.standard_normal(s).astype(dt)
 
 
 # ---------------------------------------------------------------------------
 # 1-D complex-to-complex
 # ---------------------------------------------------------------------------
+
 
 class TimeC2C1D:
     """numpy_fft.fft / ifft — 1-D."""
@@ -41,7 +45,7 @@ class TimeC2C1D:
     param_names = ["n", "dtype"]
 
     def setup(self, n, dtype):
-        self.x = _make_input(np.random.RandomState(42), n, dtype)
+        self.x = _make_input(np.random.default_rng(_RNG_SEED), n, dtype)
 
     def time_fft(self, n, dtype):
         numpy_fft.fft(self.x)
@@ -54,6 +58,7 @@ class TimeC2C1D:
 # 1-D real-to-complex / complex-to-real
 # ---------------------------------------------------------------------------
 
+
 class TimeRC1D:
     """numpy_fft.rfft / irfft — 1-D."""
 
@@ -64,11 +69,12 @@ class TimeRC1D:
     param_names = ["n", "dtype"]
 
     def setup(self, n, dtype):
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(_RNG_SEED)
         cdtype = "complex64" if dtype == "float32" else "complex128"
-        self.x_real = rng.randn(n).astype(dtype)
+        self.x_real = rng.standard_normal(n).astype(dtype)
         self.x_complex = (
-            rng.randn(n // 2 + 1) + 1j * rng.randn(n // 2 + 1)
+            rng.standard_normal(n // 2 + 1)
+            + 1j * rng.standard_normal(n // 2 + 1)
         ).astype(cdtype)
 
     def time_rfft(self, n, dtype):
@@ -84,6 +90,7 @@ class TimeRC1D:
 # ihfft: input real  length n         →  output complex length n//2+1
 # ---------------------------------------------------------------------------
 
+
 class TimeHermitian1D:
     """numpy_fft.hfft / ihfft — 1-D Hermitian.
 
@@ -98,14 +105,15 @@ class TimeHermitian1D:
     param_names = ["n", "dtype"]
 
     def setup(self, n, dtype):
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(_RNG_SEED)
         cdtype = "complex64" if dtype == "float32" else "complex128"
         # hfft input: complex half-spectrum of length n//2+1
         self.x_hfft = (
-            rng.randn(n // 2 + 1) + 1j * rng.randn(n // 2 + 1)
+            rng.standard_normal(n // 2 + 1)
+            + 1j * rng.standard_normal(n // 2 + 1)
         ).astype(cdtype)
         # ihfft input: real signal of length n
-        self.x_ihfft = rng.randn(n).astype(dtype)
+        self.x_ihfft = rng.standard_normal(n).astype(dtype)
 
     def time_hfft(self, n, dtype):
         numpy_fft.hfft(self.x_hfft, n=n)
@@ -118,6 +126,7 @@ class TimeHermitian1D:
 # 2-D complex-to-complex
 # ---------------------------------------------------------------------------
 
+
 class TimeC2C2D:
     """numpy_fft.fft2 / ifft2 — 2-D."""
 
@@ -128,7 +137,7 @@ class TimeC2C2D:
     param_names = ["shape", "dtype"]
 
     def setup(self, shape, dtype):
-        self.x = _make_input(np.random.RandomState(42), shape, dtype)
+        self.x = _make_input(np.random.default_rng(_RNG_SEED), shape, dtype)
 
     def time_fft2(self, shape, dtype):
         numpy_fft.fft2(self.x)
@@ -141,6 +150,7 @@ class TimeC2C2D:
 # 2-D real-to-complex / complex-to-real
 # ---------------------------------------------------------------------------
 
+
 class TimeRC2D:
     """numpy_fft.rfft2 / irfft2 — 2-D."""
 
@@ -151,12 +161,13 @@ class TimeRC2D:
     param_names = ["shape", "dtype"]
 
     def setup(self, shape, dtype):
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(_RNG_SEED)
         cdtype = "complex64" if dtype == "float32" else "complex128"
         half_shape = (shape[0], shape[1] // 2 + 1)
-        self.x_real = rng.randn(*shape).astype(dtype)
+        self.x_real = rng.standard_normal(shape).astype(dtype)
         self.x_complex = (
-            rng.randn(*half_shape) + 1j * rng.randn(*half_shape)
+            rng.standard_normal(half_shape)
+            + 1j * rng.standard_normal(half_shape)
         ).astype(cdtype)
 
     def time_rfft2(self, shape, dtype):
@@ -170,6 +181,7 @@ class TimeRC2D:
 # N-D complex-to-complex
 # ---------------------------------------------------------------------------
 
+
 class TimeCCND:
     """numpy_fft.fftn / ifftn — N-D."""
 
@@ -180,7 +192,7 @@ class TimeCCND:
     param_names = ["shape", "dtype"]
 
     def setup(self, shape, dtype):
-        self.x = _make_input(np.random.RandomState(42), shape, dtype)
+        self.x = _make_input(np.random.default_rng(_RNG_SEED), shape, dtype)
 
     def time_fftn(self, shape, dtype):
         numpy_fft.fftn(self.x)
@@ -193,6 +205,7 @@ class TimeCCND:
 # N-D real-to-complex / complex-to-real
 # ---------------------------------------------------------------------------
 
+
 class TimeRCND:
     """numpy_fft.rfftn / irfftn — N-D."""
 
@@ -203,12 +216,13 @@ class TimeRCND:
     param_names = ["shape", "dtype"]
 
     def setup(self, shape, dtype):
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(_RNG_SEED)
         cdtype = "complex64" if dtype == "float32" else "complex128"
         half_shape = shape[:-1] + (shape[-1] // 2 + 1,)
-        self.x_real = rng.randn(*shape).astype(dtype)
+        self.x_real = rng.standard_normal(shape).astype(dtype)
         self.x_complex = (
-            rng.randn(*half_shape) + 1j * rng.randn(*half_shape)
+            rng.standard_normal(half_shape)
+            + 1j * rng.standard_normal(half_shape)
         ).astype(cdtype)
 
     def time_rfftn(self, shape, dtype):

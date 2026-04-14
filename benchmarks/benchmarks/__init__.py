@@ -31,7 +31,9 @@ def _physical_cores():
         with open("/proc/cpuinfo") as f:
             content = f.read()
         cpu_cores = int(re.search(r"cpu cores\s*:\s*(\d+)", content).group(1))
-        sockets = max(len(set(re.findall(r"physical id\s*:\s*(\d+)", content))), 1)
+        sockets = max(
+            len(set(re.findall(r"physical id\s*:\s*(\d+)", content))), 1
+        )
         return cpu_cores * sockets
     except Exception:
         return os.cpu_count() or 1

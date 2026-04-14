@@ -5,20 +5,24 @@ in the mkl_fft root API across 1-D, 2-D, and 3-D transforms.
 """
 
 import numpy as np
+
 import mkl_fft
+
+_RNG_SEED = 42
 
 
 def _make_input(rng, shape, dtype):
     dt = np.dtype(dtype)
     s = (shape,) if isinstance(shape, int) else shape
     if dt.kind == "c":
-        return (rng.randn(*s) + 1j * rng.randn(*s)).astype(dt)
-    return rng.randn(*s).astype(dt)
+        return (rng.standard_normal(s) + 1j * rng.standard_normal(s)).astype(dt)
+    return rng.standard_normal(s).astype(dt)
 
 
 # ---------------------------------------------------------------------------
 # 1-D complex FFT
 # ---------------------------------------------------------------------------
+
 
 class PeakMemFFT1D:
     """Peak RSS for 1-D complex FFT."""
@@ -30,7 +34,7 @@ class PeakMemFFT1D:
     param_names = ["n", "dtype"]
 
     def setup(self, n, dtype):
-        self.x = _make_input(np.random.RandomState(42), n, dtype)
+        self.x = _make_input(np.random.default_rng(_RNG_SEED), n, dtype)
 
     def peakmem_fft(self, n, dtype):
         mkl_fft.fft(self.x)
@@ -43,6 +47,7 @@ class PeakMemFFT1D:
 # 1-D real FFT
 # ---------------------------------------------------------------------------
 
+
 class PeakMemRFFT1D:
     """Peak RSS for 1-D real FFT (forward and inverse)."""
 
@@ -53,11 +58,12 @@ class PeakMemRFFT1D:
     param_names = ["n", "dtype"]
 
     def setup(self, n, dtype):
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(_RNG_SEED)
         cdtype = "complex64" if dtype == "float32" else "complex128"
-        self.x_real = rng.randn(n).astype(dtype)
+        self.x_real = rng.standard_normal(n).astype(dtype)
         self.x_complex = (
-            rng.randn(n // 2 + 1) + 1j * rng.randn(n // 2 + 1)
+            rng.standard_normal(n // 2 + 1)
+            + 1j * rng.standard_normal(n // 2 + 1)
         ).astype(cdtype)
 
     def peakmem_rfft(self, n, dtype):
@@ -71,6 +77,7 @@ class PeakMemRFFT1D:
 # 2-D complex FFT
 # ---------------------------------------------------------------------------
 
+
 class PeakMemFFT2D:
     """Peak RSS for 2-D complex FFT."""
 
@@ -81,7 +88,7 @@ class PeakMemFFT2D:
     param_names = ["shape", "dtype"]
 
     def setup(self, shape, dtype):
-        self.x = _make_input(np.random.RandomState(42), shape, dtype)
+        self.x = _make_input(np.random.default_rng(_RNG_SEED), shape, dtype)
 
     def peakmem_fft2(self, shape, dtype):
         mkl_fft.fft2(self.x)
@@ -94,6 +101,7 @@ class PeakMemFFT2D:
 # N-D complex FFT (3-D)
 # ---------------------------------------------------------------------------
 
+
 class PeakMemFFTnD:
     """Peak RSS for N-D complex FFT (3-D shapes)."""
 
@@ -104,7 +112,7 @@ class PeakMemFFTnD:
     param_names = ["shape", "dtype"]
 
     def setup(self, shape, dtype):
-        self.x = _make_input(np.random.RandomState(42), shape, dtype)
+        self.x = _make_input(np.random.default_rng(_RNG_SEED), shape, dtype)
 
     def peakmem_fftn(self, shape, dtype):
         mkl_fft.fftn(self.x)
