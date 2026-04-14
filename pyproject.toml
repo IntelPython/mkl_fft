@@ -50,7 +50,7 @@ classifiers = [
   "Operating System :: POSIX",
   "Operating System :: Unix"
 ]
-dependencies = ["numpy>=1.26.4", "mkl-service"]
+dependencies = ["numpy>=1.26.4", "mkl"]
 description = "MKL-based FFT transforms for NumPy arrays"
 dynamic = ["version"]
 keywords = ["DFTI", "FFT", "Fourier", "MKL"]
@@ -60,8 +60,8 @@ readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10,<3.15"
 
 [project.optional-dependencies]
-scipy_interface = ["scipy>=1.10"]
-test = ["pytest", "scipy>=1.10"]
+scipy_interface = ["scipy>=1.10", "mkl-service"]
+test = ["pytest", "scipy>=1.10", "mkl-service"]
 
 [project.urls]
 Download = "http://github.com/IntelPython/mkl_fft"
