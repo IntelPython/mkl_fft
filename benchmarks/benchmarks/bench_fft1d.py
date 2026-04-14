@@ -4,19 +4,9 @@ import numpy as np
 
 import mkl_fft
 
+from ._utils import _make_input
+
 _RNG_SEED = 42
-
-
-def _make_input(rng, n, dtype):
-    """Return a 1-D array of length *n* with the given *dtype*.
-
-    Complex dtypes are populated with non-zero imaginary parts so the
-    benchmark exercises a genuine complex transform path.
-    """
-    dt = np.dtype(dtype)
-    if dt.kind == "c":
-        return (rng.standard_normal(n) + 1j * rng.standard_normal(n)).astype(dt)
-    return rng.standard_normal(n).astype(dt)
 
 
 # ---------------------------------------------------------------------------

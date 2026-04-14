@@ -26,7 +26,7 @@ _MIN_THREADS = 4  # minimum physical cores required for multi-threaded mode
 
 
 def _physical_cores():
-    """Return physical core count from /proc/cpuinfo; fall back to os.cpu_count()."""
+    """Return physical core count from /proc/cpuinfo; fall back to 1 (conservative)."""
     try:
         with open("/proc/cpuinfo") as f:
             content = f.read()
@@ -36,7 +36,7 @@ def _physical_cores():
         )
         return cpu_cores * sockets
     except Exception:
-        return os.cpu_count() or 1
+        return 1
 
 
 def _thread_count():

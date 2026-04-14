@@ -8,15 +8,9 @@ import numpy as np
 
 import mkl_fft
 
+from ._utils import _make_input
+
 _RNG_SEED = 42
-
-
-def _make_input(rng, shape, dtype):
-    dt = np.dtype(dtype)
-    s = (shape,) if isinstance(shape, int) else shape
-    if dt.kind == "c":
-        return (rng.standard_normal(s) + 1j * rng.standard_normal(s)).astype(dt)
-    return rng.standard_normal(s).astype(dt)
 
 
 # ---------------------------------------------------------------------------

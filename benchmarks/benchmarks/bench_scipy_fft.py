@@ -16,20 +16,9 @@ import numpy as np
 
 from mkl_fft.interfaces import scipy_fft
 
+from ._utils import _make_input
+
 _RNG_SEED = 42
-
-
-def _make_input(rng, shape, dtype):
-    """Return an array of *shape* and *dtype*.
-
-    Complex dtypes get non-zero imaginary parts for a realistic signal.
-    *shape* may be an int (1-D) or a tuple.
-    """
-    dt = np.dtype(dtype)
-    s = (shape,) if isinstance(shape, int) else shape
-    if dt.kind == "c":
-        return (rng.standard_normal(s) + 1j * rng.standard_normal(s)).astype(dt)
-    return rng.standard_normal(s).astype(dt)
 
 
 # ---------------------------------------------------------------------------
@@ -218,7 +207,7 @@ class TimeHermitian2D:
 # ---------------------------------------------------------------------------
 
 
-class TimeCCND:
+class TimeC2CND:
     """scipy_fft.fftn / ifftn — N-D."""
 
     params = [
