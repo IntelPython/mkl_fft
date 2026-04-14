@@ -44,5 +44,5 @@ def _thread_count():
 
 _THREADS = os.environ.get("MKL_NUM_THREADS", _thread_count())
 os.environ["MKL_NUM_THREADS"] = _THREADS
-os.environ["OMP_NUM_THREADS"] = _THREADS
-os.environ["OPENBLAS_NUM_THREADS"] = _THREADS
+os.environ.setdefault("OMP_NUM_THREADS", _THREADS)
+os.environ.setdefault("OPENBLAS_NUM_THREADS", _THREADS)

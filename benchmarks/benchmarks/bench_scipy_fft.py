@@ -13,6 +13,7 @@ Covers every function exported by the interface:
 """
 
 import numpy as np
+from mkl_fft.interfaces import scipy_fft
 
 
 def _make_input(rng, shape, dtype):
@@ -45,11 +46,9 @@ class TimeC2C1D:
         self.x = _make_input(np.random.RandomState(42), n, dtype)
 
     def time_fft(self, n, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.fft(self.x)
 
     def time_ifft(self, n, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.ifft(self.x)
 
 
@@ -75,11 +74,9 @@ class TimeRC1D:
         ).astype(cdtype)
 
     def time_rfft(self, n, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.rfft(self.x_real)
 
     def time_irfft(self, n, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.irfft(self.x_complex, n=n)
 
 
@@ -111,11 +108,9 @@ class TimeHermitian1D:
         self.x_ihfft = rng.randn(n).astype(dtype)
 
     def time_hfft(self, n, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.hfft(self.x_hfft, n=n)
 
     def time_ihfft(self, n, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.ihfft(self.x_ihfft)
 
 
@@ -136,11 +131,9 @@ class TimeC2C2D:
         self.x = _make_input(np.random.RandomState(42), shape, dtype)
 
     def time_fft2(self, shape, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.fft2(self.x)
 
     def time_ifft2(self, shape, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.ifft2(self.x)
 
 
@@ -167,11 +160,9 @@ class TimeRC2D:
         ).astype(cdtype)
 
     def time_rfft2(self, shape, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.rfft2(self.x_real)
 
     def time_irfft2(self, shape, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.irfft2(self.x_complex, s=shape)
 
 
@@ -203,11 +194,9 @@ class TimeHermitian2D:
         self.x_ihfft2 = rng.randn(*shape).astype(dtype)
 
     def time_hfft2(self, shape, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.hfft2(self.x_hfft2, s=shape)
 
     def time_ihfft2(self, shape, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.ihfft2(self.x_ihfft2)
 
 
@@ -228,11 +217,9 @@ class TimeCCND:
         self.x = _make_input(np.random.RandomState(42), shape, dtype)
 
     def time_fftn(self, shape, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.fftn(self.x)
 
     def time_ifftn(self, shape, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.ifftn(self.x)
 
 
@@ -259,11 +246,9 @@ class TimeRCND:
         ).astype(cdtype)
 
     def time_rfftn(self, shape, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.rfftn(self.x_real)
 
     def time_irfftn(self, shape, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.irfftn(self.x_complex, s=shape)
 
 
@@ -296,9 +281,7 @@ class TimeHermitianND:
         self.x_ihfftn = rng.randn(*shape).astype(dtype)
 
     def time_hfftn(self, shape, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.hfftn(self.x_hfftn, s=shape)
 
     def time_ihfftn(self, shape, dtype):
-        from mkl_fft.interfaces import scipy_fft
         scipy_fft.ihfftn(self.x_ihfftn)

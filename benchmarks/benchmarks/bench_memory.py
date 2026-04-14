@@ -5,6 +5,7 @@ in the mkl_fft root API across 1-D, 2-D, and 3-D transforms.
 """
 
 import numpy as np
+import mkl_fft
 
 
 def _make_input(rng, shape, dtype):
@@ -32,11 +33,9 @@ class PeakMemFFT1D:
         self.x = _make_input(np.random.RandomState(42), n, dtype)
 
     def peakmem_fft(self, n, dtype):
-        import mkl_fft
         mkl_fft.fft(self.x)
 
     def peakmem_ifft(self, n, dtype):
-        import mkl_fft
         mkl_fft.ifft(self.x)
 
 
@@ -62,11 +61,9 @@ class PeakMemRFFT1D:
         ).astype(cdtype)
 
     def peakmem_rfft(self, n, dtype):
-        import mkl_fft
         mkl_fft.rfft(self.x_real)
 
     def peakmem_irfft(self, n, dtype):
-        import mkl_fft
         mkl_fft.irfft(self.x_complex, n=n)
 
 
@@ -87,11 +84,9 @@ class PeakMemFFT2D:
         self.x = _make_input(np.random.RandomState(42), shape, dtype)
 
     def peakmem_fft2(self, shape, dtype):
-        import mkl_fft
         mkl_fft.fft2(self.x)
 
     def peakmem_ifft2(self, shape, dtype):
-        import mkl_fft
         mkl_fft.ifft2(self.x)
 
 
@@ -112,9 +107,7 @@ class PeakMemFFTnD:
         self.x = _make_input(np.random.RandomState(42), shape, dtype)
 
     def peakmem_fftn(self, shape, dtype):
-        import mkl_fft
         mkl_fft.fftn(self.x)
 
     def peakmem_ifftn(self, shape, dtype):
-        import mkl_fft
         mkl_fft.ifftn(self.x)

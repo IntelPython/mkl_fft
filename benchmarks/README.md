@@ -42,8 +42,14 @@ Override by setting `MKL_NUM_THREADS` in the environment before running ASV.
 
 ## Running Locally
 
-> Benchmarks are designed for CI. Local runs require mkl_fft to be installed
-> in the active Python environment.
+> Benchmarks are designed for CI. Local runs require `mkl_fft` to be installed
+> in the active Python environment. Benchmarks that exercise SciPy interface
+> (`bench_scipy_fft.py`) also require SciPy:
+>
+> ```bash
+> python -m pip install -e ..
+> python -m pip install scipy
+> ```
 
 ```bash
 cd benchmarks/

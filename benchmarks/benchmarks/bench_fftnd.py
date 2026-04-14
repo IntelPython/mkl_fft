@@ -1,6 +1,7 @@
 """Benchmarks for 2-D and N-D FFT operations using the mkl_fft root API."""
 
 import numpy as np
+import mkl_fft
 
 
 def _make_input(rng, shape, dtype):
@@ -36,11 +37,9 @@ class TimeFFT2D:
         self.x = _make_input(rng, shape, dtype)
 
     def time_fft2(self, shape, dtype):
-        import mkl_fft
         mkl_fft.fft2(self.x)
 
     def time_ifft2(self, shape, dtype):
-        import mkl_fft
         mkl_fft.ifft2(self.x)
 
 
@@ -68,11 +67,9 @@ class TimeRFFT2D:
         ).astype(cdtype)
 
     def time_rfft2(self, shape, dtype):
-        import mkl_fft
         mkl_fft.rfft2(self.x_real)
 
     def time_irfft2(self, shape, dtype):
-        import mkl_fft
         mkl_fft.irfft2(self.x_complex, s=shape)
 
 
@@ -97,11 +94,9 @@ class TimeFFT2DNonPow2:
         self.x = _make_input(rng, shape, dtype)
 
     def time_fft2(self, shape, dtype):
-        import mkl_fft
         mkl_fft.fft2(self.x)
 
     def time_ifft2(self, shape, dtype):
-        import mkl_fft
         mkl_fft.ifft2(self.x)
 
 
@@ -126,11 +121,9 @@ class TimeFFTnD:
         self.x = _make_input(rng, shape, dtype)
 
     def time_fftn(self, shape, dtype):
-        import mkl_fft
         mkl_fft.fftn(self.x)
 
     def time_ifftn(self, shape, dtype):
-        import mkl_fft
         mkl_fft.ifftn(self.x)
 
 
@@ -158,11 +151,9 @@ class TimeRFFTnD:
         ).astype(cdtype)
 
     def time_rfftn(self, shape, dtype):
-        import mkl_fft
         mkl_fft.rfftn(self.x_real)
 
     def time_irfftn(self, shape, dtype):
-        import mkl_fft
         mkl_fft.irfftn(self.x_complex, s=shape)
 
 
@@ -187,9 +178,7 @@ class TimeFFTnDNonPow2:
         self.x = _make_input(rng, shape, dtype)
 
     def time_fftn(self, shape, dtype):
-        import mkl_fft
         mkl_fft.fftn(self.x)
 
     def time_ifftn(self, shape, dtype):
-        import mkl_fft
         mkl_fft.ifftn(self.x)

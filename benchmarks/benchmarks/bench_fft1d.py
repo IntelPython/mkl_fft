@@ -1,6 +1,7 @@
 """Benchmarks for 1-D FFT operations using the mkl_fft root API."""
 
 import numpy as np
+import mkl_fft
 
 
 def _make_input(rng, n, dtype):
@@ -33,11 +34,9 @@ class TimeFFT1D:
         self.x = _make_input(rng, n, dtype)
 
     def time_fft(self, n, dtype):
-        import mkl_fft
         mkl_fft.fft(self.x)
 
     def time_ifft(self, n, dtype):
-        import mkl_fft
         mkl_fft.ifft(self.x)
 
 
@@ -64,11 +63,9 @@ class TimeRFFT1D:
         ).astype(cdtype)
 
     def time_rfft(self, n, dtype):
-        import mkl_fft
         mkl_fft.rfft(self.x_real)
 
     def time_irfft(self, n, dtype):
-        import mkl_fft
         mkl_fft.irfft(self.x_complex, n=n)
 
 
@@ -94,11 +91,9 @@ class TimeFFT1DNonPow2:
         self.x = _make_input(rng, n, dtype)
 
     def time_fft(self, n, dtype):
-        import mkl_fft
         mkl_fft.fft(self.x)
 
     def time_ifft(self, n, dtype):
-        import mkl_fft
         mkl_fft.ifft(self.x)
 
 
@@ -124,9 +119,7 @@ class TimeRFFT1DNonPow2:
         ).astype(cdtype)
 
     def time_rfft(self, n, dtype):
-        import mkl_fft
         mkl_fft.rfft(self.x_real)
 
     def time_irfft(self, n, dtype):
-        import mkl_fft
         mkl_fft.irfft(self.x_complex, n=n)
