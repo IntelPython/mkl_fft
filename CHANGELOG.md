@@ -7,11 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [dev] - YYYY-MM-DD
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [2.2.0] - 2026-04-16
+
+### Added
 * Added `mkl_fft` patching for NumPy, with `mkl_fft` context manager, `is_patched` query, and `patch_numpy_fft` and `restore_numpy_fft` calls to replace `numpy.fft` calls with calls from `mkl_fft.interfaces.numpy_fft` [gh-224](https://github.com/IntelPython/mkl_fft/pull/224), [gh-295](https://github.com/IntelPython/mkl_fft/pull/295)
 
 ### Changed
 * In `mkl_fft.fftn` and `mkl_fft.ifftn`, improved checking of the shape argument `s` to use faster direct transforms more often. This makes performance more consistent between `mkl_fft.fftn/ifftn` and `mkl.interfaces`. [gh-283](https://github.com/IntelPython/mkl_fft/pull/283)
 * Made conda recipe dependency on numpy configurable through `USE_NUMPY_BASE` environment variable [gh-299](https://github.com/IntelPython/mkl_fft/pull/299)
+* Made `mkl-service` an optional dependency [gh-305](https://github.com/IntelPython/mkl_fft/pull/305)
 
 ### Removed
 * Dropped support for Python 3.9 [gh-243](https://github.com/IntelPython/mkl_fft/pull/243)
@@ -43,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Dropped support for `overwrite_x` parameter in `mkl_fft` [gh-185](https://github.com/IntelPython/mkl_fft/pull/185)
 * Replaced `fwd_scale` parameter with `norm` in `mkl_fft` [gh-189](https://github.com/IntelPython/mkl_fft/pull/189)
 * Conditionally import `scipy_fft` only if `scipy` is installed [gh-195](https://github.com/IntelPython/mkl_fft/pull/195)
-* Vendor `fftfreq`, `rfftfreq`, `fftshift`, and `ifftshift` to `scipy_fft` and `numpy_fft` interfaces [gh-226](https://github.com/IntelPython/mkl_fft/pull/226), [gh=229](https://github.com/IntelPython/mkl_fft/pull/229)
+* Vendor `fftfreq`, `rfftfreq`, `fftshift`, and `ifftshift` to `scipy_fft` and `numpy_fft` interfaces [gh-226](https://github.com/IntelPython/mkl_fft/pull/226), [gh-229](https://github.com/IntelPython/mkl_fft/pull/229)
 
 ### Fixed
 * Fixed a bug for N-D FFTs when both `s` and `out` are given [gh-185](https://github.com/IntelPython/mkl_fft/pull/185)
