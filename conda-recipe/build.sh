@@ -1,6 +1,5 @@
 #!/bin/bash -x
 
-export MKLROOT=$PREFIX
 export CFLAGS="-I$PREFIX/include $CFLAGS"
 export LDFLAGS="-Wl,-rpath,\$ORIGIN/../.. -Wl,-rpath,\$ORIGIN/../../.. -L${PREFIX}/lib ${LDFLAGS}"
 
