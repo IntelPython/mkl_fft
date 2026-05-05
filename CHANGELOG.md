@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Removed `numpy-base` dependency and `USE_NUMPY_BASE` environment variable from conda recipe [gh-318](https://github.com/IntelPython/mkl_fft/pull/318)
 
 ### Fixed
 
