@@ -31,8 +31,10 @@ requirements:
 
 test:
     commands:
+      - pip check
       - pytest -v --pyargs mkl_fft
     requires:
+      - pip
       - pytest
       - scipy >=1.10
       - mkl-service
