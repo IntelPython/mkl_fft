@@ -366,8 +366,11 @@ jobs:
           )
           SET "TEST_DEPENDENCIES=pytest"
           conda install -n ${{ env.TEST_ENV_NAME }} ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% %TEST_DEPENDENCIES% python=${{ matrix.python }} ${{ matrix.numpy }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
-          conda install -n ${{ env.TEST_ENV_NAME }} scipy mkl-service -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
           }
+      - name: Install additional test dependencies
+        shell: cmd /C CALL {0}
+        run: |
+          conda install -n ${{ env.TEST_ENV_NAME }} "scipy>=1.10" "mkl-service" -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
       - name: Report content of test environment
         shell: cmd /C CALL {0}
         run: |
