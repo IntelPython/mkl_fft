@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [2.2.1] - 2026-05-11
+
+### Fixed
+* Removed `mkl` as runtime dependency to avoid possible `pip check` failures [gh-322](https://github.com/IntelPython/mkl_fft/pull/322)
+
 ## [2.2.0] - 2026-04-16
 
 ### Added
