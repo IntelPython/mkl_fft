@@ -54,7 +54,7 @@ def install_patch():
     try:
         pth_path.parent.mkdir(parents=True, exist_ok=True)
         pth_path.write_text(PTH_CONTENT)
-        print(f"✓ Persistent patch installed at {pth_path}")
+        print(f"Persistent patch installed at {pth_path}")
         print()
         print("NumPy FFT will now use MKL-accelerated implementations in all")
         print("Python sessions. To disable, run:")
@@ -77,7 +77,7 @@ def uninstall_patch():
 
     try:
         pth_path.unlink()
-        print(f"✓ Persistent patch removed from {pth_path}")
+        print(f"Persistent patch removed from {pth_path}")
         print()
         print("NumPy FFT will now use the default implementations.")
     except OSError as e:
@@ -90,12 +90,12 @@ def check_status():
     pth_path = get_pth_path()
 
     if pth_path.exists():
-        print(f"✓ Persistent patch is installed at {pth_path}")
+        print(f"Persistent patch is installed at {pth_path}")
         print()
         print("NumPy FFT is configured to use MKL-accelerated implementations.")
         return True
     else:
-        print("✗ No persistent patch installed")
+        print("No persistent patch installed")
         print()
         print("To enable MKL-accelerated NumPy FFT globally, run:")
         print("  python -m mkl_fft patch install")
