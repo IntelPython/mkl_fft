@@ -27,8 +27,6 @@ inc_np = include_directories(np_dir, 'mkl_fft/src', 'mkl_fft')
 cc = meson.get_compiler('c')
 c_args = ['-DNDEBUG']
 
-mkl_
-
 mkl_dep = dependency('MKL', method: 'cmake',
     modules: ['MKL::MKL'],
     cmake_args: [
