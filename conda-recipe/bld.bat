@@ -1,5 +1,3 @@
-set MKLROOT=%PREFIX%
-
 rem Build wheel package
 if NOT "%WHEELS_OUTPUT_FOLDER%"=="" (
     %PYTHON% -m pip wheel --no-build-isolation --no-deps .
