@@ -2,6 +2,8 @@
 
 import numpy as np
 
+_RNG_SEED = 42
+
 
 def _make_input(rng, shape, dtype):
     """Return an array of *shape* and *dtype*.
@@ -14,3 +16,50 @@ def _make_input(rng, shape, dtype):
     if dt.kind == "c":
         return (rng.standard_normal(s) + 1j * rng.standard_normal(s)).astype(dt)
     return rng.standard_normal(s).astype(dt)
+
+
+class BenchC2C:
+    """Base setup for complex-to-complex benchmarks.
+
+    Subclasses define params, param_names, and time_* / peakmem_* methods.
+    """
+
+    def setup(self, shape, dtype):
+        rng = np.random.default_rng(_RNG_SEED)
+        self.x = _make_input(rng, shape, dtype)
+
+
+# dtype axes
+_DTYPES_ALL = ["float32", "float64", "complex64", "complex128"]
+_DTYPES_REAL = ["float32", "float64"]
+_DTYPES_REDUCED = ["float64", "complex128"]
+
+# shape/size axes shared across multiple files
+_SHAPES_2D = [(64, 64), (128, 128), (256, 256), (512, 512)]
+_SHAPES_2D_IFACE = [(64, 64), (256, 256), (512, 512)]
+_SHAPES_3D = [(16, 16, 16), (32, 32, 32), (64, 64, 64)]
+
+
+class BenchR2C:
+    """Base setup for real-to-complex / complex-to-real and Hermitian benchmarks.
+
+    Prepares:
+      self.x_real    — real array of full shape (rfft / ihfft input)
+      self.x_complex — complex half-spectrum array (irfft / hfft input)
+
+    Works for 1-D (shape as int) and multi-D (shape as tuple).
+    Subclasses define params, param_names, and time_* / peakmem_* methods.
+    """
+
+    def setup(self, shape, dtype):
+        rng = np.random.default_rng(_RNG_SEED)
+        cdtype = "complex64" if dtype == "float32" else "complex128"
+        if isinstance(shape, int):
+            half_shape = shape // 2 + 1
+        else:
+            half_shape = shape[:-1] + (shape[-1] // 2 + 1,)
+        self.x_real = rng.standard_normal(shape).astype(dtype)
+        self.x_complex = (
+            rng.standard_normal(half_shape)
+            + 1j * rng.standard_normal(half_shape)
+        ).astype(cdtype)

@@ -1,38 +1,30 @@
 """Benchmarks for 2-D and N-D FFT operations using the mkl_fft root API."""
 
-import numpy as np
-
 import mkl_fft
 
-from ._utils import _make_input
-
-_RNG_SEED = 42
-
+from ._utils import (
+    _DTYPES_ALL,
+    _DTYPES_REAL,
+    _DTYPES_REDUCED,
+    _SHAPES_2D,
+    _SHAPES_3D,
+    BenchC2C,
+    BenchR2C,
+)
 
 # ---------------------------------------------------------------------------
 # 2-D complex-to-complex (power-of-two, square + non-square)
 # ---------------------------------------------------------------------------
 
 
-class TimeFFT2D:
+class BenchFFT2D(BenchC2C):
     """Forward and inverse 2-D FFT — square and non-square shapes."""
 
     params = [
-        [
-            (64, 64),
-            (128, 128),
-            (256, 256),
-            (512, 512),
-            (256, 128),
-            (512, 256),  # non-square
-        ],
-        ["float32", "float64", "complex64", "complex128"],
+        _SHAPES_2D + [(256, 128), (512, 256)],
+        _DTYPES_ALL,
     ]
     param_names = ["shape", "dtype"]
-
-    def setup(self, shape, dtype):
-        rng = np.random.default_rng(_RNG_SEED)
-        self.x = _make_input(rng, shape, dtype)
 
     def time_fft2(self, shape, dtype):
         mkl_fft.fft2(self.x)
@@ -46,25 +38,11 @@ class TimeFFT2D:
 # ---------------------------------------------------------------------------
 
 
-class TimeRFFT2D:
+class BenchRFFT2D(BenchR2C):
     """Forward rfft2 and inverse irfft2."""
 
-    params = [
-        [(64, 64), (128, 128), (256, 256), (512, 512)],
-        ["float32", "float64"],
-    ]
+    params = [_SHAPES_2D, _DTYPES_REAL]
     param_names = ["shape", "dtype"]
-
-    def setup(self, shape, dtype):
-        rng = np.random.default_rng(_RNG_SEED)
-        cdtype = "complex64" if dtype == "float32" else "complex128"
-        half_shape = (shape[0], shape[1] // 2 + 1)
-        self.x_real = rng.standard_normal(shape).astype(dtype)
-        # irfft2 input: complex half-spectrum — shape (M, N//2+1)
-        self.x_complex = (
-            rng.standard_normal(half_shape)
-            + 1j * rng.standard_normal(half_shape)
-        ).astype(cdtype)
 
     def time_rfft2(self, shape, dtype):
         mkl_fft.rfft2(self.x_real)
@@ -78,7 +56,7 @@ class TimeRFFT2D:
 # ---------------------------------------------------------------------------
 
 
-class TimeFFT2DNonPow2:
+class BenchFFT2DNonPow2(BenchC2C):
     """Forward and inverse 2-D FFT — non-power-of-two sizes."""
 
     params = [
@@ -89,13 +67,9 @@ class TimeFFT2DNonPow2:
             (500, 500),
             (100, 200),  # non-square non-pow2
         ],
-        ["float64", "complex128"],
+        _DTYPES_REDUCED,
     ]
     param_names = ["shape", "dtype"]
-
-    def setup(self, shape, dtype):
-        rng = np.random.default_rng(_RNG_SEED)
-        self.x = _make_input(rng, shape, dtype)
 
     def time_fft2(self, shape, dtype):
         mkl_fft.fft2(self.x)
@@ -109,23 +83,14 @@ class TimeFFT2DNonPow2:
 # ---------------------------------------------------------------------------
 
 
-class TimeFFTnD:
+class BenchFFTnD(BenchC2C):
     """Forward and inverse N-D FFT."""
 
     params = [
-        [
-            (16, 16, 16),
-            (32, 32, 32),
-            (64, 64, 64),
-            (32, 64, 128),  # non-cubic
-        ],
-        ["float32", "float64", "complex64", "complex128"],
+        _SHAPES_3D + [(32, 64, 128)],
+        _DTYPES_ALL,
     ]
     param_names = ["shape", "dtype"]
-
-    def setup(self, shape, dtype):
-        rng = np.random.default_rng(_RNG_SEED)
-        self.x = _make_input(rng, shape, dtype)
 
     def time_fftn(self, shape, dtype):
         mkl_fft.fftn(self.x)
@@ -139,25 +104,11 @@ class TimeFFTnD:
 # ---------------------------------------------------------------------------
 
 
-class TimeRFFTnD:
+class BenchRFFTnD(BenchR2C):
     """Forward rfftn and inverse irfftn."""
 
-    params = [
-        [(16, 16, 16), (32, 32, 32), (64, 64, 64)],
-        ["float32", "float64"],
-    ]
+    params = [_SHAPES_3D, _DTYPES_REAL]
     param_names = ["shape", "dtype"]
-
-    def setup(self, shape, dtype):
-        rng = np.random.default_rng(_RNG_SEED)
-        cdtype = "complex64" if dtype == "float32" else "complex128"
-        # irfftn input: complex half-spectrum — last axis is shape[-1]//2+1
-        half_shape = shape[:-1] + (shape[-1] // 2 + 1,)
-        self.x_real = rng.standard_normal(shape).astype(dtype)
-        self.x_complex = (
-            rng.standard_normal(half_shape)
-            + 1j * rng.standard_normal(half_shape)
-        ).astype(cdtype)
 
     def time_rfftn(self, shape, dtype):
         mkl_fft.rfftn(self.x_real)
@@ -171,7 +122,7 @@ class TimeRFFTnD:
 # ---------------------------------------------------------------------------
 
 
-class TimeFFTnDNonPow2:
+class BenchFFTnDNonPow2(BenchC2C):
     """Forward and inverse N-D FFT — non-power-of-two sizes."""
 
     params = [
@@ -181,13 +132,9 @@ class TimeFFTnDNonPow2:
             (50, 50, 50),
             (30, 40, 50),  # non-cubic non-pow2
         ],
-        ["float64", "complex128"],
+        _DTYPES_REDUCED,
     ]
     param_names = ["shape", "dtype"]
-
-    def setup(self, shape, dtype):
-        rng = np.random.default_rng(_RNG_SEED)
-        self.x = _make_input(rng, shape, dtype)
 
     def time_fftn(self, shape, dtype):
         mkl_fft.fftn(self.x)
