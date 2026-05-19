@@ -14,13 +14,24 @@ env:
   TEST_ENV_NAME: test_mkl_fft
   VER_SCRIPT1: "import json; f = open('ver.json', 'r'); j = json.load(f); f.close(); d = j['mkl_fft'][0];"
   VER_SCRIPT2: "print('='.join((d[s] for s in ('version', 'build'))))"
+  CONDA_BUILD_VERSION: 26.3.0
 
 jobs:
   build_linux:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        include:
+          - python: "3.10"
+            numpy: "2.2"
+          - python: "3.11"
+            numpy: "2.3"
+          - python: "3.12"
+            numpy: "2.3"
+          - python: "3.13"
+            numpy: "2.3"
+          - python: "3.14"
+            numpy: "2.3"
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@d07a454dad7609a92316b57b23c9ccfd4f59af66 # 0.13.1
@@ -36,7 +47,7 @@ jobs:
           echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
 
       - name: Cache conda packages
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
@@ -50,13 +61,25 @@ jobs:
       - name: Add conda to system path
         run: echo "$CONDA"/bin >> "$GITHUB_PATH"
 
+      - name: Update conda
+        run: |
+          conda update -n base --all
+
       - name: Install conda-build
-        run: conda install conda-build
+        run: conda install -n base conda-build=${{ env.CONDA_BUILD_VERSION }} -c conda-forge --override-channels
+
+      - name: Show Conda info
+        run: |
+          conda info --all
+
+      - name: List base environment packages
+        run: |
+          conda list -n base
 
       - name: Build conda package
         run: |
           CHANNELS=(-c https://software.repos.intel.com/python/conda -c conda-forge --override-channels)
-          VERSIONS=(--python "${{ matrix.python }}")
+          VERSIONS=(--python "${{ matrix.python }}" --numpy "${{ matrix.numpy }}")
           TEST=(--no-test)
 
           conda build \
@@ -78,6 +101,7 @@ jobs:
     strategy:
       matrix:
         python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        numpy: ['numpy">=2"']
         experimental: [false]
         runner: [ubuntu-latest]
     continue-on-error: ${{ matrix.experimental }}
@@ -93,8 +117,21 @@ jobs:
       - name: Add conda to system path
         run: echo "$CONDA"/bin >> "$GITHUB_PATH"
 
-      - name: Install conda-build
-        run: conda install conda-build
+      - name: Update conda
+        run: |
+          conda update -n base --all
+
+      - name: Install conda-index
+        run: |
+          conda install -n base conda-index -c conda-forge --override-channels
+
+      - name: Show Conda info
+        run: |
+          conda info --all
+
+      - name: List base environment packages
+        run: |
+          conda list -n base
 
       - name: Create conda channel
         run: |
@@ -107,18 +144,12 @@ jobs:
           conda search "$PACKAGE_NAME" -c "$GITHUB_WORKSPACE"/channel --override-channels --info --json > "$GITHUB_WORKSPACE"/ver.json
           cat "$GITHUB_WORKSPACE"/ver.json
 
-      - name: Get package version
-        run: |
-          PACKAGE_VERSION=$(python -c "${{ env.VER_SCRIPT1 }} ${{ env.VER_SCRIPT2 }}")
-          export PACKAGE_VERSION
-
-          echo PACKAGE_VERSION="${PACKAGE_VERSION}"
-          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
-
       - name: Collect dependencies
         run: |
+          PACKAGE_VERSION="$(python -c "${VER_SCRIPT1} ${VER_SCRIPT2}")"
+          export PACKAGE_VERSION
           CHANNELS=(-c "$GITHUB_WORKSPACE"/channel ${{ env.CHANNELS }})
-          conda create -n ${{ env.TEST_ENV_NAME }} "$PACKAGE_NAME" python=${{ matrix.python }} "${CHANNELS[@]}" --only-deps --dry-run > lockfile
+          conda create -n ${{ env.TEST_ENV_NAME }} "${PACKAGE_NAME}=${PACKAGE_VERSION}" python=${{ matrix.python }} ${{ matrix.numpy }} "${CHANNELS[@]}"  --only-deps --dry-run > lockfile
 
       - name: Display lockfile
         run: cat lockfile
@@ -128,7 +159,7 @@ jobs:
           echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
 
       - name: Cache conda packages
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
@@ -142,7 +173,9 @@ jobs:
       - name: Install mkl_fft
         run: |
           CHANNELS=(-c "$GITHUB_WORKSPACE"/channel ${{ env.CHANNELS }})
-          conda create -n ${{ env.TEST_ENV_NAME }} "$PACKAGE_NAME"=${{ env.PACKAGE_VERSION }} python=${{ matrix.python }} pytest "${CHANNELS[@]}"
+          PACKAGE_VERSION="$(python -c "${VER_SCRIPT1} ${VER_SCRIPT2}")"
+          export PACKAGE_VERSION
+          conda create -n ${{ env.TEST_ENV_NAME }} "${PACKAGE_NAME}=${PACKAGE_VERSION}" python=${{ matrix.python }} ${{ matrix.numpy }} pytest "${CHANNELS[@]}"
           conda install -n ${{ env.TEST_ENV_NAME }} "scipy>=1.10" "mkl-service" "${CHANNELS[@]}"
           # Test installed packages
           conda list -n ${{ env.TEST_ENV_NAME }}
@@ -160,7 +193,17 @@ jobs:
         shell: cmd /C CALL {0}
     strategy:
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        include:
+          - python: "3.10"
+            numpy: "2.2"
+          - python: "3.11"
+            numpy: "2.3"
+          - python: "3.12"
+            numpy: "2.3"
+          - python: "3.13"
+            numpy: "2.3"
+          - python: "3.14"
+            numpy: "2.3"
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@d07a454dad7609a92316b57b23c9ccfd4f59af66 # 0.13.1
@@ -171,20 +214,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
+      - uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
         with:
+          auto-update-conda: true
           miniforge-version: latest
           activate-environment: build
           channels: conda-forge
           python-version: ${{ matrix.python }}
-
-      - name: Install conda-build
-        run: |
-          conda install -n base -y conda-build
-          conda list -n base
+          conda-build-version: ${{ env.CONDA_BUILD_VERSION }}
 
       - name: Cache conda packages
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         env:
           CACHE_NUMBER: 3  # Increase to reset cache
         with:
@@ -195,14 +235,22 @@ jobs:
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python }}-
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
 
-      - name: Build conda package
-        run: |
-          conda build --no-test --python ${{ matrix.python }} -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels conda-recipe
-
       - name: Store conda paths as envs
         shell: bash -l {0}
         run: |
           echo "CONDA_BLD=$CONDA/conda-bld/win-64/" | tr "\\\\" '/' >> "$GITHUB_ENV"
+
+      - name: Show Conda info
+        run: |
+          conda info --all
+
+      - name: List base environment packages
+        run: |
+          conda list -n base
+
+      - name: Build conda package
+        run: |
+          conda build --no-test --python ${{ matrix.python }} --numpy ${{ matrix.numpy }} -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels conda-recipe
 
       - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -220,6 +268,7 @@ jobs:
     strategy:
       matrix:
         python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        numpy: ['numpy">=2"']
         experimental: [false]
         runner: [windows-latest]
     continue-on-error: ${{ matrix.experimental }}
@@ -233,12 +282,25 @@ jobs:
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
 
-      - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
+      - uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
         with:
+          auto-update-conda: true
           miniforge-version: latest
           channels: conda-forge
           activate-environment: ${{ env.TEST_ENV_NAME }}
           python-version: ${{ matrix.python }}
+
+      - name: Install conda-index
+        run: |
+          conda install -n base conda-index
+
+      - name: Show Conda info
+        run: |
+          conda info --all
+
+      - name: List base environment packages
+        run: |
+          conda list -n base
 
       - name: Create conda channel with the artifact bit
         shell: cmd /C CALL {0}
@@ -248,10 +310,6 @@ jobs:
           mkdir ${{ env.workdir }}\channel\win-64
           move ${{ env.PACKAGE_NAME }}-*.conda ${{ env.workdir }}\channel\win-64
           dir ${{ env.workdir }}\channel\win-64
-
-      - name: Install conda index
-        shell: cmd /C CALL {0}
-        run: conda install -n base conda-index
 
       - name: Index the channel
         shell: cmd /C CALL {0}
@@ -277,14 +335,14 @@ jobs:
           FOR /F "tokens=* USEBACKQ" %%F IN (`python -c "%SCRIPT%"`) DO (
              SET PACKAGE_VERSION=%%F
           )
-          conda install -n ${{ env.TEST_ENV_NAME }} ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% python=${{ matrix.python }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }} --only-deps --dry-run > lockfile
+          conda install -n ${{ env.TEST_ENV_NAME }} ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% python=${{ matrix.python }} ${{ matrix.numpy }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }} --only-deps --dry-run > lockfile
 
       - name: Display lockfile content
         shell: pwsh
         run: Get-Content -Path .\lockfile
 
       - name: Cache conda packages
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
@@ -307,9 +365,12 @@ jobs:
              SET PACKAGE_VERSION=%%F
           )
           SET "TEST_DEPENDENCIES=pytest"
-          conda install -n ${{ env.TEST_ENV_NAME }} ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% %TEST_DEPENDENCIES% python=${{ matrix.python }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
-          conda install -n ${{ env.TEST_ENV_NAME }} scipy mkl-service -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
+          conda install -n ${{ env.TEST_ENV_NAME }} ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% %TEST_DEPENDENCIES% python=${{ matrix.python }} ${{ matrix.numpy }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
           }
+      - name: Install additional test dependencies
+        shell: cmd /C CALL {0}
+        run: |
+          conda install -n ${{ env.TEST_ENV_NAME }} "scipy>=1.10" "mkl-service" -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
       - name: Report content of test environment
         shell: cmd /C CALL {0}
         run: |
