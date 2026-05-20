@@ -25,5 +25,33 @@ MKL_NUM_THREADS=8 asv run --python=same --quick HEAD^!
 If `MKL_NUM_THREADS` is not set, `__init__.py` applies a default: **4** threads
 when the machine has 4 or more physical cores, or **1** (single-threaded)
 otherwise. This keeps results comparable across CI machines in the shared pool
-regardless of their total core count. Physical cores are read from
-`/proc/cpuinfo` — hyperthreads are excluded per MKL recommendation.
+regardless of their total core count. Physical cores are detected via
+`psutil.cpu_count(logical=False)` — hyperthreads are excluded per MKL
+recommendation.
+
+## Running Benchmarks
+
+Prerequisites:
+
+```bash
+pip install asv psutil
+```
+
+Run benchmarks against the current environment:
+
+```bash
+asv run --python=same --quick HEAD^!
+```
+
+Compare two commits:
+
+```bash
+asv continuous --python=same HEAD~1 HEAD
+```
+
+View results in a browser:
+
+```bash
+asv publish
+asv preview
+```

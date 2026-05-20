@@ -20,23 +20,15 @@ MKL recommendation: use physical cores, not logical (hyperthreaded) CPUs.
 """
 
 import os
-import re
+
+import psutil
 
 _MIN_THREADS = 4  # minimum physical cores required for multi-threaded mode
 
 
 def _physical_cores():
-    """Return physical core count from /proc/cpuinfo; fall back to 1 (conservative)."""
-    try:
-        with open("/proc/cpuinfo") as f:
-            content = f.read()
-        cpu_cores = int(re.search(r"cpu cores\s*:\s*(\d+)", content).group(1))
-        sockets = max(
-            len(set(re.findall(r"physical id\s*:\s*(\d+)", content))), 1
-        )
-        return cpu_cores * sockets
-    except Exception:
-        return 1
+    """Return physical core count; fall back to 1 (conservative)."""
+    return psutil.cpu_count(logical=False) or 1
 
 
 def _thread_count():
