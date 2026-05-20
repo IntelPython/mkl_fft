@@ -1,23 +1,4 @@
-"""ASV benchmarks for mkl_fft.
-
-Thread control — design rationale
-----------------------------------
-Since we do not have a dedicated CI benchmark machine, benchmarks run on a shared CI pool
-whose machines vary in core count over time.
-Using the full physical core count of each machine would make results
-incomparable across runs on different machines.
-
-Strategy:
-  - Physical cores >= 4  →  fix MKL_NUM_THREADS = 4
-      4 is the lowest common denominator that guarantees multi-threaded MKL
-      behavior and is achievable on any modern CI machine.  Results from
-      different machines in the pool are therefore directly comparable.
-  - Physical cores < 4   →  fall back to MKL_NUM_THREADS = 1 (single-threaded)
-      Prevents over-subscription on under-resourced machines and avoids
-      misleading comparisons against 4-thread baselines.
-
-MKL recommendation: use physical cores, not logical (hyperthreaded) CPUs.
-"""
+"""ASV benchmarks for mkl_fft"""
 
 import os
 
