@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2026, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -24,9 +24,9 @@
 
 """Persistent patch management for NumPy FFT submodule."""
 
-import argparse
 import site
 import sys
+import warnings
 from pathlib import Path
 
 
@@ -43,22 +43,28 @@ def get_pth_path():
 PTH_CONTENT = """import mkl_fft._patch_startup"""
 
 
-def install_patch():
+def install_patch(verbose=False):
     """Install persistent NumPy FFT patch using .pth file."""
     pth_path = get_pth_path()
 
     if pth_path.exists():
-        print(f"Persistent patch already installed at {pth_path}")
+        if verbose:
+            warnings.warn(
+                f"Persistent patch already installed at {pth_path}",
+                UserWarning,
+                stacklevel=2
+            )
         return
 
     try:
         pth_path.parent.mkdir(parents=True, exist_ok=True)
         pth_path.write_text(PTH_CONTENT)
-        print(f"Persistent patch installed at {pth_path}")
-        print()
-        print("NumPy FFT will now use MKL-accelerated implementations in all")
-        print("Python sessions. To disable, run:")
-        print("  python -m mkl_fft patch uninstall")
+        if verbose:
+            print(f"Persistent patch installed at {pth_path}")
+            print()
+            print("NumPy FFT will now use MKL-accelerated implementations in all")
+            print("Python sessions. To disable, run:")
+            print("  python -m mkl_fft patch uninstall")
     except OSError as e:
         print(f"Error installing patch: {e}")
         print()
@@ -67,72 +73,57 @@ def install_patch():
         sys.exit(1)
 
 
-def uninstall_patch():
+def uninstall_patch(verbose=False):
     """Uninstall persistent NumPy FFT patch."""
     pth_path = get_pth_path()
 
     if not pth_path.exists():
-        print("No persistent patch found.")
+        if verbose:
+            print("No persistent patch found.")
         return
 
     try:
         pth_path.unlink()
-        print(f"Persistent patch removed from {pth_path}")
-        print()
-        print("NumPy FFT will now use the default implementations.")
+        if verbose:
+            print(f"Persistent patch removed from {pth_path}")
+            print()
+            print("NumPy FFT will now use the default implementations.")
     except OSError as e:
         print(f"Error removing patch: {e}")
         sys.exit(1)
 
 
-def check_status():
+def check_status(verbose=False):
     """Check if persistent patch is installed."""
     pth_path = get_pth_path()
 
     if pth_path.exists():
-        print(f"Persistent patch is installed at {pth_path}")
-        print()
-        print("NumPy FFT is configured to use MKL-accelerated implementations.")
+        if verbose:
+            print(f"Persistent patch is installed at {pth_path}")
+            print()
+            print("NumPy FFT is configured to use MKL-accelerated implementations.")
         return True
     else:
-        print("No persistent patch installed")
-        print()
-        print("To enable MKL-accelerated NumPy FFT globally, run:")
-        print("  python -m mkl_fft patch install")
+        if verbose:
+            print("No persistent patch installed")
+            print()
+            print("To enable MKL-accelerated NumPy FFT globally, run:")
+            print("  python -m mkl_fft patch install")
         return False
 
 
-def main(args=None):
-    """Main entry point for patch command."""
-    parser = argparse.ArgumentParser(
-        prog="python -m mkl_fft patch",
-        description="Manage persistent NumPy FFT patching with MKL acceleration",
-    )
-    subparsers = parser.add_subparsers(
-        dest="command", help="Available commands"
-    )
-
-    subparsers.add_parser("install", help="Install persistent NumPy FFT patch")
-    subparsers.add_parser(
-        "uninstall", help="Uninstall persistent NumPy FFT patch"
-    )
-    subparsers.add_parser(
-        "status", help="Check if persistent patch is installed"
-    )
-
-    parsed_args = parser.parse_args(args)
-
-    if not parsed_args.command:
-        parser.print_help()
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python -m mkl_fft.patch <install|uninstall|status>")
         sys.exit(1)
 
-    if parsed_args.command == "install":
-        install_patch()
-    elif parsed_args.command == "uninstall":
-        uninstall_patch()
-    elif parsed_args.command == "status":
-        sys.exit(0 if check_status() else 1)
-
-
-if __name__ == "__main__":
-    main()
+    command = sys.argv[1]
+    if command == "install":
+        install_patch(verbose=True)
+    elif command == "uninstall":
+        uninstall_patch(verbose=True)
+    elif command == "status":
+        sys.exit(0 if check_status(verbose=True) else 1)
+    else:
+        print(f"Unknown command: {command}")
+        sys.exit(1)

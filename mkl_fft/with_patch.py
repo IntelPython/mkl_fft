@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2026, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,30 +25,16 @@
 
 """Run Python commands with temporary NumPy FFT patch."""
 
-import argparse
 import os
 import subprocess
 import sys
 import tempfile
 
 
-def main(args=None):
+def run_with_patch(args):
     """Run a command with mkl_fft NumPy patch enabled."""
-    parser = argparse.ArgumentParser(
-        prog="python -m mkl_fft with_patch",
-        description="Run a command with temporary MKL-accelerated NumPy FFT",
-        usage="python -m mkl_fft with_patch <command> [args...]",
-    )
-    parser.add_argument(
-        "command",
-        nargs=argparse.REMAINDER,
-        help="Command to execute with patch enabled",
-    )
-
-    parsed_args = parser.parse_args(args)
-
-    if not parsed_args.command:
-        parser.print_help()
+    if not args:
+        print("Usage: python -m mkl_fft with_patch <command> [args...]")
         print()
         print("Examples:")
         print("  python -m mkl_fft with_patch python script.py")
@@ -57,8 +43,6 @@ def main(args=None):
             "  python -m mkl_fft with_patch python -c 'import numpy; print(numpy.fft.fft.__module__)'"
         )
         sys.exit(1)
-
-    args = parsed_args.command
 
     sitecustomize_content = """# mkl_fft temporary patch
 try:
@@ -91,6 +75,11 @@ except Exception:
             os.rmdir(temp_dir)
         except OSError:
             pass
+
+
+def main(args=None):
+    """Deprecated entry point. Use run_with_patch() instead."""
+    run_with_patch(args if args else sys.argv[1:])
 
 
 if __name__ == "__main__":

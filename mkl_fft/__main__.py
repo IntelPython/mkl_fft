@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2026, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,42 +25,66 @@
 
 """Command-line interface for mkl_fft."""
 
+import argparse
 import sys
-
-
-def main_impl():
-    if len(sys.argv) < 2:
-        print("Usage: python -m mkl_fft <command> [args]")
-        print()
-        print("Commands:")
-        print("  patch install      Install persistent NumPy FFT patch")
-        print("  patch uninstall    Uninstall persistent NumPy FFT patch")
-        print("  patch status       Check if persistent patch is installed")
-        print("  with_patch <cmd>   Run command with temporary NumPy FFT patch")
-        print()
-        print("Examples:")
-        print("  python -m mkl_fft patch install")
-        print("  python -m mkl_fft with_patch python script.py")
-        sys.exit(1)
-
-    command = sys.argv[1]
-
-    if command == "patch":
-        from mkl_fft.patch import main as patch_main
-
-        patch_main(sys.argv[2:])
-    elif command == "with_patch":
-        from mkl_fft.with_patch import main as with_patch_main
-
-        with_patch_main(sys.argv[2:])
-    else:
-        print(f"Unknown command: {command}")
-        sys.exit(1)
 
 
 def main():
     """Entry point for the CLI."""
-    main_impl()
+    parser = argparse.ArgumentParser(
+        prog="python -m mkl_fft",
+        description="MKL-accelerated FFT for NumPy",
+    )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose output"
+    )
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # patch subcommand with its own subparsers
+    patch_parser = subparsers.add_parser(
+        "patch", help="Manage persistent NumPy FFT patching"
+    )
+    patch_subparsers = patch_parser.add_subparsers(
+        dest="patch_command", help="Patch operations"
+    )
+    patch_subparsers.add_parser("install", help="Install persistent NumPy FFT patch")
+    patch_subparsers.add_parser(
+        "uninstall", help="Uninstall persistent NumPy FFT patch"
+    )
+    patch_subparsers.add_parser("status", help="Check if persistent patch is installed")
+
+    # with_patch subcommand
+    with_patch_parser = subparsers.add_parser(
+        "with_patch", help="Run command with temporary NumPy FFT patch"
+    )
+    with_patch_parser.add_argument(
+        "command", nargs=argparse.REMAINDER, help="Command to execute with patch"
+    )
+
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        sys.exit(1)
+
+    if args.command == "patch":
+        from mkl_fft.patch import check_status, install_patch, uninstall_patch
+
+        if not args.patch_command:
+            patch_parser.print_help()
+            sys.exit(1)
+
+        if args.patch_command == "install":
+            install_patch(verbose=args.verbose)
+        elif args.patch_command == "uninstall":
+            uninstall_patch(verbose=args.verbose)
+        elif args.patch_command == "status":
+            sys.exit(0 if check_status(verbose=args.verbose) else 1)
+
+    elif args.command == "with_patch":
+        from mkl_fft.with_patch import run_with_patch
+
+        run_with_patch(args.command)
 
 
 if __name__ == "__main__":
