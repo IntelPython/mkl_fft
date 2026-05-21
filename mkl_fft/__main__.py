@@ -38,53 +38,38 @@ def main():
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable verbose output"
     )
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
-
-    # patch subcommand with its own subparsers
-    patch_parser = subparsers.add_parser(
-        "patch", help="Manage persistent NumPy FFT patching"
+    parser.add_argument(
+        "--patch",
+        choices=["install", "uninstall", "status"],
+        help="Manage persistent NumPy FFT patching",
     )
-    patch_subparsers = patch_parser.add_subparsers(
-        dest="patch_command", help="Patch operations"
-    )
-    patch_subparsers.add_parser("install", help="Install persistent NumPy FFT patch")
-    patch_subparsers.add_parser(
-        "uninstall", help="Uninstall persistent NumPy FFT patch"
-    )
-    patch_subparsers.add_parser("status", help="Check if persistent patch is installed")
-
-    # with_patch subcommand
-    with_patch_parser = subparsers.add_parser(
-        "with_patch", help="Run command with temporary NumPy FFT patch"
-    )
-    with_patch_parser.add_argument(
-        "command", nargs=argparse.REMAINDER, help="Command to execute with patch"
+    parser.add_argument(
+        "--with-patch",
+        dest="with_patch",
+        nargs=argparse.REMAINDER,
+        help="Run command with temporary NumPy FFT patch",
     )
 
     args = parser.parse_args()
 
-    if not args.command:
-        parser.print_help()
-        sys.exit(1)
-
-    if args.command == "patch":
+    if args.patch:
         from mkl_fft.patch import check_status, install_patch, uninstall_patch
 
-        if not args.patch_command:
-            patch_parser.print_help()
-            sys.exit(1)
-
-        if args.patch_command == "install":
+        if args.patch == "install":
             install_patch(verbose=args.verbose)
-        elif args.patch_command == "uninstall":
+        elif args.patch == "uninstall":
             uninstall_patch(verbose=args.verbose)
-        elif args.patch_command == "status":
+        elif args.patch == "status":
             sys.exit(0 if check_status(verbose=args.verbose) else 1)
 
-    elif args.command == "with_patch":
+    elif args.with_patch is not None:
         from mkl_fft.with_patch import run_with_patch
 
-        run_with_patch(args.command)
+        run_with_patch(args.with_patch)
+
+    else:
+        parser.print_help()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
