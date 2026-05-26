@@ -53,14 +53,23 @@ def main():
     args = parser.parse_args()
 
     if args.patch:
-        from mkl_fft.patch import check_status, install_patch, uninstall_patch
+        from mkl_fft.patch import (
+            PatchOperationError,
+            check_status,
+            install_patch,
+            uninstall_patch,
+        )
 
-        if args.patch == "install":
-            install_patch(verbose=args.verbose)
-        elif args.patch == "uninstall":
-            uninstall_patch(verbose=args.verbose)
-        elif args.patch == "status":
-            sys.exit(0 if check_status(verbose=args.verbose) else 1)
+        try:
+            if args.patch == "install":
+                install_patch(verbose=args.verbose)
+            elif args.patch == "uninstall":
+                uninstall_patch(verbose=args.verbose)
+            elif args.patch == "status":
+                sys.exit(0 if check_status(verbose=args.verbose) else 1)
+        except PatchOperationError as exc:
+            print(exc, file=sys.stderr)
+            sys.exit(1)
 
     elif args.with_patch is not None:
         from mkl_fft.with_patch import run_with_patch

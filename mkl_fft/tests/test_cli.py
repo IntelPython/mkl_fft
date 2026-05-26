@@ -23,9 +23,17 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import site
+
+import mkl_fft
 import pytest
 
-from mkl_fft.patch import check_status, install_patch, uninstall_patch
+from mkl_fft.patch import (
+    PatchOperationError,
+    check_status,
+    install_patch,
+    uninstall_patch,
+)
 
 
 @pytest.fixture
@@ -42,7 +50,7 @@ def mock_pth_path(tmp_path, monkeypatch):
 
 def test_install_patch(mock_pth_path, capsys):
     """Test installing persistent patch."""
-    install_patch()
+    install_patch(verbose=True)
 
     assert mock_pth_path.exists()
     content = mock_pth_path.read_text()
@@ -52,13 +60,11 @@ def test_install_patch(mock_pth_path, capsys):
     assert "Persistent patch installed" in captured.out
 
 
-def test_install_patch_already_installed(mock_pth_path, capsys):
+def test_install_patch_already_installed(mock_pth_path):
     """Test installing patch when already installed."""
     install_patch()
-    install_patch()
-
-    captured = capsys.readouterr()
-    assert "already installed" in captured.out
+    with pytest.warns(UserWarning, match="already installed"):
+        install_patch(verbose=True)
 
 
 def test_uninstall_patch(mock_pth_path, capsys):
@@ -66,7 +72,7 @@ def test_uninstall_patch(mock_pth_path, capsys):
     install_patch()
     assert mock_pth_path.exists()
 
-    uninstall_patch()
+    uninstall_patch(verbose=True)
     assert not mock_pth_path.exists()
 
     captured = capsys.readouterr()
@@ -75,7 +81,7 @@ def test_uninstall_patch(mock_pth_path, capsys):
 
 def test_uninstall_patch_not_installed(mock_pth_path, capsys):
     """Test uninstalling patch when not installed."""
-    uninstall_patch()
+    uninstall_patch(verbose=True)
 
     captured = capsys.readouterr()
     assert "No persistent patch found" in captured.out
@@ -90,3 +96,65 @@ def test_patch_status_check_function(mock_pth_path):
 
     uninstall_patch()
     assert not check_status()
+
+
+def test_install_patch_enables_runtime_patch_via_pth(mock_pth_path):
+    """Test that .pth activation results in patched NumPy FFT runtime state."""
+    install_patch()
+
+    preexisting_patch_state = mkl_fft.is_patched()
+    try:
+        site.addsitedir(str(mock_pth_path.parent))
+        assert mkl_fft.is_patched()
+    finally:
+        if mkl_fft.is_patched() and not preexisting_patch_state:
+            mkl_fft.restore_numpy_fft()
+
+
+def test_install_patch_raises_patch_operation_error_on_oserror(
+    mock_pth_path, monkeypatch
+):
+    """Test install_patch raises a typed error for filesystem failures."""
+
+    def mock_write_text(*args, **kwargs):
+        raise OSError("mock write failure")
+
+    monkeypatch.setattr("pathlib.Path.write_text", mock_write_text)
+
+    with pytest.raises(PatchOperationError, match="Error installing patch"):
+        install_patch()
+
+
+def test_uninstall_patch_raises_patch_operation_error_on_oserror(
+    mock_pth_path, monkeypatch
+):
+    """Test uninstall_patch raises a typed error for filesystem failures."""
+    install_patch()
+
+    def mock_unlink(*args, **kwargs):
+        raise OSError("mock unlink failure")
+
+    monkeypatch.setattr("pathlib.Path.unlink", mock_unlink)
+
+    with pytest.raises(PatchOperationError, match="Error removing patch"):
+        uninstall_patch()
+
+
+def test_cli_patch_install_exits_with_error_on_patch_operation_error(
+    monkeypatch, capsys
+):
+    """Test CLI maps patch operation failures to exit code 1."""
+    from mkl_fft import __main__ as cli_main
+
+    def mock_install_patch(*args, **kwargs):
+        raise PatchOperationError("mock cli install failure")
+
+    monkeypatch.setattr("mkl_fft.patch.install_patch", mock_install_patch)
+    monkeypatch.setattr("sys.argv", ["python", "--patch", "install"])
+
+    with pytest.raises(SystemExit) as exc_info:
+        cli_main.main()
+
+    assert exc_info.value.code == 1
+    captured = capsys.readouterr()
+    assert "mock cli install failure" in captured.err

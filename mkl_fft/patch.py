@@ -30,6 +30,10 @@ import warnings
 from pathlib import Path
 
 
+class PatchOperationError(RuntimeError):
+    """Raised when a persistent patch operation cannot be completed."""
+
+
 def get_pth_path():
     """Get the path to mkl_fft_patch.pth in the appropriate site-packages."""
     site_packages = site.getsitepackages()
@@ -66,11 +70,11 @@ def install_patch(verbose=False):
             print("Python sessions. To disable, run:")
             print("  python -m mkl_fft patch uninstall")
     except OSError as e:
-        print(f"Error installing patch: {e}")
-        print()
-        print("You may need to run with appropriate permissions or install to")
-        print("a user site-packages directory.")
-        sys.exit(1)
+        raise PatchOperationError(
+            f"Error installing patch at {pth_path}: {e}\n\n"
+            "You may need to run with appropriate permissions or install to "
+            "a user site-packages directory."
+        ) from e
 
 
 def uninstall_patch(verbose=False):
@@ -89,8 +93,9 @@ def uninstall_patch(verbose=False):
             print()
             print("NumPy FFT will now use the default implementations.")
     except OSError as e:
-        print(f"Error removing patch: {e}")
-        sys.exit(1)
+        raise PatchOperationError(
+            f"Error removing patch at {pth_path}: {e}"
+        ) from e
 
 
 def check_status(verbose=False):
@@ -118,12 +123,16 @@ if __name__ == "__main__":
         sys.exit(1)
 
     command = sys.argv[1]
-    if command == "install":
-        install_patch(verbose=True)
-    elif command == "uninstall":
-        uninstall_patch(verbose=True)
-    elif command == "status":
-        sys.exit(0 if check_status(verbose=True) else 1)
-    else:
-        print(f"Unknown command: {command}")
+    try:
+        if command == "install":
+            install_patch(verbose=True)
+        elif command == "uninstall":
+            uninstall_patch(verbose=True)
+        elif command == "status":
+            sys.exit(0 if check_status(verbose=True) else 1)
+        else:
+            print(f"Unknown command: {command}")
+            sys.exit(1)
+    except PatchOperationError as exc:
+        print(exc, file=sys.stderr)
         sys.exit(1)
