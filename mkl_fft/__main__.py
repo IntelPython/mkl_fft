@@ -44,8 +44,8 @@ def main():
         help="Manage persistent NumPy FFT patching",
     )
     parser.add_argument(
-        "--with-patch",
-        dest="with_patch",
+        "--with-numpy-patch",
+        dest="with_numpy_patch",
         nargs=argparse.REMAINDER,
         help="Run command with temporary NumPy FFT patch",
     )
@@ -71,10 +71,10 @@ def main():
             print(exc, file=sys.stderr)
             sys.exit(1)
 
-    elif args.with_patch is not None:
-        from mkl_fft.with_patch import run_with_patch
+    elif args.with_numpy_patch is not None:
+        from mkl_fft.with_patch import run_with_numpy_patch
 
-        run_with_patch(args.with_patch)
+        run_with_numpy_patch(args.with_numpy_patch)
 
     else:
         parser.print_help()

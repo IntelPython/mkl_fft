@@ -56,7 +56,7 @@ def install_patch(verbose=False):
             warnings.warn(
                 f"Persistent patch already installed at {pth_path}",
                 UserWarning,
-                stacklevel=2
+                stacklevel=2,
             )
         return
 
@@ -66,7 +66,9 @@ def install_patch(verbose=False):
         if verbose:
             print(f"Persistent patch installed at {pth_path}")
             print()
-            print("NumPy FFT will now use MKL-accelerated implementations in all")
+            print(
+                "NumPy FFT will now use MKL-accelerated implementations in all"
+            )
             print("Python sessions. To disable, run:")
             print("  python -m mkl_fft patch uninstall")
     except OSError as e:
@@ -106,7 +108,9 @@ def check_status(verbose=False):
         if verbose:
             print(f"Persistent patch is installed at {pth_path}")
             print()
-            print("NumPy FFT is configured to use MKL-accelerated implementations.")
+            print(
+                "NumPy FFT is configured to use MKL-accelerated implementations."
+            )
         return True
     else:
         if verbose:

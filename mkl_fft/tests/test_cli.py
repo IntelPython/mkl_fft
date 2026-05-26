@@ -25,9 +25,9 @@
 
 import site
 
-import mkl_fft
 import pytest
 
+import mkl_fft
 from mkl_fft.patch import (
     PatchOperationError,
     check_status,

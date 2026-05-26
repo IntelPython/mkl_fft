@@ -31,19 +31,23 @@ import sys
 import tempfile
 
 
-def run_with_patch(args):
+def run_with_numpy_patch(args):
     """Run a command with mkl_fft NumPy patch enabled.
 
     Automatically prepends 'python' unless args start with '--'.
     """
     if not args:
-        print("Usage: python -m mkl_fft --with-patch <script|code|command>")
+        print(
+            "Usage: python -m mkl_fft --with-numpy-patch <script|code|command>"
+        )
         print()
         print("Examples:")
-        print("  python -m mkl_fft --with-patch script.py")
-        print("  python -m mkl_fft --with-patch -c 'import numpy; print(numpy.fft.fft.__module__)'")
-        print("  python -m mkl_fft --with-patch -m pytest tests/")
-        print("  python -m mkl_fft --with-patch -- any command here")
+        print("  python -m mkl_fft --with-numpy-patch script.py")
+        print(
+            "  python -m mkl_fft --with-numpy-patch -c 'import numpy; print(numpy.fft.fft.__module__)'"
+        )
+        print("  python -m mkl_fft --with-numpy-patch -m pytest tests/")
+        print("  python -m mkl_fft --with-numpy-patch -- any command here")
         sys.exit(1)
 
     # If args start with '--', strip it and run as-is (arbitrary command)
@@ -87,8 +91,8 @@ except Exception:
 
 
 def main(args=None):
-    """Deprecated entry point. Use run_with_patch() instead."""
-    run_with_patch(args if args else sys.argv[1:])
+    """Deprecated entry point. Use run_with_numpy_patch() instead."""
+    run_with_numpy_patch(args if args else sys.argv[1:])
 
 
 if __name__ == "__main__":

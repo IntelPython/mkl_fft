@@ -84,79 +84,56 @@ numpy.allclose(mkl_res, np_res)
 ---
 # Patching Mechanisms
 
-`mkl_fft` provides convenient ways to enable MKL-accelerated FFT operations in NumPy with or without modifying your code. It supports both persistent patching (applies to all Python sessions) and one-shot execution (applies only to a single command). It also supports Python functions and context managers that do the same.
+`mkl_fft` provides convenient patch methods to enable MKL-accelerated FFT operations in NumPy with or without modifying your code.
 
-## Persistent Patching
+## CLI Quickstart
 
-### Install Persistent Patch
-
-```bash
-python -m mkl_fft patch install
-```
-
-### Check Patch Status
+### Persistent patch (all Python sessions)
 
 ```bash
-python -m mkl_fft patch status
+# Install
+python -m mkl_fft --patch install
+
+# Status (exit code: 0 = installed, 1 = not installed)
+python -m mkl_fft --patch status
+
+# Remove
+python -m mkl_fft --patch uninstall
 ```
 
-Checks whether the persistent patch is currently installed. Returns exit code 0 if installed, 1 if not installed.
-
-### Uninstall Persistent Patch
+### Verify current FFT backend
 
 ```bash
-python -m mkl_fft patch uninstall
+python -c "import numpy; print(f'numpy.fft.fft.__module__: {numpy.fft.fft.__module__}')"
 ```
 
-Removes the persistent patch file, restoring NumPy to its default FFT implementation.
-
-## One-Shot Execution
+### One-shot patch (single command only)
 
 ```bash
-python -m mkl_fft with_patch <command> [args...]
+# Script
+python -m mkl_fft --with-numpy-patch my_script.py
+
+# Pytest
+python -m mkl_fft --with-numpy-patch -m pytest tests/
+
+# One-liner
+python -m mkl_fft --with-numpy-patch -c "import numpy; print(f\"numpy.fft.fft.__module__: {numpy.fft.fft.__module__}\")"
+
+# Non-Python command
+python -m mkl_fft --with-numpy-patch -- <command> [args...]
 ```
 
-Runs a single command with MKL-accelerated FFT enabled. The patch is only active for that specific execution and does not persist.
-
-**Examples:**
-
-```bash
-# Run a Python script with MKL acceleration
-python -m mkl_fft with_patch python my_script.py
-
-# Run tests with MKL acceleration
-python -m mkl_fft with_patch python -m pytest tests/
-
-# Run a Python one-liner
-python -m mkl_fft with_patch python -c "import numpy; print(numpy.fft.fft.__module__)"
-
-# Run benchmarks with MKL acceleration
-python -m mkl_fft with_patch python run_benchmarks.py
-```
-
-## Programmatic Usage
-
-You can also patch NumPy programmatically in your Python code:
+## Programmatic Quickstart
 
 ```python
 import mkl_fft
 
-# Check if currently patched
-if mkl_fft.is_patched():
-    print("NumPy FFT is using MKL")
-
-# Enable patching globally
 mkl_fft.patch_numpy_fft()
-
-# Disable patching
+print(mkl_fft.is_patched())
 mkl_fft.restore_numpy_fft()
 
-# Use as context manager (recommended for temporary patching)
 with mkl_fft.mkl_fft():
-    # NumPy FFT uses MKL inside this block
-    import numpy as np
-    result = np.fft.fft(data)
-# NumPy FFT restored outside the block
+   pass
 ```
 
 ---
