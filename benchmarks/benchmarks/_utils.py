@@ -9,7 +9,7 @@ def _make_input(rng, shape, dtype):
     """Return an array of *shape* and *dtype*.
 
     Complex dtypes get non-zero imaginary parts for a realistic signal.
-    *shape* may be an int (1-D) or a tuple.
+    `shape` may be an int (1-D) or a tuple.
     """
     dt = np.dtype(dtype)
     s = (shape,) if isinstance(shape, int) else shape
@@ -22,7 +22,7 @@ class BenchC2C:
     """Base setup for complex-to-complex benchmarks.
 
     Subclasses define params, param_names, and time_* / peakmem_* methods.
-    Extra positional params (e.g. module) are accepted and ignored.
+    Other positional params are ignored.
     """
 
     def setup(self, shape, dtype, *_):

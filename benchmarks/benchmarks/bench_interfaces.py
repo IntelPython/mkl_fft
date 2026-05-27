@@ -49,10 +49,7 @@ class BenchC2C1D(BenchC2C):
         mod = _MODULE_MAP[module]
         self.fft = mod.fft
         self.ifft = mod.ifft
-        # Prime the MKL DFTI descriptor cache so the first measured
-        # iteration doesn't pay the one-time descriptor-creation cost.
-        # ASV's warmup_time (default 0.1s) would normally cover this,
-        # but doing it explicitly removes the dependency on that default.
+        # Prime MKL DFTI descriptor cache
         self.fft(self.x)
         self.ifft(self.x)
 
@@ -79,7 +76,6 @@ class BenchRC1D(BenchR2C):
         mod = _MODULE_MAP[module]
         self.rfft = mod.rfft
         self.irfft = mod.irfft
-        # Prime the DFTI descriptor cache (see BenchC2C1D.setup).
         self.rfft(self.x_real)
         self.irfft(self.x_complex, n=n)
 
@@ -112,7 +108,6 @@ class BenchHermitian1D(BenchR2C):
         mod = _MODULE_MAP[module]
         self.hfft = mod.hfft
         self.ihfft = mod.ihfft
-        # Prime the DFTI descriptor cache (see BenchC2C1D.setup).
         self.hfft(self.x_complex, n=n)
         self.ihfft(self.x_real)
 
@@ -139,7 +134,6 @@ class BenchC2C2D(BenchC2C):
         mod = _MODULE_MAP[module]
         self.fft2 = mod.fft2
         self.ifft2 = mod.ifft2
-        # Prime the DFTI descriptor cache (see BenchC2C1D.setup).
         self.fft2(self.x)
         self.ifft2(self.x)
 
@@ -166,7 +160,6 @@ class BenchRC2D(BenchR2C):
         mod = _MODULE_MAP[module]
         self.rfft2 = mod.rfft2
         self.irfft2 = mod.irfft2
-        # Prime the DFTI descriptor cache (see BenchC2C1D.setup).
         self.rfft2(self.x_real)
         self.irfft2(self.x_complex, s=shape)
 
@@ -198,7 +191,6 @@ class BenchHermitian2D(BenchR2C):
         mod = _MODULE_MAP[module]
         self.hfft2 = mod.hfft2
         self.ihfft2 = mod.ihfft2
-        # Prime the DFTI descriptor cache (see BenchC2C1D.setup).
         self.hfft2(self.x_complex, s=shape)
         self.ihfft2(self.x_real)
 
@@ -225,7 +217,6 @@ class BenchC2CND(BenchC2C):
         mod = _MODULE_MAP[module]
         self.fftn = mod.fftn
         self.ifftn = mod.ifftn
-        # Prime the DFTI descriptor cache (see BenchC2C1D.setup).
         self.fftn(self.x)
         self.ifftn(self.x)
 
@@ -252,7 +243,6 @@ class BenchRCND(BenchR2C):
         mod = _MODULE_MAP[module]
         self.rfftn = mod.rfftn
         self.irfftn = mod.irfftn
-        # Prime the DFTI descriptor cache (see BenchC2C1D.setup).
         self.rfftn(self.x_real)
         self.irfftn(self.x_complex, s=shape)
 
@@ -284,7 +274,6 @@ class BenchHermitianND(BenchR2C):
         mod = _MODULE_MAP[module]
         self.hfftn = mod.hfftn
         self.ihfftn = mod.ihfftn
-        # Prime the DFTI descriptor cache (see BenchC2C1D.setup).
         self.hfftn(self.x_complex, s=shape)
         self.ihfftn(self.x_real)
 

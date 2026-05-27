@@ -21,10 +21,7 @@ class BenchFFT1D(BenchC2C):
 
     def setup(self, n, dtype):
         super().setup(n, dtype)
-        # Prime the MKL DFTI descriptor cache so the first measured
-        # iteration doesn't pay the one-time descriptor-creation cost.
-        # ASV's warmup_time (default 0.1s) would normally cover this,
-        # but doing it explicitly removes the dependency on that default.
+        # prime MKL DFTI descriptor cache
         mkl_fft.fft(self.x)
         mkl_fft.ifft(self.x)
 
@@ -48,7 +45,6 @@ class BenchRFFT1D(BenchR2C):
 
     def setup(self, n, dtype):
         super().setup(n, dtype)
-        # Prime the DFTI descriptor cache (see BenchFFT1D.setup).
         mkl_fft.rfft(self.x_real)
         mkl_fft.irfft(self.x_complex, n=n)
 
@@ -76,7 +72,6 @@ class BenchFFT1DNonPow2(BenchC2C):
 
     def setup(self, n, dtype):
         super().setup(n, dtype)
-        # Prime the DFTI descriptor cache (see BenchFFT1D.setup).
         mkl_fft.fft(self.x)
         mkl_fft.ifft(self.x)
 
@@ -100,7 +95,6 @@ class BenchRFFT1DNonPow2(BenchR2C):
 
     def setup(self, n, dtype):
         super().setup(n, dtype)
-        # Prime the DFTI descriptor cache (see BenchFFT1D.setup).
         mkl_fft.rfft(self.x_real)
         mkl_fft.irfft(self.x_complex, n=n)
 
