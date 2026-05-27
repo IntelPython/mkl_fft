@@ -28,6 +28,17 @@ regardless of their total core count. Physical cores are detected via
 `psutil.cpu_count(logical=False)` — hyperthreads are excluded per MKL
 recommendation.
 
+## Notes on Measurement
+
+### DFTI descriptor warmup
+
+MKL creates a DFTI descriptor on the first FFT call for a given (size, dtype,
+strides) combination and reuses it on subsequent calls. To avoid charging
+that one-time cost to the first measured iteration, each benchmark's `setup`
+performs an explicit warmup call after preparing the input array. ASV's
+default `warmup_time` (0.1s) already amortizes this for sub-millisecond
+transforms, but the explicit warmup makes the intent visible.
+
 ## Running Benchmarks
 
 Prerequisites:

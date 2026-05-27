@@ -26,6 +26,15 @@ class BenchFFT2D(BenchC2C):
     ]
     param_names = ["shape", "dtype"]
 
+    def setup(self, shape, dtype):
+        super().setup(shape, dtype)
+        # Prime the MKL DFTI descriptor cache so the first measured
+        # iteration doesn't pay the one-time descriptor-creation cost.
+        # ASV's warmup_time (default 0.1s) would normally cover this,
+        # but doing it explicitly removes the dependency on that default.
+        mkl_fft.fft2(self.x)
+        mkl_fft.ifft2(self.x)
+
     def time_fft2(self, shape, dtype):
         mkl_fft.fft2(self.x)
 
@@ -43,6 +52,12 @@ class BenchRFFT2D(BenchR2C):
 
     params = [_SHAPES_2D, _DTYPES_REAL]
     param_names = ["shape", "dtype"]
+
+    def setup(self, shape, dtype):
+        super().setup(shape, dtype)
+        # Prime the DFTI descriptor cache (see BenchFFT2D.setup).
+        mkl_fft.rfft2(self.x_real)
+        mkl_fft.irfft2(self.x_complex, s=shape)
 
     def time_rfft2(self, shape, dtype):
         mkl_fft.rfft2(self.x_real)
@@ -71,6 +86,12 @@ class BenchFFT2DNonPow2(BenchC2C):
     ]
     param_names = ["shape", "dtype"]
 
+    def setup(self, shape, dtype):
+        super().setup(shape, dtype)
+        # Prime the DFTI descriptor cache (see BenchFFT2D.setup).
+        mkl_fft.fft2(self.x)
+        mkl_fft.ifft2(self.x)
+
     def time_fft2(self, shape, dtype):
         mkl_fft.fft2(self.x)
 
@@ -92,6 +113,12 @@ class BenchFFTnD(BenchC2C):
     ]
     param_names = ["shape", "dtype"]
 
+    def setup(self, shape, dtype):
+        super().setup(shape, dtype)
+        # Prime the DFTI descriptor cache (see BenchFFT2D.setup).
+        mkl_fft.fftn(self.x)
+        mkl_fft.ifftn(self.x)
+
     def time_fftn(self, shape, dtype):
         mkl_fft.fftn(self.x)
 
@@ -109,6 +136,12 @@ class BenchRFFTnD(BenchR2C):
 
     params = [_SHAPES_3D, _DTYPES_REAL]
     param_names = ["shape", "dtype"]
+
+    def setup(self, shape, dtype):
+        super().setup(shape, dtype)
+        # Prime the DFTI descriptor cache (see BenchFFT2D.setup).
+        mkl_fft.rfftn(self.x_real)
+        mkl_fft.irfftn(self.x_complex, s=shape)
 
     def time_rfftn(self, shape, dtype):
         mkl_fft.rfftn(self.x_real)
@@ -135,6 +168,12 @@ class BenchFFTnDNonPow2(BenchC2C):
         _DTYPES_REDUCED,
     ]
     param_names = ["shape", "dtype"]
+
+    def setup(self, shape, dtype):
+        super().setup(shape, dtype)
+        # Prime the DFTI descriptor cache (see BenchFFT2D.setup).
+        mkl_fft.fftn(self.x)
+        mkl_fft.ifftn(self.x)
 
     def time_fftn(self, shape, dtype):
         mkl_fft.fftn(self.x)
