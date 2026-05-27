@@ -56,7 +56,7 @@ class BenchFFT1DNonPow2(BenchC2C):
     this suite catches regressions in that path.
     """
 
-    params = [_SIZES_NONPOW2, ["float64", "complex128", "complex64"]]
+    params = [_SIZES_NONPOW2, _DTYPES_ALL]
     param_names = ["n", "dtype"]
 
     def time_fft(self, n, dtype):

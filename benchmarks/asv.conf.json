@@ -7,6 +7,11 @@
     "branches": [
         "master"
     ],
+    "environment_type": "conda",
+    "conda_channels": [
+        "https://software.repos.intel.com/python/conda/",
+        "conda-forge"
+    ],
     "benchmark_dir": "benchmarks",
     "env_dir": ".asv/env",
     "results_dir": ".asv/results",

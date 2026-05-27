@@ -22,9 +22,10 @@ class BenchC2C:
     """Base setup for complex-to-complex benchmarks.
 
     Subclasses define params, param_names, and time_* / peakmem_* methods.
+    Extra positional params (e.g. module) are accepted and ignored.
     """
 
-    def setup(self, shape, dtype):
+    def setup(self, shape, dtype, *_):
         rng = np.random.default_rng(_RNG_SEED)
         self.x = _make_input(rng, shape, dtype)
 
@@ -47,19 +48,26 @@ class BenchR2C:
       self.x_real    — real array of full shape (rfft / ihfft input)
       self.x_complex — complex half-spectrum array (irfft / hfft input)
 
-    Works for 1-D (shape as int) and multi-D (shape as tuple).
-    Subclasses define params, param_names, and time_* / peakmem_* methods.
+    DC (index 0 of the last axis) of x_complex has its imaginary part zeroed,
+    and when the full last-axis length is even the Nyquist bin imaginary part
+    is also zeroed, satisfying Hermitian symmetry expected by hfft / ihfft2 /
+    hfftn. Extra positional params are accepted and ignored.
     """
 
-    def setup(self, shape, dtype):
+    def setup(self, shape, dtype, *_):
         rng = np.random.default_rng(_RNG_SEED)
         cdtype = "complex64" if dtype == "float32" else "complex128"
         if isinstance(shape, int):
+            n_last = shape
             half_shape = shape // 2 + 1
         else:
+            n_last = shape[-1]
             half_shape = shape[:-1] + (shape[-1] // 2 + 1,)
         self.x_real = rng.standard_normal(shape).astype(dtype)
         self.x_complex = (
             rng.standard_normal(half_shape)
             + 1j * rng.standard_normal(half_shape)
         ).astype(cdtype)
+        self.x_complex[..., 0] = self.x_complex[..., 0].real
+        if n_last % 2 == 0:
+            self.x_complex[..., -1] = self.x_complex[..., -1].real

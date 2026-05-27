@@ -9,8 +9,7 @@ Performance benchmarks for [mkl_fft](https://github.com/IntelPython/mkl_fft) usi
 |------|-----|-----------|--------|-------------|
 | `bench_fft1d.py` | `mkl_fft` | `fft`, `ifft`, `rfft`, `irfft` | float32, float64, complex64, complex128 | power-of-two and non-power-of-two |
 | `bench_fftnd.py` | `mkl_fft` | `fft2`, `ifft2`, `rfft2`, `irfft2`, `fftn`, `ifftn`, `rfftn`, `irfftn` | float32, float64, complex64, complex128 | square and non-square/non-cubic |
-| `bench_numpy_fft.py` | `mkl_fft.interfaces.numpy_fft` | All exported functions including Hermitian (`hfft`, `ihfft`) | float32, float64, complex64, complex128 | power-of-two |
-| `bench_scipy_fft.py` | `mkl_fft.interfaces.scipy_fft` | All exported functions including Hermitian 2-D/N-D (`hfft2`, `hfftn`) | float32, float64, complex64, complex128 | square and cubic |
+| `bench_interfaces.py` | `mkl_fft.interfaces.{numpy_fft, scipy_fft}` | All exported functions; selected by a `module` parameter. Hermitian 2-D/N-D (`hfft2`, `hfftn`) are scipy-only. | float32, float64, complex64, complex128 | power-of-two and cubic |
 | `bench_memory.py` | `mkl_fft` | Peak RSS for 1-D, 2-D, and 3-D transforms | float32, float64, complex128 | power-of-two |
 
 ## Threading

@@ -12,4 +12,3 @@ mkl_fft/src/mklfft.c
 
 # ASV benchmark artifacts
 .asv/
-benchmarks/.asv/
