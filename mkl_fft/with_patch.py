@@ -50,10 +50,10 @@ def run_with_numpy_patch(args):
         print("  python -m mkl_fft --with-numpy-patch -- any command here")
         sys.exit(1)
 
-    # If args start with '--', strip it and run as-is (arbitrary command)
+    # strip leading '--' and run as-is
     if args[0] == "--":
         args = args[1:]
-    # Otherwise, prepend 'python' for convenience
+    # prepend 'python' for convenience
     else:
         args = [sys.executable] + args
 
@@ -90,10 +90,5 @@ except Exception:
             pass
 
 
-def main(args=None):
-    """Deprecated entry point. Use run_with_numpy_patch() instead."""
-    run_with_numpy_patch(args if args else sys.argv[1:])
-
-
 if __name__ == "__main__":
-    main()
+    run_with_numpy_patch(sys.argv[1:])
