@@ -82,6 +82,61 @@ numpy.allclose(mkl_res, np_res)
 ```
 
 ---
+# Patching Mechanisms
+
+`mkl_fft` provides convenient patch methods to enable MKL-accelerated FFT operations in NumPy with or without modifying your code.
+
+## CLI Quickstart
+
+### Persistent patch (all Python sessions)
+
+```bash
+# Install
+python -m mkl_fft --patch install
+
+# Status (exit code: 0 = installed, 1 = not installed)
+python -m mkl_fft --patch status
+
+# Remove
+python -m mkl_fft --patch uninstall
+```
+
+### Verify current FFT backend
+
+```bash
+python -c "import numpy; print(f'numpy.fft.fft.__module__: {numpy.fft.fft.__module__}')"
+```
+
+### One-shot patch (single command only)
+
+```bash
+# Script
+python -m mkl_fft --with-numpy-patch my_script.py
+
+# Pytest
+python -m mkl_fft --with-numpy-patch -m pytest tests/
+
+# One-liner
+python -m mkl_fft --with-numpy-patch -c "import numpy; print(f\"numpy.fft.fft.__module__: {numpy.fft.fft.__module__}\")"
+
+# Non-Python command
+python -m mkl_fft --with-numpy-patch -- <command> [args...]
+```
+
+## Programmatic Quickstart
+
+```python
+import mkl_fft
+
+mkl_fft.patch_numpy_fft()
+print(mkl_fft.is_patched())
+mkl_fft.restore_numpy_fft()
+
+with mkl_fft.mkl_fft():
+   pass
+```
+
+---
 # Building from source
 
 To build `mkl_fft` from sources on Linux with Intel® oneMKL:
