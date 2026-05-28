@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [dev] - YYYY-MM-DD
 
 ### Added
-  * Added CLI for persistent and ephemeral NumPy FFT patching: `python -m mkl_fft patch install/uninstall/status` for persistent patching across all Python sessions, and `python -m mkl_fft with_patch <command>` for one-shot execution with MKL acceleration [gh-319](https://github.com/IntelPython/mkl_fft/pull/319)
+* Added CLI for persistent and ephemeral NumPy FFT patching: `python -m mkl_fft patch install/uninstall/status` for persistent patching across all Python sessions, and `python -m mkl_fft with_patch <command>` for one-shot execution with MKL acceleration [gh-319](https://github.com/IntelPython/mkl_fft/pull/319)
 
 ### Changed
 * Removed `numpy-base` dependency and `USE_NUMPY_BASE` environment variable from conda recipe [gh-318](https://github.com/IntelPython/mkl_fft/pull/318)
