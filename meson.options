@@ -1,0 +1,7 @@
+option(
+    'mkl_threading',
+    type: 'combo',
+    choices: ['intel_thread', 'tbb_thread', 'sequential', 'gnu_thread'],
+    value: 'intel_thread',
+    description: 'MKL threading layer to link to (default: intel_thread)'
+)
