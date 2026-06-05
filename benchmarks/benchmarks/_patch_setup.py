@@ -11,13 +11,15 @@ _PATCH_MAP = [
 
 
 def _apply_patches():
+    import importlib
+
     import numpy as np
 
     patched = {}
 
     for mod_name, patch_fn_name in _PATCH_MAP:
         try:
-            mod = __import__(mod_name)
+            mod = importlib.import_module(mod_name)
         except ImportError as exc:
             raise RuntimeError(
                 f"[mkl-patch] Cannot import {mod_name}: {exc}\n"
