@@ -5,9 +5,9 @@ Hard-fails with a descriptive RuntimeError if mkl_fft is missing or the
 patch does not take effect, so benchmarks never silently run on stock NumPy.
 """
 
-_PATCH_MAP = [
-    ("mkl_fft", "patch_numpy_fft"),
-]
+PATCH_MAP = {
+    "mkl_fft": "patch_numpy_fft",
+}
 
 
 def _apply_patches():
@@ -17,12 +17,12 @@ def _apply_patches():
 
     patched = {}
 
-    for mod_name, patch_fn_name in _PATCH_MAP:
+    for mod_name, patch_fn_name in PATCH_MAP.items():
         try:
             mod = importlib.import_module(mod_name)
         except ImportError as exc:
             raise RuntimeError(
-                f"[mkl-patch] Cannot import {mod_name}: {exc}\n"
+                f"Cannot import {mod_name}: {exc}\n"
                 f"  Ensure the conda env contains {mod_name} "
                 f"from the Intel channel.\n"
                 "  Required channels: "
@@ -32,7 +32,7 @@ def _apply_patches():
         patch_fn = getattr(mod, patch_fn_name, None)
         if patch_fn is None:
             raise RuntimeError(
-                f"[mkl-patch] {mod_name} has no {patch_fn_name}(). "
+                f"{mod_name} has no {patch_fn_name}(). "
                 f"Upgrade {mod_name} to a version that exposes "
                 "the stock-numpy patch API."
             )
@@ -41,13 +41,13 @@ def _apply_patches():
             patch_fn()
         except Exception as exc:
             raise RuntimeError(
-                f"[mkl-patch] {mod_name}.{patch_fn_name}() raised: {exc!r}"
+                f"{mod_name}.{patch_fn_name}() raised: {exc!r}"
             ) from exc
 
         is_patched_fn = getattr(mod, "is_patched", None)
         if callable(is_patched_fn) and not is_patched_fn():
             raise RuntimeError(
-                f"[mkl-patch] {mod_name}.is_patched() returned False "
+                f"{mod_name}.is_patched() returned False "
                 "after patching. NumPy may have been imported before "
                 "patching in a conflicting state."
             )
@@ -59,9 +59,6 @@ def _apply_patches():
     }
     for mod_name in patched:
         try:
-            attr = _attr_checks[mod_name]()
+            _attr_checks[mod_name]()
         except Exception:
-            attr = "unknown"
-        print(f"[mkl-patch] {mod_name}: numpy.fft dispatch -> {attr}")
-
-    print("[mkl-patch] ALL OK -- mkl_fft active")
+            pass
