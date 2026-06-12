@@ -19,6 +19,6 @@
     "build_cache_size": 2,
     "default_benchmark_timeout": 500,
     "regressions_thresholds": {
-        ".*": 0.3
+        ".*": 0.2
     }
 }

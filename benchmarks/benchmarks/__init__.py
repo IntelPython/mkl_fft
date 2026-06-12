@@ -4,6 +4,8 @@ import os
 
 import psutil
 
+from ._patch_setup import _apply_patches
+
 _MIN_THREADS = 4  # minimum physical cores required for multi-threaded mode
 
 
@@ -19,3 +21,6 @@ def _thread_count():
 
 _THREADS = os.environ.get("MKL_NUM_THREADS", _thread_count())
 os.environ["MKL_NUM_THREADS"] = _THREADS
+
+_apply_patches()
+del _apply_patches
