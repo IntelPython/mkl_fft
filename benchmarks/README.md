@@ -44,7 +44,7 @@ transforms, but the explicit warmup makes the intent visible.
 Prerequisites:
 
 ```bash
-pip install asv psutil
+pip install -e ".[benchmark]"
 ```
 
 Run benchmarks against the current environment:

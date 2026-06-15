@@ -60,7 +60,7 @@ readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10,<3.15"
 
 [project.optional-dependencies]
-benchmark = ["asv>=0.6", "psutil"]
+benchmark = ["asv>=0.6", "psutil", "scipy>=1.10"]
 scipy_interface = ["scipy>=1.10", "mkl-service"]
 test = ["pytest", "scipy>=1.10", "mkl-service"]
 
