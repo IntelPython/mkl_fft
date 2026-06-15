@@ -1,2 +1,2 @@
 psutil
-scipy
+scipy>=1.10

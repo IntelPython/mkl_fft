@@ -44,7 +44,7 @@ transforms, but the explicit warmup makes the intent visible.
 Prerequisites:
 
 ```bash
-pip install -e ".[benchmark]"
+pip install ".[benchmark]"
 ```
 
 Run benchmarks against the current environment:
