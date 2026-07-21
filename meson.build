@@ -60,7 +60,7 @@ gen_mklfft_c = custom_target(
     command: [py, src_file_cli, '@INPUT@', '-o', '@OUTPUT@'],
 )
 
-# cython
+# Cython extension
 py.extension_module(
     '_pydfti',
     sources: [
@@ -78,7 +78,7 @@ py.extension_module(
     subdir: 'mkl_fft'
 )
 
-# python
+# Python sources
 py.install_sources(
     [
         'mkl_fft/__init__.py',
@@ -110,5 +110,6 @@ py.install_sources(
 
 install_subdir(
     'mkl_fft/tests',
-    install_dir: py.get_install_dir() / 'mkl_fft'
+    install_dir: py.get_install_dir() / 'mkl_fft',
+    exclude_files: ['AGENTS.md']
 )
