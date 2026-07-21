@@ -2,10 +2,11 @@ project(
     'mkl_fft',
     ['c', 'cython'],
     version: run_command(
-        'python', '-c',
-        'import os; exec(open("mkl_fft/_version.py").read()); print(__version__)',
+        find_program('python3', 'python'),
+        'exec(open("mkl_fft/_version.py").read()); print(__version__)',
         check: true
     ).stdout().strip(),
+    meson_version: '>=1.8.3',
     default_options: [
         'buildtype=release',
     ]
