@@ -1,4 +1,8 @@
-#!/bin/bash -x
+#!/bin/bash -ex
+
+if [ -d "build" ]; then
+    rm -rf build
+fi
 
 export CFLAGS="-I$PREFIX/include $CFLAGS"
 export LDFLAGS="-L${PREFIX}/lib ${LDFLAGS}"
