@@ -69,11 +69,15 @@ py.extension_module(
 py.install_sources(
     [
         'mkl_fft/__init__.py',
+        'mkl_fft/__main__.py',
         'mkl_fft/_fft_utils.py',
         'mkl_fft/_init_helper.py',
         'mkl_fft/_mkl_fft.py',
         'mkl_fft/_patch_numpy.py',
+        'mkl_fft/_patch_startup.py',
         'mkl_fft/_version.py',
+        'mkl_fft/patch.py',
+        'mkl_fft/with_patch.py',
     ],
     subdir: 'mkl_fft'
 )
