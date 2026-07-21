@@ -28,6 +28,17 @@ inc_np = include_directories(np_dir, 'mkl_fft/src', 'mkl_fft')
 cc = meson.get_compiler('c')
 c_args = ['-DNDEBUG']
 
+rpath_link_args = []
+if host_machine.system() != 'windows'
+    if host_machine.system() == 'darwin'
+        origin = '@loader_path'
+    else
+        origin = '$ORIGIN'
+    endif
+    rpath = origin / '../..' + ':' + origin / '../../..'
+    rpath_link_args = ['-Wl,-rpath,' + rpath]
+endif
+
 mkl_dep = dependency('MKL', method: 'cmake',
     modules: ['MKL::MKL'],
     cmake_args: [
@@ -62,6 +73,7 @@ py.extension_module(
         '-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION',
         '-DPY_ARRAY_UNIQUE_SYMBOL=mkl_fft_ext'
     ],
+    link_args: rpath_link_args,
     install: true,
     subdir: 'mkl_fft'
 )
