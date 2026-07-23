@@ -8,11 +8,6 @@ on:
 
 permissions: read-all
 
-env:
-  PACKAGE_NAME: mkl_fft
-  MODULE_NAME: mkl_fft
-  TEST_ENV_NAME: test_mkl_fft
-
 jobs:
   build:
     runs-on: ubuntu-latest
