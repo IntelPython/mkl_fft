@@ -9,6 +9,7 @@ build:
     number: {{ GIT_DESCRIBE_NUMBER }}
     ignore_run_exports:
       - blas
+      - numpy
 
 requirements:
     build:
