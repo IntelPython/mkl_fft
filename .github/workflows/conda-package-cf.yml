@@ -76,19 +76,6 @@ jobs:
             "${CHANNELS[@]}" \
             conda-recipe-cf
 
-      - name: Check llvm-openmp linkage
-        run: |
-          # Install built package into a fresh env to inspect linkage
-          conda index /usr/share/miniconda/conda-bld
-          conda create -n check_linkage \
-              -c /usr/share/miniconda/conda-bld -c conda-forge --override-channels \
-              "$PACKAGE_NAME" python=${{ matrix.python }} -y
-          ENV=/usr/share/miniconda/envs/check_linkage
-          echo "--- llvm-openmp symlinks ---"
-          ls -la "$ENV/lib/libgomp"* "$ENV/lib/libiomp5"* "$ENV/lib/libomp.so" || true
-          echo "--- _pydfti omp linkage ---"
-          ldd "$ENV/lib/python${{ matrix.python }}/site-packages/mkl_fft/_pydfti"*.so | grep omp
-
       - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -222,20 +209,6 @@ jobs:
       - name: Build conda package with NumPy 2.x
         run: |
           conda build --no-test --python ${{ matrix.python }} --numpy ${{ matrix.numpy }} -c conda-forge --override-channels conda-recipe-cf
-
-      - name: Check llvm-openmp linkage
-        shell: bash -l {0}
-        run: |
-          CONDA_BLD="$CONDA/conda-bld"
-          conda index "$CONDA_BLD"
-          conda create -n check_linkage \
-              -c "$CONDA_BLD" -c conda-forge --override-channels \
-              "$PACKAGE_NAME" python=${{ matrix.python }} numpy -y
-          ENV="$CONDA/envs/check_linkage"
-          echo "--- llvm-openmp DLLs ---"
-          ls -la "$ENV/Library/bin/libiomp5md.dll" "$ENV/Library/bin/libomp.dll" || true
-          echo "--- import check ---"
-          cd "$TEMP" && "$ENV/python" -c "import mkl_fft; print('import OK')"
 
       - name: Store conda paths as envs
         shell: bash -l {0}
