@@ -26,7 +26,6 @@ requirements:
       - python-gil     # [py>=314]
       - pip
       - mkl-devel
-      - intel-openmp
       - cython
       - numpy
       - wheel  >=0.41.3
@@ -34,7 +33,6 @@ requirements:
       - python
       - python-gil     # [py>=314]
       - {{ pin_compatible('mkl') }}
-      - {{ pin_compatible('intel-openmp') }}
       - numpy >=1.26.4
 
 test:
