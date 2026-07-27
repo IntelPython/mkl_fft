@@ -53,12 +53,9 @@ jobs:
       - name: Build mkl_fft
         run: |
           export CC=${{ env.COMPILER_ROOT }}/clang
-          pip install . --no-build-isolation --no-deps --verbose
+          pip install -e . --no-build-isolation --no-deps --verbose
 
       - name: Run mkl_fft tests
         run: |
           pip install pytest mkl-service scipy
-          # mkl_fft cannot be installed in editable mode, we need
-          # to change directory before importing it and running tests
-          cd ..
           python -m pytest -sv --pyargs mkl_fft
