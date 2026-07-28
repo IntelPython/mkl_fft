@@ -61,6 +61,11 @@ jobs:
       - name: Add conda to system path
         run: echo "$CONDA"/bin >> "$GITHUB_PATH"
 
+      - name: Store conda paths as envs
+        run: |
+          echo "CONDA_BLD=/usr/share/miniconda/conda-bld/linux-64/" >> "$GITHUB_ENV"
+          echo "WHEELS_OUTPUT_FOLDER=$GITHUB_WORKSPACE/" >> "$GITHUB_ENV"
+
       - name: Update conda
         run: |
           conda update -n base --all
@@ -92,7 +97,13 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
-          path: /usr/share/miniconda/conda-bld/linux-64/${{ env.PACKAGE_NAME }}-*.conda
+          path: ${{ env.CONDA_BLD }}${{ env.PACKAGE_NAME }}-*.conda
+
+      - name: Upload wheels artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Wheels Python ${{ matrix.python }}
+          path: ${{ env.WHEELS_OUTPUT_FOLDER }}${{ env.PACKAGE_NAME }}-*.whl
 
   test_linux:
     needs: build_linux
@@ -239,6 +250,7 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "CONDA_BLD=$CONDA/conda-bld/win-64/" | tr "\\\\" '/' >> "$GITHUB_ENV"
+          echo "WHEELS_OUTPUT_FOLDER=$GITHUB_WORKSPACE\\" >> "$GITHUB_ENV"
 
       - name: Show Conda info
         run: |
@@ -257,6 +269,12 @@ jobs:
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python }}
           path: ${{ env.CONDA_BLD }}${{ env.PACKAGE_NAME }}-*.conda
+
+      - name: Upload wheels artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Wheels Python ${{ matrix.python }}
+          path: ${{ env.WHEELS_OUTPUT_FOLDER }}${{ env.PACKAGE_NAME }}-*.whl
 
   test_windows:
     needs: build_windows
@@ -366,7 +384,6 @@ jobs:
           )
           SET "TEST_DEPENDENCIES=pytest"
           conda install -n ${{ env.TEST_ENV_NAME }} ${{ env.PACKAGE_NAME }}=%PACKAGE_VERSION% %TEST_DEPENDENCIES% python=${{ matrix.python }} ${{ matrix.numpy }} -c ${{ env.workdir }}/channel ${{ env.CHANNELS }}
-          }
       - name: Install additional test dependencies
         shell: cmd /C CALL {0}
         run: |

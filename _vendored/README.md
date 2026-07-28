@@ -1,5 +1,3 @@
 ## Vendored files
 
-File `conv_template.py` is copied from NumPy's numpy/distutils folder, since
-`numpy.distutils` is absent from the installation layout starting with
-Python 3.12
+Files `conv_template.py` and `process_src_template.py` are copied from NumPy's numpy/numpy/_build_utils folder

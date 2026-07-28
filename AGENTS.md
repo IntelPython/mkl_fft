@@ -16,8 +16,8 @@ It provides accelerated FFT transforms while aiming to preserve upstream API beh
 - **Packaging:** `conda-recipe/`, `conda-recipe-cf/`
 
 ## Build/runtime basics
-- Build system: `pyproject.toml` + `setup.py`
-- Build deps: `cython`, `numpy`, `mkl-devel`
+- Build system: `pyproject.toml` + `meson.build`
+- Build deps: `cython`, `numpy`, `mkl-devel`, `meson-python`, `cmake`, `ninja`
 - Runtime deps: `numpy`, `mkl-service`
 
 ## Development guardrails
@@ -28,7 +28,7 @@ It provides accelerated FFT transforms while aiming to preserve upstream API beh
 - Avoid hardcoding mutable versions/matrices/channels in docs.
 
 ## Where truth lives
-- Build/config: `pyproject.toml`, `setup.py`
+- Build/config: `pyproject.toml`, `meson.build`
 - Dependencies: `pyproject.toml`, `conda-recipe*/meta.yaml`
 - CI/workflows: `.github/workflows/*.{yml,yaml}`
 - Public API: `mkl_fft/__init__.py`, `mkl_fft/interfaces/` (including wrapper/patch adapter modules)

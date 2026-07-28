@@ -1,18 +1,29 @@
-#!/bin/bash -x
+#!/bin/bash -ex
 
-export MKLROOT=$PREFIX
-export CFLAGS="-I$PREFIX/include $CFLAGS"
-export LDFLAGS="-Wl,-rpath,\$ORIGIN/../.. -Wl,-rpath,\$ORIGIN/../../.. -L${PREFIX}/lib ${LDFLAGS}"
+if [ -d "build" ]; then
+    rm -rf build
+fi
 
 read -r GLIBC_MAJOR GLIBC_MINOR <<<"$(conda list '^sysroot_linux-64$' \
     | tail -n 1 | awk '{print $2}' | grep -oP '\d+' | head -n 2 | tr '\n' ' ')"
 
-# Build wheel package
-if [ -n "${WHEELS_OUTPUT_FOLDER}" ]; then
-     $PYTHON -m pip wheel --no-build-isolation --no-deps .
-     ${PYTHON} -m wheel tags --remove --platform-tag "manylinux_${GLIBC_MAJOR}_${GLIBC_MINOR}_x86_64" mkl_fft*.whl
-     cp mkl_fft*.whl "${WHEELS_OUTPUT_FOLDER}"
-else
-    # Build conda package
-    $PYTHON -m pip install --no-build-isolation --no-deps .
+# -wnx flags mean: --wheel --no-isolation --skip-dependency-check
+# -Ccompile-args=-v makes ninja print full compiler commands (verbose build)
+${PYTHON} -m build -w -n -x -Ccompile-args=-v
+
+${PYTHON} -m wheel tags --remove \
+    --platform-tag "manylinux_${GLIBC_MAJOR}_${GLIBC_MINOR}_x86_64" \
+    dist/mkl_fft*.whl
+
+${PYTHON} -m pip install dist/mkl_fft*.whl \
+    --no-build-isolation \
+    --no-deps \
+    --only-binary :all: \
+    --no-index \
+    --prefix "${PREFIX}" \
+    -vv
+
+# Copy wheel package
+if [[ -d "${WHEELS_OUTPUT_FOLDER}" ]]; then
+    cp dist/mkl_fft*.whl "${WHEELS_OUTPUT_FOLDER[@]}"
 fi

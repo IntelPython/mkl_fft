@@ -41,7 +41,9 @@ per-file-ignores =
     mkl_fft/interfaces/scipy_fft.py: F401
     mkl_fft/interfaces/numpy_fft.py: F401
 
-exclude = _vendored/conv_template.py
+exclude =
+    _vendored/conv_template.py
+    _vendored/process_src_template.py
 
 filename = *.py, *.pyx, *.pxi, *.pxd
 max_line_length = 80

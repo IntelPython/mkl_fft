@@ -8,11 +8,6 @@ on:
 
 permissions: read-all
 
-env:
-  PACKAGE_NAME: mkl_fft
-  MODULE_NAME: mkl_fft
-  TEST_ENV_NAME: test_mkl_fft
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,11 +21,6 @@ jobs:
         use_pre: ["", "--pre"]
 
     steps:
-      - name: Install jq
-        shell: bash -l {0}
-        run: |
-          sudo apt-get install jq
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
@@ -48,10 +38,8 @@ jobs:
 
       - name: Build conda package
         run: |
-          pip install --no-cache-dir cython setuptools
+          pip install --no-cache-dir meson-python ninja cmake cython
           pip install --no-cache-dir numpy ${{ matrix.use_pre }}
-          echo "CONDA_PREFFIX is '${CONDA_PREFIX}'"
-          export MKLROOT=${CONDA_PREFIX}
           pip install -e ".[test]" --no-build-isolation --verbose
           pip list
           python -m pytest -v mkl_fft/tests

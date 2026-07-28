@@ -1,5 +1,5 @@
 [![Conda package](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package.yml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package.yml)
-[![Editable build using pip and pre-release NumPy](https://github.com/IntelPython/mkl_fft/actions/workflows/build_pip.yaml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/build_pip.yaml)
+[![Editable build using pip and pre-release NumPy](https://github.com/IntelPython/mkl_fft/actions/workflows/build_pip.yml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/build_pip.yml)
 [![Conda package with conda-forge channel only](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package-cf.yml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package-cf.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/IntelPython/mkl_fft/badge)](https://securityscorecards.dev/viewer/?uri=github.com/IntelPython/mkl_fft)
 
@@ -139,25 +139,28 @@ with mkl_fft.mkl_fft():
 ---
 # Building from source
 
-To build `mkl_fft` from sources on Linux with Intel® oneMKL:
-  - create a virtual environment: `python3 -m venv fft_env`
-  - activate the environment: `source fft_env/bin/activate`
-  - install a recent version of oneMKL, if necessary
-  - execute `source /path_to_oneapi/mkl/latest/env/vars.sh`
-  - `git clone https://github.com/IntelPython/mkl_fft.git mkl_fft`
-  - `cd mkl_fft`
-  - `python -m pip install .`
-  - `pip install scipy` (optional: for using `mkl_fft.interface.scipy_fft` module)
-  - `cd ..`
-  - `python -c "import mkl_fft"`
+A C compiler, Intel® oneAPI Math Kernel Library (oneMKL), and NumPy are required
+to build `mkl_fft` from source.
 
-To build `mkl_fft` from sources on Linux with conda follow these steps:
-  - `conda create -n fft_env python=3.12 mkl-devel`
-  - `conda activate fft_env`
-  - `export MKLROOT=$CONDA_PREFIX`
-  - `git clone https://github.com/IntelPython/mkl_fft.git mkl_fft`
-  - `cd mkl_fft`
-  - `python -m pip install .`
-  - `conda install scipy` (optional: for using `mkl_fft.interface.scipy_fft` module)
-  - `cd ..`
-  - `python -c "import mkl_fft"`
+Executing
+```sh
+python -m pip install .
+```
+will pull in the required build dependencies, including `mkl` and `numpy`, and build `mkl_fft`.
+
+If you already have `mkl` and `numpy` installed (from your system or a conda environment)
+and want to reuse them instead of pulling fresh copies into an isolated build, first
+install the build dependencies:
+```sh
+pip install meson-python cmake ninja cython numpy mkl-devel
+```
+
+then build against the existing installation with:
+```sh
+python -m pip install --no-build-isolation --no-deps .
+```
+
+Optionally, install `scipy` to use the `mkl_fft.interfaces.scipy_fft` module:
+```sh
+pip install scipy
+```
