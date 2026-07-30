@@ -4,15 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [dev] - YYYY-MM-DD
+## [2.3.0] - 2026-07-30
 
 ### Added
 * Added CLI for persistent and ephemeral NumPy FFT patching: `python -m mkl_fft patch install/uninstall/status` for persistent patching across all Python sessions, and `python -m mkl_fft with_patch <command>` for one-shot execution with MKL acceleration [gh-319](https://github.com/IntelPython/mkl_fft/pull/319)
 
 ### Changed
 * Removed `numpy-base` dependency and `USE_NUMPY_BASE` environment variable from conda recipe [gh-318](https://github.com/IntelPython/mkl_fft/pull/318)
-
-### Fixed
+* Migrated the build system from `setuptools` to `meson-python`, removing `setup.py` in favor of `meson.build` [gh-303](https://github.com/IntelPython/mkl_fft/pull/303)
 
 ## [2.2.1] - 2026-05-11
 
