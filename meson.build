@@ -29,8 +29,13 @@ cc = meson.get_compiler('c')
 c_args = ['-DNDEBUG']
 
 rpath_link_args = []
-if host_machine.system() == 'linux'
-    rpath = '$ORIGIN' / '../..' + ':' + '$ORIGIN' / '../../..'
+if host_machine.system() != 'windows'
+    if host_machine.system() == 'darwin'
+        origin = '@loader_path'
+    else
+        origin = '$ORIGIN'
+    endif
+    rpath = origin / '../..' + ':' + origin / '../../..'
     rpath_link_args = ['-Wl,-rpath,' + rpath]
 endif
 
