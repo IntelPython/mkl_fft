@@ -29,9 +29,17 @@ cc = meson.get_compiler('c')
 c_args = ['-DNDEBUG']
 
 rpath_link_args = []
-if host_machine.system() == 'linux'
-    rpath = '$ORIGIN' / '../..' + ':' + '$ORIGIN' / '../../..'
-    rpath_link_args = ['-Wl,-rpath,' + rpath]
+if host_machine.system() != 'windows'
+    if host_machine.system() == 'darwin'
+        origin = '@loader_path'
+    else
+        origin = '$ORIGIN'
+    endif
+
+    rpath_link_args = [
+        '-Wl,-rpath,' + origin / '../..',
+        '-Wl,-rpath,' + origin / '../../..',
+    ]
 endif
 
 mkl_dep = dependency('MKL', method: 'cmake',
