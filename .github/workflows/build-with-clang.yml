@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t"]
         numpy_version: ["'numpy>=2'"]
 
     env:
@@ -55,7 +55,7 @@ jobs:
 
       - name: Install mkl_fft dependencies
         run: |
-          pip install meson-python ninja cython cmake
+          pip install meson-python ninja "cython>=3.1.0" cmake
           pip install ${{ matrix.numpy_version }}
 
       - name: List oneAPI folder content
