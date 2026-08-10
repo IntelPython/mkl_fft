@@ -7,10 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [dev] - YYYY-MM-DD
 
 ### Added
+* Added support for free-threaded (GIL-disabled) CPython builds: the Cython extension is compiled with `freethreading_compatible=True` [gh-357](https://github.com/IntelPython/mkl_fft/pull/357)
 
 ### Changed
+* Raised the minimum build-time `Cython` requirement to `3.1.0`, the first release providing the `freethreading_compatible` directive [gh-357](https://github.com/IntelPython/mkl_fft/pull/357)
+* Removed the `python-gil` constraint from the conda recipes, which pinned `mkl_fft` to GIL-enabled Python 3.14 builds [gh-357](https://github.com/IntelPython/mkl_fft/pull/357)
 
-### Fixed
 
 ## [2.3.0] - 2026-07-30
 
