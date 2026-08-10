@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Silenced a Coverity `UNUSED_VALUE` finding in `__create_descriptor_1d` by marking the `DftiFreeDescriptor` status (used only by a debug-only `assert`) as intentionally unused
 
 ## [2.3.2] - 2026-08-04
 

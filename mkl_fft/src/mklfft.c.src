@@ -170,6 +170,7 @@ __create_descriptor_1d_@prec@_@domain@(MKL_LONG len, @sc_t@ fsc, @sc_t@ bsc, Dft
     if(dfti_cache->hand) {
         status = DftiFreeDescriptor(&(dfti_cache->hand));
         assert(status == 0);
+        (void)status;  /* used only by assert; ignored under NDEBUG */
     }
 
     status = 0;
