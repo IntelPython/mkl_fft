@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Fixed `norm="forward"` and `norm="ortho"` scaling in `mkl_fft.fftn`, `ifftn`, `rfftn`, `irfftn` and the `fft2`/`ifft2`/`rfft2`/`irfft2` family when only a subset of the input axes is transformed and `s` is not given. The scale factor was computed over the full array shape instead of over the transformed axes, over-normalizing the result by the product of the untransformed axis lengths (for example `fft2` on a 3-D array, or `fftn(x, axes=(0,))`). The `mkl_fft.interfaces.numpy_fft` and `mkl_fft.interfaces.scipy_fft` wrappers were unaffected, as they resolve `s` before delegating
+* Fixed `norm="forward"` and `norm="ortho"` scaling in `mkl_fft.irfftn` and `irfft2`, which normalized over the input length `n` along the last transformed axis rather than the complex-to-real output length `2 * (n - 1)`. This applied even when every axis was transformed
 * Declared `f_ndim` as a C `int` in `_allocate_result` so the buffer size is computed in C rather than through a Python object, resolving a Coverity out-of-bounds (OVERRUN) false positive [gh-364](https://github.com/IntelPython/mkl_fft/pull/364)
 * Silenced a Coverity `UNUSED_VALUE` finding in `__create_descriptor_1d` by marking the `DftiFreeDescriptor` status (used only by a debug-only `assert`) as intentionally unused [gh-365](https://github.com/IntelPython/mkl_fft/pull/365)
 
