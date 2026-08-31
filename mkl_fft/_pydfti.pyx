@@ -68,19 +68,27 @@ cdef void _capsule_destructor(object caps) noexcept:
 
 
 def _tls_dfti_cache_capsule():
-    cdef DftiCache *_cache_struct
+    cdef DftiCache *_cache_struct = NULL
 
-    init = getattr(_tls, "initialized", None)
-    if (init is None):
+    capsule = getattr(_tls, "capsule", None)
+    if (capsule is None):
         _cache_struct = <DftiCache *> PyMem_Malloc(sizeof(DftiCache))
-        # important to initialized
+        if (_cache_struct is NULL):
+            raise MemoryError(
+                "Failed to allocate memory for DFTI descriptor cache"
+            )
+        # important to initialize
         _cache_struct.initialized = 0
         _cache_struct.hand = NULL
-        _tls.initialized = True
-        _tls.capsule = cpython.pycapsule.PyCapsule_New(
-            <void *>_cache_struct, capsule_name, &_capsule_destructor
-        )
-    capsule = getattr(_tls, "capsule", None)
+        try:
+            capsule = cpython.pycapsule.PyCapsule_New(
+                <void *>_cache_struct, capsule_name, &_capsule_destructor
+            )
+        except:
+            PyMem_Free(_cache_struct)
+            raise
+        # only publish to TLS once the capsule owns the allocation
+        _tls.capsule = capsule
     if (not cpython.pycapsule.PyCapsule_IsValid(capsule, capsule_name)):
         raise ValueError("Internal Error: invalid capsule stored in TLS")
     return capsule
@@ -199,15 +207,24 @@ cdef cnp.ndarray _pad_array(
     b_ndim = cnp.PyArray_NDIM(x_arr)
 
     b_shape = <cnp.npy_intp*> PyMem_Malloc(b_ndim * sizeof(cnp.npy_intp))
-    memcpy(b_shape, cnp.PyArray_DIMS(x_arr), b_ndim * sizeof(cnp.npy_intp))
-    b_shape[axis] = n
+    if (b_shape is NULL):
+        raise MemoryError("Failed to allocate memory for the array shape")
 
-    # allocating temporary buffer
-    x_arr_is_fortran = cnp.PyArray_CHKFLAGS(x_arr, cnp.NPY_ARRAY_F_CONTIGUOUS)
-    b_arr = <cnp.ndarray> cnp.PyArray_EMPTY(
-        b_ndim, b_shape, <cnp.NPY_TYPES> b_type, x_arr_is_fortran
-    )  # 0 for C-contiguous
-    PyMem_Free(b_shape)
+    try:
+        memcpy(
+            b_shape, cnp.PyArray_DIMS(x_arr), b_ndim * sizeof(cnp.npy_intp)
+        )
+        b_shape[axis] = n
+
+        # allocating temporary buffer
+        x_arr_is_fortran = cnp.PyArray_CHKFLAGS(
+            x_arr, cnp.NPY_ARRAY_F_CONTIGUOUS
+        )
+        b_arr = <cnp.ndarray> cnp.PyArray_EMPTY(
+            b_ndim, b_shape, <cnp.NPY_TYPES> b_type, x_arr_is_fortran
+        )  # 0 for C-contiguous
+    finally:
+        PyMem_Free(b_shape)
 
     ind = [slice(0, None, None), ] * b_ndim
     ind[axis] = slice(0, cnp.PyArray_DIM(x_arr, axis), None)
@@ -307,17 +324,26 @@ cdef cnp.ndarray _allocate_result(
     f_ndim = cnp.PyArray_NDIM(x_arr)
 
     f_shape = <cnp.npy_intp*> PyMem_Malloc(f_ndim * sizeof(cnp.npy_intp))
-    memcpy(f_shape, cnp.PyArray_DIMS(x_arr), f_ndim * sizeof(cnp.npy_intp))
-    # if dimension is negative, do not alter the dimension
-    if n_ > 0:
-        f_shape[axis_] = n_
+    if (f_shape is NULL):
+        raise MemoryError("Failed to allocate memory for the array shape")
 
-    # allocating output buffer
-    x_arr_is_fortran = cnp.PyArray_CHKFLAGS(x_arr, cnp.NPY_ARRAY_F_CONTIGUOUS)
-    f_arr = <cnp.ndarray> cnp.PyArray_EMPTY(
-        f_ndim, f_shape, <cnp.NPY_TYPES> f_type, x_arr_is_fortran
-    )  # 0 for C-contiguous
-    PyMem_Free(f_shape)
+    try:
+        memcpy(
+            f_shape, cnp.PyArray_DIMS(x_arr), f_ndim * sizeof(cnp.npy_intp)
+        )
+        # if dimension is negative, do not alter the dimension
+        if n_ > 0:
+            f_shape[axis_] = n_
+
+        # allocating output buffer
+        x_arr_is_fortran = cnp.PyArray_CHKFLAGS(
+            x_arr, cnp.NPY_ARRAY_F_CONTIGUOUS
+        )
+        f_arr = <cnp.ndarray> cnp.PyArray_EMPTY(
+            f_ndim, f_shape, <cnp.NPY_TYPES> f_type, x_arr_is_fortran
+        )  # 0 for C-contiguous
+    finally:
+        PyMem_Free(f_shape)
 
     return f_arr
 
