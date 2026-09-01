@@ -9,10 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Multi-iterator constructors now return a status corresponding to allocation success or failure, and raise `MemoryError` instead of `ValueError` [gh-373].(https://github.com/IntelPython/mkl_fft/pull/373)
+* `_direct_fftnd` now also checks the status returned by the backend instead of discarding it [gh-373].(https://github.com/IntelPython/mkl_fft/pull/373)
 
 ### Fixed
 * Declared `f_ndim` as a C `int` in `_allocate_result` so the buffer size is computed in C rather than through a Python object, resolving a Coverity out-of-bounds (OVERRUN) false positive [gh-364](https://github.com/IntelPython/mkl_fft/pull/364)
 * Silenced a Coverity `UNUSED_VALUE` finding in `__create_descriptor_1d` by marking the `DftiFreeDescriptor` status (used only by a debug-only `assert`) as intentionally unused [gh-365](https://github.com/IntelPython/mkl_fft/pull/365)
+* Fixed possible memory leaks when `PyMem_Malloc` fails, and raise `MemoryError` [gh-373].(https://github.com/IntelPython/mkl_fft/pull/373)
+* Fixed possible memory leaks when multi-iterator constructors fail [gh-373].(https://github.com/IntelPython/mkl_fft/pull/373)
+* Fixed N-D transforms returning a success status when a scratch allocation fails [gh-373].(https://github.com/IntelPython/mkl_fft/pull/373)
 
 ## [2.3.2] - 2026-08-04
 
