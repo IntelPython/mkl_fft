@@ -165,6 +165,18 @@ cdef extern from "src/mklfft.h":
     int float_cfloat_mkl_ifftnd_out(cnp.ndarray, cnp.ndarray, double)
     int double_cdouble_mkl_ifftnd_out(cnp.ndarray, cnp.ndarray, double)
     char * mkl_dfti_error(int)
+    int DFTI_MEMORY_ERROR
+
+
+cdef _raise_dfti_error(int status):
+    """Raise the exception described by a non-zero MKL DFTI status"""
+    cdef char * c_error_msg = mkl_dfti_error(status)
+    cdef bytes py_error_msg = c_error_msg
+
+    message = f"Internal error occurred: {str(py_error_msg)}"
+    if status == DFTI_MEMORY_ERROR:
+        raise MemoryError(message)
+    raise ValueError(message)
 
 
 # Initialize numpy
@@ -406,8 +418,6 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
     cdef long n_, axis_
     cdef int x_type, f_type, status = 0
     cdef int ALL_HARMONICS = 1
-    cdef char * c_error_msg = NULL
-    cdef bytes py_error_msg
     cdef DftiCache *_cache
 
     if direction not in [-1, +1]:
@@ -470,9 +480,7 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
             status = 1
 
         if status:
-            c_error_msg = mkl_dfti_error(status)
-            py_error_msg = c_error_msg
-            raise ValueError("Internal error occurred: {}".format(py_error_msg))
+            _raise_dfti_error(status)
 
         n_max = <long> cnp.PyArray_DIM(x_arr, axis_)
         if (n_ < n_max):
@@ -569,9 +577,7 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
                     )
 
         if (status):
-            c_error_msg = mkl_dfti_error(status)
-            py_error_msg = c_error_msg
-            raise ValueError("Internal error occurred: {}".format(py_error_msg))
+            _raise_dfti_error(status)
 
         if out is not None and f_arr is not out:
             out[...] = f_arr
@@ -595,8 +601,6 @@ def _r2c_fft1d_impl(
     cdef long n_, axis_
     cdef int x_type, f_type, status, requirement
     cdef int HALF_HARMONICS = 0  # give only positive index harmonics
-    cdef char * c_error_msg = NULL
-    cdef bytes py_error_msg
     cdef DftiCache *_cache
 
     x_arr = _process_arguments(x, n, axis, &axis_, &n_, &in_place, &xnd, 1)
@@ -665,11 +669,7 @@ def _r2c_fft1d_impl(
         )
 
     if (status):
-        c_error_msg = mkl_dfti_error(status)
-        py_error_msg = c_error_msg
-        raise ValueError(
-            "Internal error occurred: {}".format(str(py_error_msg))
-        )
+        _raise_dfti_error(status)
 
     if out is not None and f_arr is not out:
         out[...] = f_arr
@@ -692,8 +692,6 @@ def _c2r_fft1d_impl(
     cdef int xnd, in_place, int_n
     cdef long n_, axis_
     cdef int x_type, f_type, status
-    cdef char * c_error_msg = NULL
-    cdef bytes py_error_msg
     cdef DftiCache *_cache
 
     int_n = _is_integral(n)
@@ -768,11 +766,7 @@ def _c2r_fft1d_impl(
             )
 
         if (status):
-            c_error_msg = mkl_dfti_error(status)
-            py_error_msg = c_error_msg
-            raise ValueError(
-                "Internal error occurred: {}".format(str(py_error_msg))
-            )
+            _raise_dfti_error(status)
 
         if out is not None and f_arr is not out:
             out[...] = f_arr
@@ -785,7 +779,7 @@ def _direct_fftnd(
     x, direction=+1, double fsc=1.0, out=None
 ):
     """Perform n-dimensional FFT over all axes"""
-    cdef int err
+    cdef int err = 0
     cdef cnp.ndarray x_arr "xxnd_arrayObject"
     cdef cnp.ndarray f_arr "ffnd_arrayObject"
     cdef int in_place, x_type, f_type
@@ -848,6 +842,9 @@ def _direct_fftnd(
         else:
             raise ValueError("An input argument x is not complex type array")
 
+        if err:
+            _raise_dfti_error(err)
+
         return x_arr
     else:
         if x_type == cnp.NPY_CDOUBLE or x_type == cnp.NPY_DOUBLE:
@@ -889,6 +886,9 @@ def _direct_fftnd(
                 err = float_cfloat_mkl_ifftnd_out(x_arr, f_arr, fsc)
         else:
             raise ValueError("An input argument x is not complex type array")
+
+        if err:
+            _raise_dfti_error(err)
 
         if out is not None and f_arr is not out:
             out[...] = f_arr

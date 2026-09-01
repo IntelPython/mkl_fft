@@ -548,11 +548,19 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis, double fs
         int i;
 
         mask = (int *) mkl_malloc((x_rank-1)*sizeof(int), 64);
+        if (!mask) {
+            status = DFTI_MEMORY_ERROR;
+            goto failed;
+        }
 
         for(i = 0; i < axis; i++) mask[i] = i;
         for(i = axis + 1; i < x_rank; i++) mask[i-1] = i;
 
-        multi_iter_masked_new(&mit, x_shape, x_rank, mask, x_rank - 1);
+        if (multi_iter_masked_new(&mit, x_shape, x_rank, mask, x_rank - 1)) {
+            mkl_free(mask);
+            status = DFTI_MEMORY_ERROR;
+            goto failed;
+        }
 
         while(!MultiIter_Done(mit)) {
             char *tmp;
@@ -646,7 +654,7 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
 
     assert(xout_itemsize == sizeof(@MKL_OUT_TYPE@));
     assert(xin_itemsize == sizeof(@MKL_IN_TYPE@));
-    assert(xout_itemsize = 2 * xin_itemsize);
+    assert(xout_itemsize == 2 * xin_itemsize);
 
     for(i=0; i < axis; i++)
         assert(xin_shape[i] == xout_shape[i]);
@@ -744,11 +752,20 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
         int i;
 
         mask = (int *) mkl_malloc((xin_rank-1)*sizeof(int), 64);
+        if (!mask) {
+            status = DFTI_MEMORY_ERROR;
+            goto failed;
+        }
 
         for(i = 0; i < axis; i++) mask[i] = i;
         for(i = axis + 1; i < xin_rank; i++) mask[i-1] = i;
 
-        multi_iter_masked_new(&mit, xin_shape, xin_rank, mask, xin_rank - 1);
+        if (multi_iter_masked_new(
+                &mit, xin_shape, xin_rank, mask, xin_rank - 1)) {
+            mkl_free(mask);
+            status = DFTI_MEMORY_ERROR;
+            goto failed;
+        }
 
         while(!MultiIter_Done(mit)) {
             char *tmp1, *tmp2;
@@ -805,11 +822,19 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
             npy_intp *half_shape;
 
             half_shape = (npy_intp *) mkl_malloc(xout_rank * sizeof(npy_intp), 64);
+            if (!half_shape) {
+                status = DFTI_MEMORY_ERROR;
+                goto failed;
+            }
 
             memcpy(half_shape, xout_shape, xout_rank * sizeof(npy_intp));
             half_shape[axis] = (n_last > 2) ? n_last - nh_last: 0;
 
-            multi_iter_new(&mit, half_shape, xout_rank);
+            if (multi_iter_new(&mit, half_shape, xout_rank)) {
+                mkl_free(half_shape);
+                status = DFTI_MEMORY_ERROR;
+                goto failed;
+            }
 	    mkl_free(half_shape);
 
             while(!MultiIter_Done(mit)) {
@@ -1006,11 +1031,20 @@ int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
         int i;
 
         mask = (int *) mkl_malloc((xin_rank-1)*sizeof(int), 64);
+        if (!mask) {
+            status = DFTI_MEMORY_ERROR;
+            goto failed;
+        }
 
         for(i = 0; i < axis; i++) mask[i] = i;
         for(i = axis + 1; i < xin_rank; i++) mask[i-1] = i;
 
-        multi_iter_masked_new(&mit, xin_shape, xin_rank, mask, xin_rank - 1);
+        if (multi_iter_masked_new(
+                &mit, xin_shape, xin_rank, mask, xin_rank - 1)) {
+            mkl_free(mask);
+            status = DFTI_MEMORY_ERROR;
+            goto failed;
+        }
 
         while(!MultiIter_Done(mit)) {
             char *tmp1, *tmp2;
@@ -1193,11 +1227,20 @@ int
         int i;
 
         mask = (int *) mkl_malloc((xin_rank-1)*sizeof(int), 64);
+        if (!mask) {
+            status = DFTI_MEMORY_ERROR;
+            goto failed;
+        }
 
         for(i = 0; i < axis; i++) mask[i] = i;
         for(i = axis + 1; i < xin_rank; i++) mask[i-1] = i;
 
-        multi_iter_masked_new(&mit, xin_shape, xin_rank, mask, xin_rank - 1);
+        if (multi_iter_masked_new(
+                &mit, xin_shape, xin_rank, mask, xin_rank - 1)) {
+            mkl_free(mask);
+            status = DFTI_MEMORY_ERROR;
+            goto failed;
+        }
 
         while(!MultiIter_Done(mit)) {
             char *tmp1, *tmp2;
@@ -1285,7 +1328,10 @@ int
         } else {
             // TODO: should rather use alloca or something optimized for small allocations
             x_shape_mkl = (MKL_LONG *) mkl_malloc(x_rank*sizeof(MKL_LONG), 64);
-            if (!x_shape_mkl) goto cleanup;
+            if (!x_shape_mkl) {
+                status = DFTI_MEMORY_ERROR;
+                goto cleanup;
+            }
             for(i = 0; i < x_rank; i++)
                 x_shape_mkl[i] = _to_mkl_long(x_shape[i]);
         }
@@ -1308,7 +1354,10 @@ int
     if (0 != status) goto cleanup;
 
     input_strides = (MKL_LONG *) mkl_malloc((x_rank + 1) * sizeof(MKL_LONG), 64);
-    if (!input_strides) goto cleanup;
+    if (!input_strides) {
+        status = DFTI_MEMORY_ERROR;
+        goto cleanup;
+    }
 
     input_strides[0] = 0;
     for(i = 0; i < x_rank; i++) {
@@ -1400,7 +1449,10 @@ int
         } else {
             // TODO: should rather use alloca or something optimized for small allocations
             xin_shape_mkl = (MKL_LONG *) mkl_malloc(xin_rank * sizeof(MKL_LONG), 64);
-            if (!xin_shape_mkl) goto cleanup;
+            if (!xin_shape_mkl) {
+                status = DFTI_MEMORY_ERROR;
+                goto cleanup;
+            }
             for(i = 0; i < xin_rank; i++)
                 xin_shape_mkl[i] = _to_mkl_long(xin_shape[i]);
         }
@@ -1423,10 +1475,16 @@ int
     if (0 != status) goto cleanup;
 
     input_strides = (MKL_LONG *) mkl_malloc((xin_rank + 1) * sizeof(MKL_LONG), 64);
-    if (!input_strides) goto cleanup;
+    if (!input_strides) {
+        status = DFTI_MEMORY_ERROR;
+        goto cleanup;
+    }
 
     output_strides = (MKL_LONG *) mkl_malloc((xout_rank + 1) * sizeof(MKL_LONG), 64);
-    if (!output_strides) goto cleanup;
+    if (!output_strides) {
+        status = DFTI_MEMORY_ERROR;
+        goto cleanup;
+    }
 
     input_strides[0] = 0;
     output_strides[0] = 0;
@@ -1534,7 +1592,10 @@ int
         } else {
             /* TODO: should rather use alloca or something optimized for small allocations */
             xin_shape_mkl = (MKL_LONG *) mkl_malloc(xin_rank * sizeof(MKL_LONG), 64);
-            if (!xin_shape_mkl) goto cleanup;
+            if (!xin_shape_mkl) {
+                status = DFTI_MEMORY_ERROR;
+                goto cleanup;
+            }
             for(i = 0; i < xin_rank; i++)
                 xin_shape_mkl[i] = _to_mkl_long(xin_shape[i]);
         }
@@ -1557,10 +1618,16 @@ int
     if (0 != status) goto cleanup;
 
     input_strides = (MKL_LONG *) mkl_malloc((xin_rank + 1) * sizeof(MKL_LONG), 64);
-    if (!input_strides) goto cleanup;
+    if (!input_strides) {
+        status = DFTI_MEMORY_ERROR;
+        goto cleanup;
+    }
 
     output_strides = (MKL_LONG *) mkl_malloc((xout_rank + 1) * sizeof(MKL_LONG), 64);
-    if (!output_strides) goto cleanup;
+    if (!output_strides) {
+        status = DFTI_MEMORY_ERROR;
+        goto cleanup;
+    }
 
     input_strides[0] = 0;
     output_strides[0] = 0;
@@ -1603,13 +1670,21 @@ int
         int i, last_idx = xout_rank - 1;
 
         half_shape = (npy_intp *) mkl_malloc(xout_rank * sizeof(npy_intp), 64);
+        if (!half_shape) {
+            status = DFTI_MEMORY_ERROR;
+            goto cleanup;
+        }
 
         memcpy(half_shape, xout_shape, xout_rank * sizeof(npy_intp));
         n_last = xout_shape[last_idx];
         nh_last = (n_last/2) + 1;
         half_shape[last_idx] = (n_last > 2) ? n_last - nh_last: 0;
 
-        multi_iter_new(&mit, half_shape, xout_rank);
+        if (multi_iter_new(&mit, half_shape, xout_rank)) {
+            mkl_free(half_shape);
+            status = DFTI_MEMORY_ERROR;
+            goto cleanup;
+        }
 	mkl_free(half_shape);
 
         while(!MultiIter_Done(mit)) {
