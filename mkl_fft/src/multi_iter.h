@@ -62,18 +62,20 @@ typedef struct multi_iter_masked_t
 #define MultiIter_ShapeElem(mit, i) ((mit).shape)[(i)]
 #define MultiIter_MaskElem(mit, i)  ((mit).mask)[(i)]
 
-/*
-void multi_iter_new(multi_iter_t*, npy_intp*, int);
-void multi_iter_masked_new(multi_iter_masked_t*, npy_intp*, int, int*, int);
+/* The constructors return 0 on success, and -1 if a memory allocation failed.
+   The iterator is safe to pass to the matching destructor, and the caller
+   is expected to propagate the error rather than iterate. */
+static NPY_INLINE int multi_iter_new(multi_iter_t *, npy_intp *, int);
+static NPY_INLINE int
+    multi_iter_masked_new(multi_iter_masked_t *, npy_intp *, int, int *, int);
 
-void multi_iter_free(multi_iter_t*);
-int multi_iter_next(multi_iter_t*);
+static NPY_INLINE void multi_iter_free(multi_iter_t *);
+static NPY_INLINE int multi_iter_next(multi_iter_t *);
 
-void multi_iter_masked_free(multi_iter_masked_t*);
-int multi_iter_masked_next(multi_iter_masked_t*);
-*/
+static NPY_INLINE void multi_iter_masked_free(multi_iter_masked_t *);
+static NPY_INLINE int multi_iter_masked_next(multi_iter_masked_t *);
 
-static NPY_INLINE void
+static NPY_INLINE int
     multi_iter_new(multi_iter_t *mi, npy_intp shape[], int rank)
 {
     int i;
@@ -81,10 +83,17 @@ static NPY_INLINE void
 
     assert(rank > 0);
 
+    MultiIter_Rank(*mi) = rank;
+    /* an iterator that failed to allocate must not be iterated over */
+    MultiIter_Done(*mi) = 1;
+
     MultiIter_Index(*mi) = (npy_intp *)mkl_calloc(rank, sizeof(npy_intp), 64);
     MultiIter_Shape(*mi) = (npy_intp *)mkl_malloc(rank * sizeof(npy_intp), 64);
+    if (!MultiIter_Index(*mi) || !MultiIter_Shape(*mi)) {
+        multi_iter_free(mi);
+        return -1;
+    }
     memcpy(MultiIter_Shape(*mi), shape, rank * sizeof(npy_intp));
-    MultiIter_Rank(*mi) = rank;
 
     for (i = 0; i < rank; i++) {
         d |= MultiIter_IndexElem(*mi, i) >= MultiIter_ShapeElem(*mi, i);
@@ -94,24 +103,36 @@ static NPY_INLINE void
 
     MultiIter_Done(*mi) = d;
 
-    return;
+    return 0;
 }
 
-static NPY_INLINE void multi_iter_masked_new(multi_iter_masked_t *mi,
-                                             npy_intp shape[],
-                                             int rank,
-                                             int mask[],
-                                             int mask_len)
+static NPY_INLINE int multi_iter_masked_new(multi_iter_masked_t *mi,
+                                            npy_intp shape[],
+                                            int rank,
+                                            int mask[],
+                                            int mask_len)
 {
     int i;
     char d = 0;
 
     assert(rank > 0);
+    assert(mask_len > 0);
+
+    MultiIter_Rank(*mi) = rank;
+    MultiIter_MaskLength(*mi) = mask_len;
+    /* an iterator that failed to allocate must not be iterated over */
+    MultiIter_Done(*mi) = 1;
 
     MultiIter_Index(*mi) = (npy_intp *)mkl_calloc(rank, sizeof(npy_intp), 64);
     MultiIter_Shape(*mi) = (npy_intp *)mkl_malloc(rank * sizeof(npy_intp), 64);
+    MultiIter_Mask(*mi) = (int *)mkl_malloc(mask_len * sizeof(int), 64);
+    if (!MultiIter_Index(*mi) || !MultiIter_Shape(*mi) ||
+        !MultiIter_Mask(*mi)) {
+        multi_iter_masked_free(mi);
+        return -1;
+    }
     memcpy(MultiIter_Shape(*mi), shape, rank * sizeof(npy_intp));
-    MultiIter_Rank(*mi) = rank;
+    memcpy(MultiIter_Mask(*mi), mask, mask_len * sizeof(int));
 
     for (i = 0; i < rank; i++) {
         d |= MultiIter_IndexElem(*mi, i) >= MultiIter_ShapeElem(*mi, i);
@@ -121,25 +142,26 @@ static NPY_INLINE void multi_iter_masked_new(multi_iter_masked_t *mi,
 
     MultiIter_Done(*mi) = d;
 
-    assert(mask_len > 0);
-    MultiIter_MaskLength(*mi) = mask_len;
-    MultiIter_Mask(*mi) = (int *)mkl_malloc(mask_len * sizeof(int), 64);
-    memcpy(MultiIter_Mask(*mi), mask, mask_len * sizeof(int));
-
-    return;
+    return 0;
 }
 
 static NPY_INLINE void multi_iter_masked_free(multi_iter_masked_t *mi)
 {
     if (mi) {
-        if (MultiIter_Index(*mi))
+        if (MultiIter_Index(*mi)) {
             mkl_free(MultiIter_Index(*mi));
+            MultiIter_Index(*mi) = NULL;
+        }
 
-        if (MultiIter_Shape(*mi))
+        if (MultiIter_Shape(*mi)) {
             mkl_free(MultiIter_Shape(*mi));
+            MultiIter_Shape(*mi) = NULL;
+        }
 
-        if (MultiIter_Mask(*mi))
+        if (MultiIter_Mask(*mi)) {
             mkl_free(MultiIter_Mask(*mi));
+            MultiIter_Mask(*mi) = NULL;
+        }
     }
 
     return;
@@ -148,11 +170,15 @@ static NPY_INLINE void multi_iter_masked_free(multi_iter_masked_t *mi)
 static NPY_INLINE void multi_iter_free(multi_iter_t *mi)
 {
     if (mi) {
-        if (MultiIter_Index(*mi))
+        if (MultiIter_Index(*mi)) {
             mkl_free(MultiIter_Index(*mi));
+            MultiIter_Index(*mi) = NULL;
+        }
 
-        if (MultiIter_Shape(*mi))
+        if (MultiIter_Shape(*mi)) {
             mkl_free(MultiIter_Shape(*mi));
+            MultiIter_Shape(*mi) = NULL;
+        }
     }
 
     return;
