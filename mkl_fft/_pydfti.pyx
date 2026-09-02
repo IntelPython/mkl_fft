@@ -84,9 +84,9 @@ def _tls_dfti_cache_capsule():
             capsule = cpython.pycapsule.PyCapsule_New(
                 <void *>_cache_struct, capsule_name, &_capsule_destructor
             )
-        except:
-            PyMem_Free(_cache_struct)
-            raise
+        finally:
+            if capsule is None:
+                PyMem_Free(_cache_struct)
         # only publish to TLS once the capsule owns the allocation
         _tls.capsule = capsule
     if (not cpython.pycapsule.PyCapsule_IsValid(capsule, capsule_name)):
