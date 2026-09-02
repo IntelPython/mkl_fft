@@ -303,6 +303,7 @@ cdef cnp.ndarray _allocate_result(
     cdef cnp.npy_intp *f_shape
     cdef cnp.ndarray f_arr "ff_arrayObject"
     cdef int x_arr_is_fortran
+    cdef int f_ndim
 
     f_ndim = cnp.PyArray_NDIM(x_arr)
 

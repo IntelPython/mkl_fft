@@ -13,6 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Raised the minimum build-time `Cython` requirement to `3.1.0`, the first release providing the `freethreading_compatible` directive [gh-357](https://github.com/IntelPython/mkl_fft/pull/357)
 * Removed the `python-gil` constraint from the conda recipes, which pinned `mkl_fft` to GIL-enabled Python 3.14 builds [gh-357](https://github.com/IntelPython/mkl_fft/pull/357)
 
+### Fixed
+* Declared `f_ndim` as a C `int` in `_allocate_result` so the buffer size is computed in C rather than through a Python object, resolving a Coverity out-of-bounds (OVERRUN) false positive [gh-364](https://github.com/IntelPython/mkl_fft/pull/364)
+* Silenced a Coverity `UNUSED_VALUE` finding in `__create_descriptor_1d` by marking the `DftiFreeDescriptor` status (used only by a debug-only `assert`) as intentionally unused [gh-365](https://github.com/IntelPython/mkl_fft/pull/365)
+
+## [2.3.2] - 2026-08-04
+
+### Fixed
+* Emit one `-rpath` linker argument per path instead of colon-joining them, so the runtime library search path is baked correctly into macOS (Mach-O) extensions [gh-358](https://github.com/IntelPython/mkl_fft/pull/358)
+
+## [2.3.1] - 2026-07-31
+
+### Fixed
+* Fixed RPATH logic for OSX builds [gh-351](https://github.com/IntelPython/mkl_fft/pull/351)
 
 ## [2.3.0] - 2026-07-30
 
