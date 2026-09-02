@@ -170,10 +170,9 @@ cdef extern from "src/mklfft.h":
 
 cdef _raise_dfti_error(int status):
     """Raise the exception described by a non-zero MKL DFTI status"""
-    cdef char * c_error_msg = mkl_dfti_error(status)
-    cdef bytes py_error_msg = c_error_msg
+    cdef bytes error_msg = mkl_dfti_error(status)
 
-    message = f"Internal error occurred: {py_error_msg}"
+    message = f"Internal error occurred: {error_msg.decode()}"
     if status == DFTI_MEMORY_ERROR:
         raise MemoryError(message)
     raise ValueError(message)
