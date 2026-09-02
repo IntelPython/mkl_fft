@@ -173,7 +173,7 @@ cdef _raise_dfti_error(int status):
     cdef char * c_error_msg = mkl_dfti_error(status)
     cdef bytes py_error_msg = c_error_msg
 
-    message = f"Internal error occurred: {str(py_error_msg)}"
+    message = f"Internal error occurred: {py_error_msg}"
     if status == DFTI_MEMORY_ERROR:
         raise MemoryError(message)
     raise ValueError(message)
