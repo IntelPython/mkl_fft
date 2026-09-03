@@ -78,6 +78,43 @@ def _compute_fwd_scale(norm, n, shape):
         return np.sqrt(fsc)
 
 
+def _compute_nd_scale_shape(x, s, axes, norm=None, invreal=False):
+    """
+    Resolve the lengths that a norm-scaled N-D transform normalizes over.
+
+    ``_compute_fwd_scale`` falls back to the full array shape when ``s`` is
+    None. That over-normalizes when only a subset of axes is transformed, and
+    for c2r transforms the basis is the *output* length along the last
+    transformed axis rather than the input one.
+
+    This mirrors what the ``numpy_fft`` and ``scipy_fft`` interfaces already
+    do by calling ``_cook_nd_args`` before delegating. Only the scale basis is
+    resolved here; ``s`` itself is left alone so that dispatch in
+    ``_c2c_fftnd_impl`` is unchanged.
+
+    ``norm`` is accepted only to skip the work for the unscaled norms, whose
+    scale is 1.0 regardless of shape. Invalid values fall through to
+    ``_compute_fwd_scale``, which validates them.
+    """
+
+    if s is not None or norm in (None, "backward"):
+        return s
+    try:
+        if axes is None:
+            ss = list(x.shape)
+            last = len(ss) - 1
+        else:
+            ss = [x.shape[ai] for ai in axes]
+            last = axes[-1]
+        if invreal:
+            ss[-1] = 2 * (x.shape[last] - 1)
+    except (IndexError, TypeError):
+        # invalid or empty axes; leave the scale alone and let the
+        # transform itself raise
+        return s
+    return tuple(ss)
+
+
 def _cook_nd_args(a, s=None, axes=None, invreal=False):
     if s is None:
         shapeless = True
