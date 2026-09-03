@@ -58,7 +58,7 @@ repos:
     args: ["-i"]
 
 - repo: https://github.com/MarcoGorelli/cython-lint
-  rev: v0.21.0
+  rev: v0.21.1
   hooks:
   - id: cython-lint
   - id: double-quote-cython-strings
@@ -73,7 +73,7 @@ repos:
       - flake8-bugbear==25.11.29
 
 - repo: https://github.com/pycqa/isort
-  rev: 9.0.0b5
+  rev: 9.0.0
   hooks:
   - id: isort
     name: isort (python)
