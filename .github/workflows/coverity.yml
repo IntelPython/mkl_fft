@@ -34,7 +34,9 @@ jobs:
           architecture: x64
 
       - name: Install mkl_fft dependencies
-        run: pip install meson-python ninja cmake cython "numpy>=2" mkl-devel
+        # Cython is pinned here only (not in pyproject.toml) to keep the generated
+        # code stable between scans, so Coverity CIDs and their triage survive
+        run: pip install meson-python ninja cmake "cython==3.3.0" "numpy>=2" mkl-devel
 
       - name: Download Coverity Build Tool
         timeout-minutes: 15
