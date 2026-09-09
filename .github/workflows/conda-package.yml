@@ -237,7 +237,7 @@ jobs:
           auto-update-conda: true
           miniforge-version: latest
           activate-environment: build
-          channels: conda-forge
+          channels: conda-forge,conda-forge/label/python_rc
           python-version: ${{ matrix.python }}
           conda-build-version: ${{ env.CONDA_BUILD_VERSION }}
 
@@ -311,7 +311,7 @@ jobs:
         with:
           auto-update-conda: true
           miniforge-version: latest
-          channels: conda-forge
+          channels: conda-forge,conda-forge/label/python_rc
           activate-environment: ${{ env.TEST_ENV_NAME }}
           python-version: ${{ matrix.python }}
 

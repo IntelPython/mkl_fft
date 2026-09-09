@@ -193,7 +193,7 @@ jobs:
         with:
           miniforge-version: latest
           activate-environment: build
-          channels: conda-forge
+          channels: conda-forge,conda-forge/label/python_rc
           python-version: ${{ matrix.python }}
 
       - name: Install conda-build
@@ -255,7 +255,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
         with:
           miniforge-version: latest
-          channels: conda-forge
+          channels: conda-forge,conda-forge/label/python_rc
           activate-environment: ${{ env.TEST_ENV_NAME }}
           python-version: ${{ matrix.python }}
 
