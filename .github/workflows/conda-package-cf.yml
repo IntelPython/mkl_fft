@@ -32,6 +32,8 @@ jobs:
             numpy: "2.3"
           - python: "3.14"
             numpy: "2.3"
+          - python: "3.15"
+            numpy: "2.5"
 
     steps:
       - name: Cancel Previous Runs
@@ -68,7 +70,7 @@ jobs:
 
       - name: Build conda package with NumPy 2.x
         run: |
-          CHANNELS=(-c conda-forge --override-channels)
+          CHANNELS=(-c conda-forge -c conda-forge/label/python_rc --override-channels)
           VERSIONS=(--python "${{ matrix.python }}" --numpy "${{ matrix.numpy }}")
           TEST=(--no-test)
 
@@ -90,13 +92,13 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
         numpy: ['numpy">=2"']
         experimental: [false]
         runner: [ubuntu-latest]
     continue-on-error: ${{ matrix.experimental }}
     env:
-      CHANNELS: -c conda-forge --override-channels
+      CHANNELS: -c conda-forge -c conda-forge/label/python_rc --override-channels
 
     steps:
       - name: Download artifact
@@ -173,6 +175,8 @@ jobs:
             numpy: "2.3"
           - python: "3.14"
             numpy: "2.3"
+          - python: "3.15"
+            numpy: "2.5"
 
     steps:
       - name: Cancel Previous Runs
@@ -211,7 +215,7 @@ jobs:
 
       - name: Build conda package with NumPy 2.x
         run: |
-          conda build --no-test --python ${{ matrix.python }} --numpy ${{ matrix.numpy }} -c conda-forge --override-channels conda-recipe-cf
+          conda build --no-test --python ${{ matrix.python }} --numpy ${{ matrix.numpy }} -c conda-forge -c conda-forge/label/python_rc --override-channels conda-recipe-cf
 
       - name: Store conda paths as envs
         shell: bash -l {0}
@@ -233,14 +237,14 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
         numpy: ['numpy">=2"']
         experimental: [false]
         runner: [windows-latest]
     continue-on-error: ${{ matrix.experimental }}
     env:
       workdir: '${{ github.workspace }}'
-      CHANNELS: -c conda-forge --override-channels
+      CHANNELS: -c conda-forge -c conda-forge/label/python_rc --override-channels
 
     steps:
       - name: Download artifact
