@@ -89,6 +89,9 @@ repos:
   hooks:
   - id: pretty-format-toml
     args: [--autofix]
+    # the hook does not pin toml-sort, so an unpinned resolve makes the
+    # formatting differ between a cold and a warm hook cache
+    additional_dependencies: [toml-sort==0.25.0]
 
 - repo: local
   hooks:
