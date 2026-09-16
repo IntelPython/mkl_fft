@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Pinned Cython in the Coverity Scan workflow so generated code stays stable between scans, and added `coverity/README.md` documenting the known false-positive families and the scan review checklist [gh-374](https://github.com/IntelPython/mkl_fft/pull/374)
 
 ### Fixed
+* Fixed `norm="forward"`/`"ortho"` scaling in `fftn`, `ifftn`, `rfftn`, `irfftn` and the `fft2` family when only a subset of axes is transformed: the scale used the full array shape instead of the transformed axes [gh-336](https://github.com/IntelPython/mkl_fft/issues/336), [gh-370](https://github.com/IntelPython/mkl_fft/pull/370)
+* Fixed `norm="forward"`/`"ortho"` scaling in `irfftn` and `irfft2`, which normalized over the input length `n` rather than the complex-to-real output length `2 * (n - 1)` [gh-370](https://github.com/IntelPython/mkl_fft/pull/370)
 * Declared `f_ndim` as a C `int` in `_allocate_result` so the buffer size is computed in C rather than through a Python object, resolving a Coverity out-of-bounds (OVERRUN) false positive [gh-364](https://github.com/IntelPython/mkl_fft/pull/364)
 * Silenced a Coverity `UNUSED_VALUE` finding in `__create_descriptor_1d` by marking the `DftiFreeDescriptor` status (used only by a debug-only `assert`) as intentionally unused [gh-365](https://github.com/IntelPython/mkl_fft/pull/365)
 * Fixed possible memory leaks when `PyMem_Malloc` fails, and raise `MemoryError` [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
