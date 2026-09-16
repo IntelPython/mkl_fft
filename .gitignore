@@ -12,3 +12,6 @@ mkl_fft/src/mklfft.c
 
 # ASV benchmark artifacts
 .asv/
+
+# Developer-local coding agent settings
+.claude/settings.local.json
