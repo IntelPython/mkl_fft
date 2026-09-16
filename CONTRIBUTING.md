@@ -15,7 +15,8 @@ Building requires a C compiler, oneMKL headers and libraries (`mkl-devel`), and
 NumPy. A conda environment is the least surprising way to get them:
 
 ```sh
-conda create -n mkl_fft-dev -c conda-forge python=3.12 pip mkl-devel numpy \
+# add python=X.Y to target a specific interpreter
+conda create -n mkl_fft-dev -c conda-forge python pip mkl-devel numpy \
     meson-python ninja cmake cython pytest scipy mkl-service
 conda activate mkl_fft-dev
 ```
@@ -25,6 +26,9 @@ Then build in place, which reuses the environment's MKL and NumPy:
 ```sh
 pip install -e ".[test]" --no-build-isolation --verbose
 ```
+
+`pyproject.toml` defines the supported Python range, and
+`.github/workflows/build_pip.yml` is canonical for the versions CI covers.
 
 The `[test]` extra pulls in `pytest`, `scipy`, and `mkl-service`. Other extras
 are declared in `pyproject.toml`: `scipy_interface` for the SciPy adapter at
