@@ -20,6 +20,6 @@ conda build, the benchmarks. Write "none" if you ran everything relevant.
 
 - [ ] NumPy/SciPy FFT API compatibility preserved, or the break is intentional and called out above.
 - [ ] Behavior changes have tests in `mkl_fft/tests/`; bug fixes have a regression test.
-- [ ] `CHANGELOG.md` updated under `## [dev]` with a `[gh-NNN]` link.
+- [ ] `CHANGELOG.md` updated under `## [dev]` with a `[gh-NNN]` link, or the change isn't user-visible.
 
 <!-- See CONTRIBUTING.md for the build and test workflow, and AGENTS.md for the module map. -->

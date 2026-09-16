@@ -154,10 +154,12 @@ orientation map for humans too.
 Work on a branch: the `no-commit-to-branch` hook blocks direct commits to
 `master` and `maintenance/*`.
 
-Add a `CHANGELOG.md` entry under `## [dev]` in the matching section, with a
+If the change is user-visible — behavior, API, packaging, or build output — add
+a `CHANGELOG.md` entry under `## [dev]` in the matching section, with a
 `[gh-NNN](https://github.com/IntelPython/mkl_fft/pull/NNN)` link. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
-follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Docs,
+tooling, and CI-only changes are usually left out.
 
 Then open the PR and fill in the template, including what you verified locally
 and what you left to CI.
