@@ -54,8 +54,9 @@ module or a new C file would not be installed and would not import. Refactor
 inside the files that exist; if a change genuinely needs a new file, describe it
 in your report and leave it to a human.
 
-The workflow enforces these paths independently and fails the run if the diff
-steps outside them.
+The caller re-checks the diff and fails the run if it strays into a forbidden
+path, but its deny list is narrower than the scope above. Treat the scope as
+yours to honour rather than as something that will be caught for you.
 
 ## Track A — performance
 
@@ -133,8 +134,8 @@ of the fix — this repository has done exactly that before, when a path was cha
 to raise `MemoryError` instead of `ValueError`. Adding a test and leaving the
 wrong assertion in place would be dishonest.
 
-So you may modify an existing test. The bar is high, and the workflow refuses two
-things outright:
+So you may modify an existing test. The bar is high, and two things are never
+acceptable:
 
 - **Removing a test function.** Retiring coverage is a human decision, always.
 - **Adding a `skip`, `skipif` or `xfail` marker to an existing test.** A fix never
@@ -178,8 +179,9 @@ pytest mkl_fft/tests
 pre-commit run --files <every file you changed>
 ```
 
-The whole suite must pass. The workflow repeats the build and the suite
-independently and will refuse to open a pull request if either fails.
+The whole suite must pass. The caller re-runs the build and the suite when it is
+configured to and discards your work if either fails, but that is a backstop —
+running them yourself is how you find out whether your change is right.
 
 Source edits mean the Python, Cython and C hooks apply: `black`, `isort`,
 `flake8`, `pylint`, `cython-lint` and `clang-format` will all have opinions. Fix
@@ -197,17 +199,17 @@ Stop without proposing anything if you changed nothing. An empty pull request is
 a worse outcome than silence.
 
 Do not commit, push, or open a pull request, and do not run `git commit`,
-`git push`, or any `gh` command. Leave your work as uncommitted changes. The
-caller checks your diff against the allowed paths, re-runs the build and the full
-suite, and then commits it to a single reused branch so weekly runs do not stack.
-If you are running this skill outside that automation, hand the diff and your
-report to whoever invoked you.
+`git push`, or any `gh` command. You have no write credentials. Leave your work as
+uncommitted changes: the caller checks the diff, re-runs the verification it is
+configured with, and turns the result into a patch or a branch for a human to
+review. If you are running this skill by hand, hand the diff and your report to
+whoever invoked you.
 
 Write a one-line pull-request title to `pr-title.txt` in the repository root,
 prefixed `perf:` or `fix:` to match the track you took. Write the report itself to
 `pr-body.md` in the repository root, following the repository's pull-request
-template if one exists. The workflow moves both out of the tree before
-committing, so neither appears in the diff.
+template if one exists. The caller moves both out of the tree before proposing the
+diff, so neither appears in it.
 
 Whatever the shape, the report must state:
 
