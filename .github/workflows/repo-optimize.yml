@@ -1,9 +1,19 @@
-name: Weekly repository optimization
+name: Weekly performance and correctness sweep
 
-# Unattended agentic maintenance sweep. Opens a pull request; never pushes to a
-# protected branch and never merges. Scope is enforced twice: the repo-optimize
-# skill declares it, and the "Enforce scope" step below fails the run if the
-# diff escapes it.
+# Unattended agentic sweep. Looks for one behaviour-preserving speedup in the FFT
+# implementation, or one genuine bug fix, and opens a pull request; never pushes
+# to a protected branch and never merges. CI's benchmark reporting measures the
+# effect on the resulting pull request — this workflow does not judge performance,
+# only correctness.
+#
+# The agent may edit source, so two controls carry the weight:
+#   1. "Enforce scope" fails the run if the diff touches the benchmark suite,
+#      build configuration, packaging, or this automation. Under mkl_fft/tests a
+#      new test_*.py is allowed and an existing test may be corrected, but
+#      removing a test function or adding a skip/xfail is refused and any
+#      modification is flagged on the pull request for review.
+#   2. "Rebuild and run the full test suite" must be green before a pull request
+#      can exist.
 #
 # Trigger surface is deliberately narrow. Scheduled runs always execute the
 # workflow file from the default branch in this repository's context, and
@@ -17,7 +27,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Run the sweep and scope check, but do not push or open a pull request'
+        description: 'Run the sweep, scope check and tests, but do not push or open a pull request'
         type: boolean
         default: false
 
@@ -28,9 +38,6 @@ concurrency:
   cancel-in-progress: false # never interrupt a run that may be mid-push
 
 env:
-  # Pinned commit of the AgentReady readiness scanner (not published to npm).
-  AGENTREADY_REPO: https://github.com/napetrov/agentready
-  AGENTREADY_SHA: 289c2a9aa9984b259a8a2b1726c4fb997ace8209
   SWEEP_BRANCH: chore/repo-optimize
 
 jobs:
@@ -41,7 +48,7 @@ jobs:
     if: github.repository == 'IntelPython/mkl_fft'
 
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     # Gates secrets.ANTHROPIC_API_KEY behind an environment restricted to the
     # default branch, so no other workflow context can reach it.
@@ -49,6 +56,10 @@ jobs:
 
     permissions:
       contents: read # the agent gets read-only credentials; writes happen via the app token below
+
+    defaults:
+      run:
+        shell: bash -el {0}
 
     steps:
       - name: Checkout mkl_fft repo
@@ -61,32 +72,38 @@ jobs:
           # scoping the run with --files would not skip it.
           ref: ${{ github.sha }}
 
-      - name: Set up Node for the readiness scanner
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Set up conda
+        uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
         with:
-          node-version: 24
+          miniforge-version: latest
+          channels: conda-forge
+          activate-environment: sweep
+          # Any version inside the requires-python range in pyproject.toml works;
+          # build_pip.yml is canonical for the matrix CI actually covers.
+          python-version: '3.13'
 
-      # Third-party code is fetched and built here, before any write-capable
-      # credential exists in the job.
-      - name: Build the readiness scanner at a pinned commit
+      - name: Install build and test dependencies
         run: |
-          git clone --quiet --no-checkout "$AGENTREADY_REPO" "$RUNNER_TEMP/agentready"
-          git -C "$RUNNER_TEMP/agentready" checkout --quiet "$AGENTREADY_SHA"
-          npm --prefix "$RUNNER_TEMP/agentready" ci --ignore-scripts
+          conda install -y mkl-devel numpy scipy mkl-service \
+            meson-python ninja cmake cython pytest pip
 
-      - name: Set up Python for pre-commit
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        with:
-          # Match pre-commit.yml, which is the source of truth for the lint environment.
-          python-version: '3.14'
+      - name: Build mkl_fft
+        run: pip install -e ".[test]" --no-build-isolation
+
+      - name: Confirm the baseline suite is green
+        run: pytest mkl_fft/tests -q
+
+      # Put the environment on PATH for every later step, including the
+      # subprocesses the agent spawns, which do not get a login shell.
+      - name: Expose the environment to later steps
+        run: echo "$CONDA_PREFIX/bin" >> "$GITHUB_PATH"
 
       - name: Install pre-commit
         run: python -m pip install pre-commit
 
-      - name: Run the maintenance sweep
+      - name: Run the performance sweep
         uses: anthropics/claude-code-action@e337a86d5fec66d2a465637dff1b9ffedd91dd22 # v1.0.227
         env:
-          AGENTREADY_DIR: ${{ runner.temp }}/agentready
           # Redirect the runner's environment files to throwaways. Anything the
           # agent writes to them is discarded instead of being applied to later
           # steps, which would otherwise let it alter PATH or inject variables
@@ -103,22 +120,35 @@ jobs:
             (`.claude/skills/repo-optimize/SKILL.md`). It is your complete
             mandate: follow its scope, task list and rules exactly.
 
+            The goal is one behaviour-preserving performance improvement in the
+            FFT implementation, or — if you find one while looking — one genuine
+            bug fix, which takes precedence. Exactly one of the two, never both.
+            Documentation upkeep is only for weeks where you find neither.
+
+            A bug fix must come with a new `mkl_fft/tests/test_<name>.py` that you
+            saw fail before the fix. If an existing test encoded the bug you may
+            correct it, but you must justify each such change in your report as
+            the skill describes; removing a test or adding a skip is refused.
+
+            The package is already built in editable mode in the active conda
+            environment, so `pytest mkl_fft/tests` runs immediately and
+            `meson-python` rebuilds the extension on import after you edit
+            `.pyx` or `.c.src` files.
+
             Two adjustments for this environment:
 
             - You have read-only GitHub credentials. Do not run `git commit`,
               `git push`, or any `gh` command. Leave your work as uncommitted
-              changes in the working tree; the workflow commits and opens the
-              pull request after checking your diff against the allowed paths.
-            - Instead of opening the pull request yourself, write the body you
-              would have used to a file named `pr-body.md` in the repository
-              root. The workflow moves it out of the tree before committing, so
-              it will not appear in the diff. If you made no changes, do not
-              create it.
-
-            AgentReady is built at the path in $AGENTREADY_DIR.
+              changes in the working tree; the workflow checks your diff against
+              the allowed paths, re-runs the full suite, and then commits.
+            - Write a one-line title to `pr-title.txt` and your report to
+              `pr-body.md`, both in the repository root. The title must start with
+              `perf:` or `fix:`. The workflow moves both out of the tree before
+              committing, so neither appears in the diff. If you made no changes,
+              do not create them.
           claude_args: |
-            --max-turns 60
-            --allowedTools "Read,Grep,Glob,Edit,Write,Bash(npm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git ls-files:*),Bash(pre-commit run:*),Bash(python3:*)"
+            --max-turns 80
+            --allowedTools "Read,Grep,Glob,Edit,Write,Bash(pip:*),Bash(pytest:*),Bash(python:*),Bash(python3:*),Bash(asv:*),Bash(meson:*),Bash(ninja:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git ls-files:*),Bash(pre-commit run:*)"
 
       # Authoritative scope check. Runs before any credential that could push.
       - name: Enforce scope
@@ -129,11 +159,13 @@ jobs:
           # that would execute it. The agent has stopped, so it cannot undo this.
           rm -rf .git/hooks
 
-          # The agent leaves its pull-request body in the worktree; lift it out
-          # before staging so it is never part of the proposed diff.
-          if [ -f pr-body.md ]; then
-            mv pr-body.md "$RUNNER_TEMP/pr-body.md"
-          fi
+          # The agent leaves its title and report in the worktree; lift them out
+          # before staging so they are never part of the proposed diff.
+          for f in pr-title.txt pr-body.md; do
+            if [ -f "$f" ]; then
+              mv "$f" "$RUNNER_TEMP/$f"
+            fi
+          done
 
           git add -A
           if git diff --cached --quiet; then
@@ -143,19 +175,27 @@ jobs:
           fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
-          DENY='^([.]github/workflows/|[.]claude/|CHANGELOG[.]md$)'
-          ALLOW='^([A-Za-z0-9_.-]+[.]md|docs/.+|(.+/)?AGENTS[.]md|[.]github/pull_request_template[.]md|[.]github/ISSUE_TEMPLATE/.+|[.]gitignore|[.]gitattributes)$'
+          # Denied paths outrank allowed ones. The benchmark suite is the
+          # instrument that judges this sweep, so the sweep cannot edit it.
+          DENY='^([.]github/workflows/|[.]claude/|_vendored/|benchmarks/|conda-recipe|CHANGELOG[.]md$|meson[.]build$|pyproject[.]toml$|mkl_fft/_version[.]py$)'
+          ALLOW='^(mkl_fft/.+|[A-Za-z0-9_.-]+[.]md|docs/.+|(.+/)?AGENTS[.]md|[.]github/pull_request_template[.]md|[.]github/ISSUE_TEMPLATE/.+|[.]gitignore|[.]gitattributes)$'
+          # A bug fix needs a regression test, so a new test file is allowed.
+          # Modifying an existing test is allowed too — a test can encode the very
+          # bug being fixed — but it is flagged for review, and the two ways a
+          # suite gets quietly weakened are refused outright below.
+          NEW_TEST='^mkl_fft/tests/test_[a-z0-9_]+[.]py$'
+          # Removing a test, or silencing one with a skip/xfail marker, is never
+          # part of a legitimate fix.
+          DROPPED_TEST='^-[[:space:]]*def[[:space:]]+test_'
+          ADDED_SKIP='^\+[[:space:]]*(@pytest\.mark\.(skip|skipif|xfail)|pytest\.(skip|xfail)\()'
 
           violations=0
+          modified_tests=()
 
-          # This sweep only adds and edits files. A deletion is always suspect,
-          # even of an in-scope path, so treat it as out of scope.
-          while IFS= read -r -d '' f; do
-            echo "::error file=$f::sweep deleted a file; deletions are out of scope"
-            violations=$((violations + 1))
-          done < <(git diff --cached --name-only -z --no-renames --diff-filter=D)
-
-          while IFS= read -r -d '' f; do
+          # --no-renames matters: with rename detection on, moving an
+          # out-of-scope file to an in-scope path shows the guard only the
+          # allowed destination and hides the source deletion entirely.
+          while IFS= read -r -d '' status && IFS= read -r -d '' f; do
             case "$f" in
               /* | *..*)
                 # Unreachable via the index, which normalises paths, but the
@@ -165,24 +205,78 @@ jobs:
                 continue
                 ;;
             esac
+
+            # Deletions are always suspect, even of an in-scope path.
+            if [ "$status" = "D" ]; then
+              echo "::error file=$f::sweep deleted a file; deletions are out of scope"
+              violations=$((violations + 1))
+              continue
+            fi
+
+            case "$f" in
+              mkl_fft/tests/conftest.py)
+                # A conftest changes collection and fixtures for the whole suite,
+                # which is a way to defang tests without editing one.
+                echo "::error file=$f::conftest.py is off limits; it changes collection for the whole suite"
+                violations=$((violations + 1))
+                continue
+                ;;
+              mkl_fft/tests/*)
+                if [ "$status" = "A" ]; then
+                  if printf '%s' "$f" | grep -Eq "$NEW_TEST"; then
+                    echo "in scope (new regression test): $f"
+                  else
+                    echo "::error file=$f::a new file under mkl_fft/tests/ must be named test_<name>.py"
+                    violations=$((violations + 1))
+                  fi
+                elif [ "$status" = "M" ]; then
+                  echo "::warning file=$f::sweep modified an existing test; this needs explicit review"
+                  modified_tests+=("$f")
+                else
+                  echo "::error file=$f::unexpected change type '$status' under mkl_fft/tests/"
+                  violations=$((violations + 1))
+                fi
+                continue
+                ;;
+            esac
+
             if printf '%s' "$f" | grep -Eq "$DENY"; then
-              echo "::error file=$f::forbidden path (workflows, agent config, and CHANGELOG are out of scope)"
+              echo "::error file=$f::forbidden path (benchmarks, build config, packaging, agent config)"
               violations=$((violations + 1))
             elif ! printf '%s' "$f" | grep -Eq "$ALLOW"; then
-              echo "::error file=$f::outside the allowed maintenance scope"
+              echo "::error file=$f::outside the allowed sweep scope"
               violations=$((violations + 1))
             else
               echo "in scope: $f"
             fi
-          # --no-renames matters: with rename detection on, moving an
-          # out-of-scope file to an in-scope path shows the guard only the
-          # allowed destination and hides the source deletion entirely.
-          done < <(git diff --cached --name-only -z --no-renames --diff-filter=d)
+          done < <(git diff --cached --name-status -z --no-renames)
+
+          # Content checks on modified tests only. A new test file is the agent's
+          # own work and may legitimately carry a platform skipif; an existing one
+          # losing a test or gaining a skip is how coverage disappears.
+          if [ "${#modified_tests[@]}" -gt 0 ]; then
+            if git diff --cached -- "${modified_tests[@]}" | grep -Eq "$DROPPED_TEST"; then
+              echo "::error::a test function was removed from an existing test file; retiring a test is a human decision"
+              violations=$((violations + 1))
+            fi
+            if git diff --cached -- "${modified_tests[@]}" | grep -Eq "$ADDED_SKIP"; then
+              echo "::error::a skip/xfail marker was added to an existing test; a fix never needs to silence one"
+              violations=$((violations + 1))
+            fi
+            printf 'tests_modified=%s\n' "${modified_tests[*]}" >> "$GITHUB_OUTPUT"
+          fi
 
           if [ "$violations" -gt 0 ]; then
             echo "::error::sweep touched $violations out-of-scope path(s); refusing to propose a pull request"
             exit 1
           fi
+
+      # The correctness gate. The agent could not edit these tests.
+      - name: Rebuild and run the full test suite
+        if: steps.scope.outputs.changed == 'true'
+        run: |
+          pip install -e ".[test]" --no-build-isolation
+          pytest mkl_fft/tests
 
       - name: Verify with the repository's own hooks
         if: steps.scope.outputs.changed == 'true'
@@ -192,7 +286,7 @@ jobs:
           git diff --cached --name-only -z --no-renames --diff-filter=d \
             | xargs -0 --no-run-if-empty pre-commit run --files
 
-      # Minted last, and only if the diff is in scope and verified.
+      # Minted last, and only if the diff is in scope and the suite is green.
       - name: Mint a repository-scoped app token
         id: app-token
         if: steps.scope.outputs.changed == 'true' && !inputs.dry_run
@@ -200,12 +294,13 @@ jobs:
         with:
           app-id: ${{ vars.MAINTENANCE_APP_ID }}
           private-key: ${{ secrets.MAINTENANCE_APP_PRIVATE_KEY }}
-          # A PR opened by an app token triggers the repository's CI, which a
-          # PR opened by GITHUB_TOKEN would not.
+          # A PR opened by an app token triggers the repository's CI — including
+          # benchmark reporting — which a PR opened by GITHUB_TOKEN would not.
           permission-contents: write
           permission-pull-requests: write
 
       - name: Commit and push the sweep
+        id: commit
         if: steps.scope.outputs.changed == 'true' && !inputs.dry_run
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -213,11 +308,24 @@ jobs:
         run: |
           git config user.name "${APP_SLUG}[bot]"
           git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
+
           # -c core.hooksPath overrides any hooksPath the agent may have written
           # into .git/config; command-line config beats config files.
+          # The agent proposes the subject line; take only the first line, cap the
+          # length, and fall back to a neutral default. Passed as an argument,
+          # never evaluated.
+          title='chore: weekly performance and correctness sweep'
+          if [ -s "$RUNNER_TEMP/pr-title.txt" ]; then
+            candidate="$(head -n 1 "$RUNNER_TEMP/pr-title.txt" | tr -d '\r' | cut -c1-72)"
+            case "$candidate" in
+              perf:*|fix:*) title="$candidate" ;;
+              *) echo "::warning::ignoring pr-title.txt: expected a perf: or fix: prefix" ;;
+            esac
+          fi
+          echo "title=$title" >> "$GITHUB_OUTPUT"
+
           git -c core.hooksPath=/dev/null checkout -B "$SWEEP_BRANCH"
-          git -c core.hooksPath=/dev/null commit --no-verify --quiet \
-            -m "chore: weekly repository optimization sweep"
+          git -c core.hooksPath=/dev/null commit --no-verify --quiet -m "$title"
 
           # checkout only fetched the default branch, so there is no
           # remote-tracking ref for the sweep branch and a bare
@@ -236,28 +344,46 @@ jobs:
         if: steps.scope.outputs.changed == 'true' && !inputs.dry_run
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_TITLE: ${{ steps.commit.outputs.title }}
+          TESTS_MODIFIED: ${{ steps.scope.outputs.tests_modified }}
         run: |
           BODY="$RUNNER_TEMP/pr-body.md"
           if [ ! -s "$BODY" ]; then
             printf '%s\n' \
-              'Automated maintenance sweep.' '' \
+              'Automated performance and correctness sweep.' '' \
               'The agent did not leave a report, so review the diff on its own merits.' > "$BODY"
+          fi
+
+          # An existing test changing is the one thing a reviewer must not skim.
+          if [ -n "$TESTS_MODIFIED" ]; then
+            {
+              echo '> [!IMPORTANT]'
+              echo '> This sweep modified existing tests:'
+              for t in $TESTS_MODIFIED; do echo "> - \`$t\`"; done
+              echo '>'
+              echo '> Check each change corrects what the test asserted, rather than'
+              echo '> accommodating the diff. Removing a test or adding a skip is'
+              echo '> refused automatically; changing an assertion is not.'
+              echo
+              cat "$BODY"
+            } > "$BODY.annotated"
+            mv "$BODY.annotated" "$BODY"
           fi
 
           existing="$(gh pr list --head "$SWEEP_BRANCH" --state open --json number --jq '.[0].number // empty')"
           if [ -n "$existing" ]; then
-            gh pr edit "$existing" --body-file "$BODY"
+            gh pr edit "$existing" --title "$PR_TITLE" --body-file "$BODY"
             echo "Updated pull request #$existing"
           else
             gh pr create \
               --base master \
               --head "$SWEEP_BRANCH" \
-              --title "chore: weekly repository optimization sweep" \
+              --title "$PR_TITLE" \
               --body-file "$BODY"
           fi
 
       - name: Report dry-run result
         if: steps.scope.outputs.changed == 'true' && inputs.dry_run
         run: |
-          echo "### Dry run: in-scope changes produced, not pushed" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Dry run: in-scope changes produced and tested, not pushed" >> "$GITHUB_STEP_SUMMARY"
           git diff --cached --stat >> "$GITHUB_STEP_SUMMARY"
