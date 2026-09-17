@@ -1,0 +1,263 @@
+name: Weekly repository optimization
+
+# Unattended agentic maintenance sweep. Opens a pull request; never pushes to a
+# protected branch and never merges. Scope is enforced twice: the repo-optimize
+# skill declares it, and the "Enforce scope" step below fails the run if the
+# diff escapes it.
+#
+# Trigger surface is deliberately narrow. Scheduled runs always execute the
+# workflow file from the default branch in this repository's context, and
+# workflow_dispatch requires write access, so no non-member can invoke this.
+# Do not add issue_comment or pull_request_target triggers: on a public repo
+# that would let any account start a job holding credentials.
+
+on:
+  schedule:
+    - cron: '17 3 * * 1' # Mondays 03:17 UTC (off-the-hour to avoid scheduler contention)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run the sweep and scope check, but do not push or open a pull request'
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false # never interrupt a run that may be mid-push
+
+env:
+  # Pinned commit of the AgentReady readiness scanner (not published to npm).
+  AGENTREADY_REPO: https://github.com/napetrov/agentready
+  AGENTREADY_SHA: 289c2a9aa9984b259a8a2b1726c4fb997ace8209
+  SWEEP_BRANCH: chore/repo-optimize
+
+jobs:
+  optimize:
+    name: Sweep and open pull request
+
+    # Keep forks from running this on their own schedule.
+    if: github.repository == 'IntelPython/mkl_fft'
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # Gates secrets.ANTHROPIC_API_KEY behind an environment restricted to the
+    # default branch, so no other workflow context can reach it.
+    environment: agentic-maintenance
+
+    permissions:
+      contents: read # the agent gets read-only credentials; writes happen via the app token below
+
+    steps:
+      - name: Checkout mkl_fft repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          # Detached HEAD, as pre-commit.yml does, so the "no-commit-to-branch"
+          # hook does not fire during verification. That hook is always_run, so
+          # scoping the run with --files would not skip it.
+          ref: ${{ github.sha }}
+
+      - name: Set up Node for the readiness scanner
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      # Third-party code is fetched and built here, before any write-capable
+      # credential exists in the job.
+      - name: Build the readiness scanner at a pinned commit
+        run: |
+          git clone --quiet --no-checkout "$AGENTREADY_REPO" "$RUNNER_TEMP/agentready"
+          git -C "$RUNNER_TEMP/agentready" checkout --quiet "$AGENTREADY_SHA"
+          npm --prefix "$RUNNER_TEMP/agentready" ci --ignore-scripts
+
+      - name: Set up Python for pre-commit
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          # Match pre-commit.yml, which is the source of truth for the lint environment.
+          python-version: '3.14'
+
+      - name: Install pre-commit
+        run: python -m pip install pre-commit
+
+      - name: Run the maintenance sweep
+        uses: anthropics/claude-code-action@e337a86d5fec66d2a465637dff1b9ffedd91dd22 # v1.0.227
+        env:
+          AGENTREADY_DIR: ${{ runner.temp }}/agentready
+          # Redirect the runner's environment files to throwaways. Anything the
+          # agent writes to them is discarded instead of being applied to later
+          # steps, which would otherwise let it alter PATH or inject variables
+          # into the steps that hold the write-capable token.
+          GITHUB_ENV: ${{ runner.temp }}/discarded-env
+          GITHUB_PATH: ${{ runner.temp }}/discarded-path
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Short-lived, scoped to this job's contents:read. The agent cannot
+          # push or open a pull request with it; later steps do that.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            Run the `repo-optimize` skill in this repository
+            (`.claude/skills/repo-optimize/SKILL.md`). It is your complete
+            mandate: follow its scope, task list and rules exactly.
+
+            Two adjustments for this environment:
+
+            - You have read-only GitHub credentials. Do not run `git commit`,
+              `git push`, or any `gh` command. Leave your work as uncommitted
+              changes in the working tree; the workflow commits and opens the
+              pull request after checking your diff against the allowed paths.
+            - Instead of opening the pull request yourself, write the body you
+              would have used to a file named `pr-body.md` in the repository
+              root. The workflow moves it out of the tree before committing, so
+              it will not appear in the diff. If you made no changes, do not
+              create it.
+
+            AgentReady is built at the path in $AGENTREADY_DIR.
+          claude_args: |
+            --max-turns 60
+            --allowedTools "Read,Grep,Glob,Edit,Write,Bash(npm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git ls-files:*),Bash(pre-commit run:*),Bash(python3:*)"
+
+      # Authoritative scope check. Runs before any credential that could push.
+      - name: Enforce scope
+        id: scope
+        run: |
+          # The guard can only see worktree paths, never .git/**. Discard any
+          # hook the agent may have left behind before running a git command
+          # that would execute it. The agent has stopped, so it cannot undo this.
+          rm -rf .git/hooks
+
+          # The agent leaves its pull-request body in the worktree; lift it out
+          # before staging so it is never part of the proposed diff.
+          if [ -f pr-body.md ]; then
+            mv pr-body.md "$RUNNER_TEMP/pr-body.md"
+          fi
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes produced; nothing to propose."
+            exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+          DENY='^([.]github/workflows/|[.]claude/|CHANGELOG[.]md$)'
+          ALLOW='^([A-Za-z0-9_.-]+[.]md|docs/.+|(.+/)?AGENTS[.]md|[.]github/pull_request_template[.]md|[.]github/ISSUE_TEMPLATE/.+|[.]gitignore|[.]gitattributes)$'
+
+          violations=0
+
+          # This sweep only adds and edits files. A deletion is always suspect,
+          # even of an in-scope path, so treat it as out of scope.
+          while IFS= read -r -d '' f; do
+            echo "::error file=$f::sweep deleted a file; deletions are out of scope"
+            violations=$((violations + 1))
+          done < <(git diff --cached --name-only -z --no-renames --diff-filter=D)
+
+          while IFS= read -r -d '' f; do
+            case "$f" in
+              /* | *..*)
+                # Unreachable via the index, which normalises paths, but the
+                # guard must not depend on that.
+                echo "::error::refusing suspicious path: $f"
+                violations=$((violations + 1))
+                continue
+                ;;
+            esac
+            if printf '%s' "$f" | grep -Eq "$DENY"; then
+              echo "::error file=$f::forbidden path (workflows, agent config, and CHANGELOG are out of scope)"
+              violations=$((violations + 1))
+            elif ! printf '%s' "$f" | grep -Eq "$ALLOW"; then
+              echo "::error file=$f::outside the allowed maintenance scope"
+              violations=$((violations + 1))
+            else
+              echo "in scope: $f"
+            fi
+          # --no-renames matters: with rename detection on, moving an
+          # out-of-scope file to an in-scope path shows the guard only the
+          # allowed destination and hides the source deletion entirely.
+          done < <(git diff --cached --name-only -z --no-renames --diff-filter=d)
+
+          if [ "$violations" -gt 0 ]; then
+            echo "::error::sweep touched $violations out-of-scope path(s); refusing to propose a pull request"
+            exit 1
+          fi
+
+      - name: Verify with the repository's own hooks
+        if: steps.scope.outputs.changed == 'true'
+        run: |
+          # Scope the run to the files the sweep touched, excluding deletions so
+          # pre-commit is never handed a path that no longer exists.
+          git diff --cached --name-only -z --no-renames --diff-filter=d \
+            | xargs -0 --no-run-if-empty pre-commit run --files
+
+      # Minted last, and only if the diff is in scope and verified.
+      - name: Mint a repository-scoped app token
+        id: app-token
+        if: steps.scope.outputs.changed == 'true' && !inputs.dry_run
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.MAINTENANCE_APP_ID }}
+          private-key: ${{ secrets.MAINTENANCE_APP_PRIVATE_KEY }}
+          # A PR opened by an app token triggers the repository's CI, which a
+          # PR opened by GITHUB_TOKEN would not.
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Commit and push the sweep
+        if: steps.scope.outputs.changed == 'true' && !inputs.dry_run
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
+          # -c core.hooksPath overrides any hooksPath the agent may have written
+          # into .git/config; command-line config beats config files.
+          git -c core.hooksPath=/dev/null checkout -B "$SWEEP_BRANCH"
+          git -c core.hooksPath=/dev/null commit --no-verify --quiet \
+            -m "chore: weekly repository optimization sweep"
+
+          # checkout only fetched the default branch, so there is no
+          # remote-tracking ref for the sweep branch and a bare
+          # --force-with-lease would have no lease to check. Read the remote
+          # value directly and lease against it; first run has none.
+          remote_url="https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git"
+          expected="$(git ls-remote "$remote_url" "refs/heads/$SWEEP_BRANCH" | cut -f1)"
+          if [ -n "$expected" ]; then
+            git push --force-with-lease="refs/heads/$SWEEP_BRANCH:$expected" \
+              "$remote_url" "HEAD:refs/heads/$SWEEP_BRANCH"
+          else
+            git push "$remote_url" "HEAD:refs/heads/$SWEEP_BRANCH"
+          fi
+
+      - name: Open or update the pull request
+        if: steps.scope.outputs.changed == 'true' && !inputs.dry_run
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          BODY="$RUNNER_TEMP/pr-body.md"
+          if [ ! -s "$BODY" ]; then
+            printf '%s\n' \
+              'Automated maintenance sweep.' '' \
+              'The agent did not leave a report, so review the diff on its own merits.' > "$BODY"
+          fi
+
+          existing="$(gh pr list --head "$SWEEP_BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --body-file "$BODY"
+            echo "Updated pull request #$existing"
+          else
+            gh pr create \
+              --base master \
+              --head "$SWEEP_BRANCH" \
+              --title "chore: weekly repository optimization sweep" \
+              --body-file "$BODY"
+          fi
+
+      - name: Report dry-run result
+        if: steps.scope.outputs.changed == 'true' && inputs.dry_run
+        run: |
+          echo "### Dry run: in-scope changes produced, not pushed" >> "$GITHUB_STEP_SUMMARY"
+          git diff --cached --stat >> "$GITHUB_STEP_SUMMARY"
