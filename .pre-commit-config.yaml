@@ -52,13 +52,13 @@ repos:
     exclude: "_vendored/conv_template.py"
 
 - repo: https://github.com/pre-commit/mirrors-clang-format
-  rev: v22.1.8
+  rev: v23.1.1
   hooks:
   - id: clang-format
     args: ["-i"]
 
 - repo: https://github.com/MarcoGorelli/cython-lint
-  rev: v0.21.0
+  rev: v0.21.1
   hooks:
   - id: cython-lint
   - id: double-quote-cython-strings
@@ -70,10 +70,10 @@ repos:
     args: ["--config=.flake8"]
     additional_dependencies:
       - flake8-docstrings==1.7.0
-      - flake8-bugbear==25.11.29
+      - flake8-bugbear==26.9.9
 
 - repo: https://github.com/pycqa/isort
-  rev: 9.0.0b5
+  rev: 9.0.1
   hooks:
   - id: isort
     name: isort (python)
@@ -89,6 +89,9 @@ repos:
   hooks:
   - id: pretty-format-toml
     args: [--autofix]
+    # the hook does not pin toml-sort, so an unpinned resolve makes the
+    # formatting differ between a cold and a warm hook cache
+    additional_dependencies: [toml-sort==0.25.0]
 
 - repo: local
   hooks:

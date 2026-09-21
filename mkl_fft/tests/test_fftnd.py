@@ -50,7 +50,7 @@ def _get_rtol_atol(x):
             or dt == np.complex128
             or dt == np.float32
             or dt == np.complex64
-        ), "Unexpected dtype {}".format(dt)
+        ), f"Unexpected dtype {dt}"
         return reps_64, atol_64
 
 
@@ -75,18 +75,14 @@ class Test_mklfft_matrix(TestCase):
                 t2,
                 rtol=r_tol,
                 atol=a_tol,
-                err_msg="failed test for dtype {}, max abs diff: {}".format(
-                    d.dtype, np.max(np.abs(t1 - t2))
-                ),
+                err_msg=f"failed test for dtype {d.dtype}, max abs diff: {np.max(np.abs(t1 - t2))}",
             )
             assert_allclose(
                 t1,
                 t3,
                 rtol=r_tol,
                 atol=a_tol,
-                err_msg="failed test for dtype {}, max abs diff: {}".format(
-                    d.dtype, np.max(np.abs(t1 - t3))
-                ),
+                err_msg=f"failed test for dtype {d.dtype}, max abs diff: {np.max(np.abs(t1 - t3))}",
             )
 
     def test_matrix2(self):
@@ -100,9 +96,7 @@ class Test_mklfft_matrix(TestCase):
                 t,
                 rtol=r_tol,
                 atol=a_tol,
-                err_msg="failed test for dtype {}, max abs diff: {}".format(
-                    d.dtype, np.max(np.abs(d - t))
-                ),
+                err_msg=f"failed test for dtype {d.dtype}, max abs diff: {np.max(np.abs(d - t))}",
             )
 
     def test_matrix3(self):
@@ -116,9 +110,7 @@ class Test_mklfft_matrix(TestCase):
                 t,
                 rtol=r_tol,
                 atol=a_tol,
-                err_msg="failed test for dtype {}, max abs diff: {}".format(
-                    d.dtype, np.max(np.abs(d - t))
-                ),
+                err_msg=f"failed test for dtype {d.dtype}, max abs diff: {np.max(np.abs(d - t))}",
             )
 
     def test_matrix4(self):
@@ -163,9 +155,7 @@ class Test_mklfft_matrix(TestCase):
                         t,
                         rtol=r_tol,
                         atol=a_tol,
-                        err_msg="failed test for dtype {}, max abs diff: {}".format(
-                            d.dtype, np.max(np.abs(d - t))
-                        ),
+                        err_msg=f"failed test for dtype {d.dtype}, max abs diff: {np.max(np.abs(d - t))}",
                     )
 
 
