@@ -1,0 +1,1 @@
+perf: avoid a redundant full-array copy in scipy.fft hfft/hfftn adapters
