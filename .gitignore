@@ -5,6 +5,12 @@ mkl_fft.egg-info/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 
+# Virtual environments, test caches, local env files
+.venv/
+venv/
+.pytest_cache/
+.env
+
 mkl_fft/_pydfti.c
 mkl_fft/_pydfti.cpython*.so
 mkl_fft/_pydfti.*-win_amd64.pyd
@@ -12,3 +18,6 @@ mkl_fft/src/mklfft.c
 
 # ASV benchmark artifacts
 .asv/
+
+# Developer-local coding agent settings
+.claude/settings.local.json
