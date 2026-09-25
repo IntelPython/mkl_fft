@@ -153,7 +153,7 @@ If you already have `mkl` and `numpy` installed (from your system or a conda env
 and want to reuse them instead of pulling fresh copies into an isolated build, first
 install the build dependencies:
 ```sh
-pip install meson-python cmake ninja cython numpy mkl-devel
+pip install meson-python cmake ninja "cython>=3.1.0" numpy mkl-devel
 ```
 
 then build against the existing installation with:

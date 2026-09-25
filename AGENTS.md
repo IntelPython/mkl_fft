@@ -17,7 +17,7 @@ It provides accelerated FFT transforms while aiming to preserve upstream API beh
 
 ## Build/runtime basics
 - Build system: `pyproject.toml` + `meson.build`
-- Build deps: `cython`, `numpy`, `mkl-devel`, `meson-python`, `cmake`, `ninja`
+- Build deps: `cython>=3.1.0`, `numpy`, `mkl-devel`, `meson-python`, `cmake`, `ninja`
 - Runtime deps: `numpy`, `mkl-service`
 
 ## Development guardrails
