@@ -523,8 +523,10 @@ def hfft(
     _check_plan(plan)
     x = _validate_input(x)
     norm = _swap_direction(norm)
-    x = np.array(x, copy=True)
-    np.conjugate(x, out=x)
+    # np.conjugate(x) already allocates a fresh array, so there is no need
+    # to copy x first and then conjugate it in place (which would touch
+    # every element twice instead of once).
+    x = np.conjugate(x)
 
     with _Workers(workers):
         # Note: overwrite_x is not utilized
@@ -626,8 +628,10 @@ def hfftn(
     _check_plan(plan)
     x = _validate_input(x)
     norm = _swap_direction(norm)
-    x = np.array(x, copy=True)
-    np.conjugate(x, out=x)
+    # np.conjugate(x) already allocates a fresh array, so there is no need
+    # to copy x first and then conjugate it in place (which would touch
+    # every element twice instead of once).
+    x = np.conjugate(x)
     s, axes = _init_nd_shape_and_axes(x, s, axes, invreal=True)
 
     with _Workers(workers):
