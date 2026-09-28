@@ -23,6 +23,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import math
+
 import numpy as np
 
 # pylint: disable=no-name-in-module
@@ -70,13 +72,16 @@ def _compute_fwd_scale(norm, n, shape):
         return 1.0
 
     ss = n if n is not None else shape
-    # The 1-D callers in `_mkl_fft.py` always pass a plain scalar here
-    # (either `n` or `x.shape[axis]`), so avoid the overhead of wrapping
-    # it in a 0-d numpy array via `np.prod` on that hot path. Sequences
-    # (used by the N-D callers via `_nd_fwd_scale`) still go through
-    # `np.prod`, unchanged.
+    # `np.prod` dominates the Python-side cost of a small normalized transform,
+    # so take cheaper routes for the two shapes the callers actually pass: a
+    # scalar `n` (1-D) and a sequence (`_nd_fwd_scale`). It stays the fallback
+    # because `numpy.fft` also accepts array-like `n` and `s` (e.g. a 0-d
+    # `n=np.array(8)`, a 1-D `s=np.array([4, 4])`), which `math.prod` cannot
+    # handle uniformly.
     if isinstance(ss, (int, np.integer)):
         nn = ss
+    elif isinstance(ss, (list, tuple)):
+        nn = math.prod(ss)
     else:
         nn = np.prod(ss)
     fsc = 1 / nn if nn != 0 else 1
