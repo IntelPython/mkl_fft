@@ -70,7 +70,15 @@ def _compute_fwd_scale(norm, n, shape):
         return 1.0
 
     ss = n if n is not None else shape
-    nn = np.prod(ss)
+    # The 1-D callers in `_mkl_fft.py` always pass a plain scalar here
+    # (either `n` or `x.shape[axis]`), so avoid the overhead of wrapping
+    # it in a 0-d numpy array via `np.prod` on that hot path. Sequences
+    # (used by the N-D callers via `_nd_fwd_scale`) still go through
+    # `np.prod`, unchanged.
+    if isinstance(ss, (int, np.integer)):
+        nn = ss
+    else:
+        nn = np.prod(ss)
     fsc = 1 / nn if nn != 0 else 1
     if norm == "forward":
         return fsc
