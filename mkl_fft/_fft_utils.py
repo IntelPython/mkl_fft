@@ -72,12 +72,9 @@ def _compute_fwd_scale(norm, n, shape):
         return 1.0
 
     ss = n if n is not None else shape
-    # `np.prod` dominates the Python-side cost of a small normalized transform,
-    # so take cheaper routes for the two shapes the callers actually pass: a
-    # scalar `n` (1-D) and a sequence (`_nd_fwd_scale`). It stays the fallback
-    # because `numpy.fft` also accepts array-like `n` and `s` (e.g. a 0-d
-    # `n=np.array(8)`, a 1-D `s=np.array([4, 4])`), which `math.prod` cannot
-    # handle uniformly.
+    # Avoid np.prod's array-creation overhead on the hot scalar (1-D) and
+    # sequence (N-D) paths; np.prod stays as the fallback for array-like
+    # `n`/`s` (e.g. np.array(8)) that math.prod can't handle.
     if isinstance(ss, (int, np.integer)):
         nn = ss
     elif isinstance(ss, (list, tuple)):
