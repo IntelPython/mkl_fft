@@ -14,6 +14,7 @@ It provides accelerated FFT transforms while aiming to preserve upstream API beh
 - **Tests:** `mkl_fft/tests/`
 - **Vendored helpers:** `_vendored/`
 - **Packaging:** `conda-recipe/`, `conda-recipe-cf/`
+- **Benchmarks:** `benchmarks/`
 
 ## Build/runtime basics
 - Build system: `pyproject.toml` + `meson.build`
@@ -46,3 +47,4 @@ Use nearest local `AGENTS.md` when present:
 - `conda-recipe/AGENTS.md` — Intel-channel conda packaging
 - `conda-recipe-cf/AGENTS.md` — conda-forge recipe context
 - `_vendored/AGENTS.md` — vendored tooling boundaries
+- `benchmarks/AGENTS.md` — ASV performance suite

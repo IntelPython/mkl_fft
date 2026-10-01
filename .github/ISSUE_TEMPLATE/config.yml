@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://www.intel.com/content/www/us/en/security-center/vulnerability-handling-guidelines.html
+    about: Report security vulnerabilities through Intel's process, not a public issue.
+  - name: Question about usage
+    url: https://github.com/IntelPython/mkl_fft/blob/master/README.md
+    about: Check the README and the interfaces documentation first.
