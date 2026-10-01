@@ -170,5 +170,5 @@ pip install scipy
 # Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow: setting up a
-build environment, running the tests and lint hooks, how the Python, Cython, and
-C template layers fit together, and what to include in a pull request.
+build environment, running the tests and lint hooks, code style, and what to
+include in a pull request.
