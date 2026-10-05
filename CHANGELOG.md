@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Multi-iterator constructors now return a status corresponding to allocation success or failure, and raise `MemoryError` instead of `ValueError` [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
 * `_direct_fftnd` now also checks the status returned by the backend instead of discarding it [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
 * Pinned Cython in the Coverity Scan workflow so generated code stays stable between scans, and added `coverity/README.md` documenting the known false-positive families and the scan review checklist [gh-374](https://github.com/IntelPython/mkl_fft/pull/374)
+* Reduced Python overhead in `norm="forward"`/`"ortho"` scaling by computing the scale factor without `numpy.prod` [gh-384](https://github.com/IntelPython/mkl_fft/pull/384)
 
 ### Fixed
 * Fixed `norm="forward"`/`"ortho"` scaling in `fftn`, `ifftn`, `rfftn`, `irfftn` and the `fft2` family when only a subset of axes is transformed: the scale used the full array shape instead of the transformed axes [gh-336](https://github.com/IntelPython/mkl_fft/issues/336), [gh-370](https://github.com/IntelPython/mkl_fft/pull/370)

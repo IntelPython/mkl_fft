@@ -23,6 +23,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import math
+
 import numpy as np
 
 # pylint: disable=no-name-in-module
@@ -70,7 +72,15 @@ def _compute_fwd_scale(norm, n, shape):
         return 1.0
 
     ss = n if n is not None else shape
-    nn = np.prod(ss)
+    # Avoid np.prod's array-creation overhead on the hot scalar (1-D) and
+    # sequence (N-D) paths; np.prod stays as the fallback for array-like
+    # `n`/`s` (e.g. np.array(8)) that math.prod can't handle.
+    if isinstance(ss, (int, np.integer)):
+        nn = ss
+    elif isinstance(ss, (list, tuple)):
+        nn = math.prod(ss)
+    else:
+        nn = np.prod(ss)
     fsc = 1 / nn if nn != 0 else 1
     if norm == "forward":
         return fsc
