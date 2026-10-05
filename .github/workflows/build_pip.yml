@@ -18,7 +18,8 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+        # TODO: add "3.15" back once mkl-service publishes a Python 3.15 wheel on PyPI
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         use_pre: ["", "--pre"]
 
     steps:
