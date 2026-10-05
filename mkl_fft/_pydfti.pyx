@@ -425,11 +425,11 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
     x_arr = _process_arguments(x, n, axis, &axis_, &n_, &in_place, &xnd, 0)
     x_type = cnp.PyArray_TYPE(x_arr)
 
-    if out is not None:
-        in_place = 0
-    elif x_type is cnp.NPY_CFLOAT or x_type is cnp.NPY_CDOUBLE:
+    if x_type is cnp.NPY_CFLOAT or x_type is cnp.NPY_CDOUBLE:
+        if out is not None:
+            in_place = 0
         # we can operate in place if requested.
-        if in_place:
+        elif in_place:
             if not cnp.PyArray_ISONESEGMENT(x_arr):
                 in_place = 0 if internal_overlap(x_arr) else 1
     elif x_type is cnp.NPY_FLOAT or x_type is cnp.NPY_DOUBLE:
@@ -438,7 +438,12 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
         in_place = 0
     else:
         # we must cast the input and allocate the output,
-        # so we cast to complex double and operate in place
+        # so we cast to complex double and operate in place.
+        # This cast must happen even when `out` is given: `x_type` is
+        # otherwise left as this unsupported type, and the dispatch below
+        # (which only recognizes float/double/cfloat/cdouble) would then
+        # silently skip calling into MKL, leaving `out`/`f_arr` filled with
+        # whatever uninitialized memory `_allocate_result` handed back.
         try:
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
                 x_arr, cnp.NPY_CDOUBLE,
@@ -450,7 +455,7 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
                 "or real sequence of single or double precision"
             )
         x_type = cnp.PyArray_TYPE(x_arr)
-        in_place = 1
+        in_place = 0 if out is not None else 1
 
     if in_place:
         _cache_capsule = _tls_dfti_cache_capsule()
