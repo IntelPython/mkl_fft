@@ -23,6 +23,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import math
+
 import numpy as np
 
 # pylint: disable=no-name-in-module
@@ -70,7 +72,15 @@ def _compute_fwd_scale(norm, n, shape):
         return 1.0
 
     ss = n if n is not None else shape
-    nn = np.prod(ss)
+    # Avoid np.prod's array-creation overhead on the hot scalar (1-D) and
+    # sequence (N-D) paths; np.prod stays as the fallback for array-like
+    # `n`/`s` (e.g. np.array(8)) that math.prod can't handle.
+    if isinstance(ss, (int, np.integer)):
+        nn = ss
+    elif isinstance(ss, (list, tuple)):
+        nn = math.prod(ss)
+    else:
+        nn = np.prod(ss)
     fsc = 1 / nn if nn != 0 else 1
     if norm == "forward":
         return fsc
@@ -100,6 +110,22 @@ def _cook_nd_args(a, s=None, axes=None, invreal=False):
     if invreal and shapeless:
         s[-1] = (a.shape[axes[-1]] - 1) * 2
     return s, axes
+
+
+def _nd_fwd_scale(x, s, axes, norm, invreal=False):
+    """Forward scale for an N-D transform, over the transformed axes only.
+
+    ``_compute_fwd_scale`` falls back to the full array shape when ``s`` is
+    None, which over-normalizes a subset of axes; ``_cook_nd_args`` already
+    resolves the right lengths, including c2r's ``2 * (n - 1)``.
+    """
+
+    _check_norm(norm)
+    if norm in (None, "backward"):
+        return 1.0
+    if s is None:
+        s, _ = _cook_nd_args(x, s, axes, invreal=invreal)
+    return _compute_fwd_scale(norm, s, x.shape)
 
 
 # copied from scipy.fft module
