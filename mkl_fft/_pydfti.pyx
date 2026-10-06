@@ -642,8 +642,9 @@ def _r2c_fft1d_impl(
         # be compared directly.
         # TODO: currently instead of this condition, we check both input
         # and output to be c_contig or f_contig, relax this condition
-        c_contig = x.flags.c_contiguous and out.flags.c_contiguous
-        f_contig = x.flags.f_contiguous and out.flags.f_contiguous
+        # Check x_arr, which may be a cast copy of x with a different layout.
+        c_contig = x_arr.flags.c_contiguous and out.flags.c_contiguous
+        f_contig = x_arr.flags.f_contiguous and out.flags.f_contiguous
         if c_contig or f_contig:
             f_arr = <cnp.ndarray> out
         else:

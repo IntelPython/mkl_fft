@@ -604,6 +604,54 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis, double fs
        ((mkl_complex_p_dest)->imag) = -((mkl_complex_p_src)->imag); }
 
 /**begin repeat
+* #name=cfloat,cdouble#
+* #MKL_TYPE=MKL_Complex8,MKL_Complex16#
+* #vml_conj_func=vmcConj,vmzConj#
+*/
+/* Complex conjugate x in place, honoring its strides: x may be a
+   non-contiguous out array provided by the user */
+static int
+@name@_conj_inplace(PyArrayObject *x)
+{
+    multi_iter_t mit;
+    npy_intp *x_shape = 0, *x_strides = 0;
+    npy_intp x_itemsize, x_size;
+    int x_rank;
+    char *x_data = (char *) PyArray_DATA(x);
+
+    get_basic_array_data(x, &x_rank, &x_shape,
+                         &x_strides, &x_itemsize, &x_size);
+
+    if (PyArray_ISONESEGMENT(x)) {
+        @vml_conj_func@(x_size, (@MKL_TYPE@ *) x_data,
+                        (@MKL_TYPE@ *) x_data, VML_HA);
+        return 0;
+    }
+
+    if (multi_iter_new(&mit, x_shape, x_rank))
+        return DFTI_MEMORY_ERROR;
+
+    while(!MultiIter_Done(mit)) {
+        char *tmp = x_data;
+        @MKL_TYPE@ *elem;
+        int i;
+
+        for(i = 0; i < x_rank; i++)
+            tmp += x_strides[i] * MultiIter_IndexElem(mit, i);
+
+        elem = (@MKL_TYPE@ *) tmp;
+        SET_CONJ(elem, elem);
+
+        if (multi_iter_next(&mit))
+            break;
+    }
+
+    multi_iter_free(&mit);
+    return 0;
+}
+/**end repeat**/
+
+/**begin repeat
 * #REALIN=(float,double)*2#
 * #COMPLEXOUT=(cfloat,cdouble)*2#
 * #MKL_OUT_TYPE=(MKL_Complex8,MKL_Complex16)*2#
@@ -611,7 +659,6 @@ int @name@_mkl_@mode@_in(PyArrayObject* x_inout, npy_intp n, int axis, double fs
 * #DFTI_PRECISION=(DFTI_SINGLE,DFTI_DOUBLE)*2#
 * #mode=(fft1d)*2,(ifft1d)*2#
 * #POST_CONJUGATE=(FALSE)*2,(TRUE)*2#
-* #vml_conj_func=(vmcConj,vmzConj)*2#
 */
 int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
     PyArrayObject *x_in, npy_intp n, int axis, PyArrayObject *x_out,
@@ -879,7 +926,8 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
     }
 
     if (@POST_CONJUGATE@) {
-       @vml_conj_func@(xout_size, xout_data, xout_data, VML_HA);
+        status = @COMPLEXOUT@_conj_inplace(x_out);
+        if (status != 0) goto failed;
     }
 
     status = OK;
@@ -1544,7 +1592,6 @@ int
 * #op_name=fftnd*2,ifftnd*2#
 * #DftiCompute_MODE=DftiComputeForward*4#
 * #POST_CONJUGATE=FALSE*2,TRUE*2#
-* #vml_conj_func=(vmcConj,vmzConj)*2#
 */
 int
 @inp_type_name@_@out_type_name@_mkl_@op_name@_out(
@@ -1727,7 +1774,7 @@ int
 
     if (@POST_CONJUGATE@) {
        Py_BEGIN_ALLOW_THREADS
-       @vml_conj_func@(xout_size, xout_data, xout_data, VML_HA);
+       status = @out_type_name@_conj_inplace(x_out);
        Py_END_ALLOW_THREADS
     }
 

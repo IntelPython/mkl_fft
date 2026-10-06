@@ -373,3 +373,36 @@ def test_empty_axes_returns_same_object(dtype, func):
     assert (
         result is x
     ), f"{func} with axes=() should return the same object, not a copy"
+
+
+@pytest.mark.parametrize("axes", [None, (0, 1), (1, 2)])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("func", ["fftn", "ifftn"])
+def test_out_strided_real_input(func, dtype, axes):
+    # ifftn of real input conjugates the result in place in out,
+    # which must honor the strides of out
+    shape = (20, 30, 40)
+    x = rnd.random(shape).astype(dtype)[::2, ::3, ::4]
+    base = np.full(shape, -1 - 1j, dtype=np.result_type(dtype, np.complex64))
+    out = base[::2, ::3, ::4]
+    result = getattr(mkl_fft, func)(x, axes=axes, out=out)
+    expected = getattr(np.fft, func)(x.astype(np.float64), axes=axes)
+
+    assert result is out
+    rtol, atol = _get_rtol_atol(result)
+    assert_allclose(result, expected, rtol=rtol, atol=atol)
+    # nothing outside of out was written to
+    out[...] = -1 - 1j
+    assert np.all(base == -1 - 1j)
+
+
+@pytest.mark.parametrize("dt", ["i8", "f8"])
+@pytest.mark.parametrize("func", ["rfftn", "rfft2"])
+def test_rfftn_out_fortran(func, dt):
+    x = np.asfortranarray(rnd.randint(-50, 50, size=(6, 7, 8)).astype(dt))
+    expected = getattr(np.fft, func)(x.astype(np.float64))
+    out = np.full(expected.shape, -1 - 1j, order="F")
+    result = getattr(mkl_fft, func)(x, out=out)
+
+    assert result is out
+    assert_allclose(result, expected, atol=1e-9)

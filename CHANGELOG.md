@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed possible memory leaks when `PyMem_Malloc` fails, and raise `MemoryError` [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
 * Fixed possible memory leaks when multi-iterator constructors fail [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
 * Fixed N-D transforms returning a success status when a scratch allocation fails [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
+* Fixed wrong results and writes outside of `out` in `ifft` and `ifftn` of real input when `out` is not contiguous: the final complex conjugation treated `out` as one contiguous block [gh-389](https://github.com/IntelPython/mkl_fft/pull/389)
+* Fixed wrong results in `rfft` and `rfftn` with `out` for input that is cast to `float64` (e.g. integer, `float16`) when the input and `out` are Fortran-ordered [gh-389](https://github.com/IntelPython/mkl_fft/pull/389)
 
 ## [2.3.2] - 2026-08-04
 
