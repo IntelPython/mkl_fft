@@ -299,14 +299,18 @@ def test_repeated_axes(dtype, axes, func):
 def test_out_strided(axes, func):
     shape = (20, 30, 40)
     x = rnd.random(shape) + 1j * rnd.random(shape)
-    out = np.empty(shape, dtype=x.dtype)
+    base = np.full(shape, -1 - 1j)
 
     x = x[::2, ::3, ::4]
-    out = out[::2, ::3, ::4]
+    out = base[::2, ::3, ::4]
     result = getattr(mkl_fft, func)(x, axes=axes, out=out)
-    expected = getattr(np.fft, func)(x, axes=axes, out=out)
+    expected = getattr(np.fft, func)(x, axes=axes)
 
+    assert result is out
     assert_allclose(result, expected, strict=True)
+    # nothing outside of out was written to
+    out[...] = -1 - 1j
+    assert np.all(base == -1 - 1j)
 
 
 @pytest.mark.parametrize(
