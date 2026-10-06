@@ -616,8 +616,10 @@ def _r2c_fft1d_impl(
         pass
     else:
         # we must cast the input to doubles and allocate the output,
+        # the cast always copies; without NPY_ARRAY_ENSURECOPY the copy keeps
+        # the memory order of x instead of being made C-contiguous
         try:
-            requirement = cnp.NPY_ARRAY_BEHAVED | cnp.NPY_ARRAY_ENSURECOPY
+            requirement = cnp.NPY_ARRAY_BEHAVED
             if x_type is cnp.NPY_LONGDOUBLE:
                 requirement = requirement | cnp.NPY_ARRAY_FORCECAST
             x_arr = <cnp.ndarray> cnp.PyArray_FROM_OTF(
