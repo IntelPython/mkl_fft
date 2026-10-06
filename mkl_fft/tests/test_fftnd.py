@@ -309,6 +309,28 @@ def test_out_strided(axes, func):
     assert_allclose(result, expected, strict=True)
 
 
+@pytest.mark.parametrize("strided", [False, True])
+@pytest.mark.parametrize("axes", [None, (0, 1), (0, 2), (1, 2)])
+@pytest.mark.parametrize("func", ["fftn", "ifftn"])
+def test_out_int_input(func, axes, strided):
+    # integer input is cast to complex128 before being transformed into out
+    shape = (20, 30, 40)
+    x = rnd.randint(-50, 50, size=shape)
+    base = np.full(shape, -1 - 1j)
+    out = base
+    if strided:
+        x = x[::2, ::3, ::4]
+        out = base[::2, ::3, ::4]
+    result = getattr(mkl_fft, func)(x, axes=axes, out=out)
+    expected = getattr(np.fft, func)(x.astype(np.float64), axes=axes)
+
+    assert result is out
+    assert_allclose(result, expected, rtol=reps_64, atol=1e-9)
+    # nothing outside of out was written to
+    out[...] = -1 - 1j
+    assert np.all(base == -1 - 1j)
+
+
 @pytest.mark.parametrize(
     "dtype", [np.float32, np.float64, np.complex64, np.complex128]
 )
