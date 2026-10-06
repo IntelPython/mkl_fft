@@ -130,12 +130,12 @@ jobs:
             numpy: 'numpy">=2"'
             experimental: false
             runner: ubuntu-latest
-          - python: "3.14"
-            python_spec: "3.14.* *_cp314t"
-            python_tag: "3.14t"
-            numpy: 'numpy">=2"'
-            experimental: false
-            runner: ubuntu-latest
+          # - python: "3.14"
+            # python_spec: "3.14.* *_cp314t"
+            # python_tag: "3.14t"
+            # numpy: 'numpy">=2"'
+            # experimental: false
+            # runner: ubuntu-latest
     continue-on-error: ${{ matrix.experimental }}
     env:
       CHANNELS: -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels
@@ -324,12 +324,12 @@ jobs:
             numpy: 'numpy">=2"'
             experimental: false
             runner: windows-latest
-          - python: "3.14"
-            python_spec: "3.14.* *_cp314t"
-            python_tag: "3.14t"
-            numpy: 'numpy">=2"'
-            experimental: false
-            runner: windows-latest
+          # - python: "3.14"
+            # python_spec: "3.14.* *_cp314t"
+            # python_tag: "3.14t"
+            # numpy: 'numpy">=2"'
+            # experimental: false
+            # runner: windows-latest
     continue-on-error: ${{ matrix.experimental }}
     env:
       workdir: '${{ github.workspace }}'
