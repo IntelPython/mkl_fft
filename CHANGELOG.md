@@ -7,13 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [dev] - YYYY-MM-DD
 
 ### Added
+* Added support for free-threaded (GIL-disabled) CPython builds: the Cython extension is compiled with `freethreading_compatible=True` [gh-357](https://github.com/IntelPython/mkl_fft/pull/357)
 
 ### Changed
+* Raised the minimum build-time `Cython` requirement to `3.1.0`, the first release providing the `freethreading_compatible` directive [gh-357](https://github.com/IntelPython/mkl_fft/pull/357)
+* Removed the `python-gil` constraint from the conda recipes, which pinned `mkl_fft` to GIL-enabled Python 3.14 builds [gh-357](https://github.com/IntelPython/mkl_fft/pull/357)
 * Multi-iterator constructors now return a status corresponding to allocation success or failure, and raise `MemoryError` instead of `ValueError` [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
 * `_direct_fftnd` now also checks the status returned by the backend instead of discarding it [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
 * Pinned Cython in the Coverity Scan workflow so generated code stays stable between scans, and added `coverity/README.md` documenting the known false-positive families and the scan review checklist [gh-374](https://github.com/IntelPython/mkl_fft/pull/374)
+* Reduced Python overhead in `norm="forward"`/`"ortho"` scaling by computing the scale factor without `numpy.prod` [gh-384](https://github.com/IntelPython/mkl_fft/pull/384)
 
 ### Fixed
+* Fixed `norm="forward"`/`"ortho"` scaling in `fftn`, `ifftn`, `rfftn`, `irfftn` and the `fft2` family when only a subset of axes is transformed: the scale used the full array shape instead of the transformed axes [gh-336](https://github.com/IntelPython/mkl_fft/issues/336), [gh-370](https://github.com/IntelPython/mkl_fft/pull/370)
+* Fixed `norm="forward"`/`"ortho"` scaling in `irfftn` and `irfft2`, which normalized over the input length `n` rather than the complex-to-real output length `2 * (n - 1)` [gh-370](https://github.com/IntelPython/mkl_fft/pull/370)
 * Declared `f_ndim` as a C `int` in `_allocate_result` so the buffer size is computed in C rather than through a Python object, resolving a Coverity out-of-bounds (OVERRUN) false positive [gh-364](https://github.com/IntelPython/mkl_fft/pull/364)
 * Silenced a Coverity `UNUSED_VALUE` finding in `__create_descriptor_1d` by marking the `DftiFreeDescriptor` status (used only by a debug-only `assert`) as intentionally unused [gh-365](https://github.com/IntelPython/mkl_fft/pull/365)
 * Fixed possible memory leaks when `PyMem_Malloc` fails, and raise `MemoryError` [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)

@@ -28,14 +28,14 @@ build-backend = "mesonpy"
 requires = [
   "meson-python>=0.13.0",
   "ninja",
-  "Cython",
+  "Cython>=3.1.0",
   "numpy",
   "mkl-devel",
   "cmake"
 ]
 
 [project]
-authors = [{name = "Intel Corporation"}]
+authors = [{ name = "Intel Corporation" }]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Science/Research",
@@ -48,6 +48,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: Free Threading :: 2 - Beta",
   "Programming Language :: Python :: Implementation :: CPython",
   "Topic :: Software Development",
   "Topic :: Scientific/Engineering",
@@ -61,7 +62,7 @@ dynamic = ["version"]
 keywords = ["DFTI", "FFT", "Fourier", "MKL"]
 license = "BSD-3-Clause"
 name = "mkl_fft"
-readme = {file = "README.md", content-type = "text/markdown"}
+readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10,<3.15"
 
 [project.optional-dependencies]
