@@ -44,7 +44,11 @@ body:
       description: |
         Output of:
         ```
-        python -c "import mkl_fft, numpy, mkl; print(mkl_fft.__version__); print(numpy.__version__); print(mkl.get_version_string())"
+        python -c "import mkl_fft, numpy; print(mkl_fft.__version__); print(numpy.__version__)"
+        ```
+        If the optional `mkl-service` package is installed, add the MKL version:
+        ```
+        python -c "import mkl; print(mkl.get_version_string())"
         ```
         Add your OS and Python version too.
       render: shell

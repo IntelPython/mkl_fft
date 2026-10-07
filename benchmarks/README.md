@@ -34,10 +34,14 @@ recommendation.
 
 MKL creates a DFTI descriptor on the first FFT call for a given (size, dtype,
 strides) combination and reuses it on subsequent calls. To avoid charging
-that one-time cost to the first measured iteration, each benchmark's `setup`
-performs an explicit warmup call after preparing the input array. ASV's
+that one-time cost to the first measured iteration, each timing benchmark's
+`setup` performs an explicit warmup call after preparing the input array. ASV's
 default `warmup_time` (0.1s) already amortizes this for sub-millisecond
 transforms, but the explicit warmup makes the intent visible.
+
+The peak-memory benchmarks in `bench_memory.py` do not warm up: they inherit
+the base `setup`, which only prepares the input, so descriptor creation is
+included in the measured peak RSS.
 
 ## Running Benchmarks
 

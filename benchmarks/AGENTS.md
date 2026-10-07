@@ -12,7 +12,10 @@ ASV performance suite for `mkl_fft`.
 - Treat `asv.conf.json` as canonical for ASV settings; treat `README.md` as
   canonical for what each module covers.
 - Comparability across machines depends on the thread default in
-  `benchmarks/__init__.py` and the DFTI warmup in each `setup`. Changing either
+  `benchmarks/__init__.py` and the DFTI warmup call in each `time_*` class's
+  `setup`. The `peakmem_*` classes in `bench_memory.py` inherit the base
+  `setup` from `_utils.py`, which only builds the input, so their first call
+  creates the descriptor. Changing the thread default or either setup behavior
   invalidates comparison against existing results — call it out explicitly.
 - Keep inputs deterministic; benchmarks seed their own RNG.
 - Report performance numbers with reproducible context: hardware, thread count,

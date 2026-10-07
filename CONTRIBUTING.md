@@ -72,8 +72,10 @@ platforms and Python versions and runs various lint and static-analysis checks.
 
 Style is loose, and the pre-commit hooks enforce most of it:
 
-- Python and Cython are formatted with `black` and `isort`, with a line length
-  of 80.
+- Python is formatted with `black` and `isort`, with a line length of 80.
+- Cython is not touched by `black`. `isort` sorts its imports, `cython-lint`
+  checks it against the same 80-column limit, and string literals use double
+  quotes.
 - C sources follow the repository's `.clang-format`.
 - Otherwise, match the surrounding code.
 
