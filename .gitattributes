@@ -1,0 +1,3 @@
+# Keep shell scripts LF on checkout so shellcheck and conda build scripts work
+# the same on Windows and WSL checkouts with core.autocrlf enabled.
+*.sh text eol=lf
