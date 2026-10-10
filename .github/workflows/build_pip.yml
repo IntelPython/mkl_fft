@@ -18,7 +18,8 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13"]
+        # TODO: add "3.15" back once mkl-service publishes a Python 3.15 wheel on PyPI
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         use_pre: ["", "--pre"]
         include:
           - python: "3.14"
@@ -43,7 +44,8 @@ jobs:
       - uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
         with:
           miniforge-version: latest
-          channels: conda-forge
+          # conda-forge/label/python_rc carries the 3.15 release candidate
+          channels: conda-forge,conda-forge/label/python_rc
           activate-environment: test
           python-version: ${{ matrix.python }}
 

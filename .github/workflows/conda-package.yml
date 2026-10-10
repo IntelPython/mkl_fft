@@ -39,6 +39,9 @@ jobs:
             numpy: "2.3"
             python_spec: "3.14.* *_cp314t"
             python_tag: "3.14t"
+          - python: "3.15"
+            numpy: "2.5"
+
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@d07a454dad7609a92316b57b23c9ccfd4f59af66 # 0.13.1
@@ -91,7 +94,7 @@ jobs:
 
       - name: Build conda package
         run: |
-          CHANNELS=(-c https://software.repos.intel.com/python/conda -c conda-forge --override-channels)
+          CHANNELS=(-c https://software.repos.intel.com/python/conda -c conda-forge -c conda-forge/label/python_rc --override-channels)
           VERSIONS=(--python "${{ matrix.python_spec || matrix.python }}" --numpy "${{ matrix.numpy }}")
           TEST=(--no-test)
 
@@ -119,7 +122,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13"]
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
         numpy: ['numpy">=2"']
         experimental: [false]
         runner: [ubuntu-latest]
@@ -138,7 +141,7 @@ jobs:
             # runner: ubuntu-latest
     continue-on-error: ${{ matrix.experimental }}
     env:
-      CHANNELS: -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels
+      CHANNELS: -c https://software.repos.intel.com/python/conda -c conda-forge -c conda-forge/label/python_rc --override-channels
 
     steps:
       - name: Download artifact
@@ -242,6 +245,9 @@ jobs:
             numpy: "2.3"
             python_spec: "3.14.* *_cp314t"
             python_tag: "3.14t"
+          - python: "3.15"
+            numpy: "2.5"
+
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@d07a454dad7609a92316b57b23c9ccfd4f59af66 # 0.13.1
@@ -258,7 +264,7 @@ jobs:
           auto-update-conda: true
           miniforge-version: latest
           activate-environment: build
-          channels: conda-forge
+          channels: conda-forge,conda-forge/label/python_rc
           python-version: ${{ matrix.python }}
           conda-build-version: ${{ env.CONDA_BUILD_VERSION }}
 
@@ -290,7 +296,7 @@ jobs:
 
       - name: Build conda package
         run: |
-          conda build --no-test --python "${{ matrix.python_spec || matrix.python }}" --numpy ${{ matrix.numpy }} -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels conda-recipe
+          conda build --no-test --python "${{ matrix.python_spec || matrix.python }}" --numpy ${{ matrix.numpy }} -c https://software.repos.intel.com/python/conda -c conda-forge -c conda-forge/label/python_rc --override-channels conda-recipe
 
       - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -313,7 +319,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13"]
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
         numpy: ['numpy">=2"']
         experimental: [false]
         runner: [windows-latest]
@@ -333,7 +339,7 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     env:
       workdir: '${{ github.workspace }}'
-      CHANNELS: -c https://software.repos.intel.com/python/conda -c conda-forge --override-channels
+      CHANNELS: -c https://software.repos.intel.com/python/conda -c conda-forge -c conda-forge/label/python_rc --override-channels
 
     steps:
       - name: Download artifact
@@ -345,7 +351,7 @@ jobs:
         with:
           auto-update-conda: true
           miniforge-version: latest
-          channels: conda-forge
+          channels: conda-forge,conda-forge/label/python_rc
           activate-environment: ${{ env.TEST_ENV_NAME }}
           python-version: ${{ matrix.python }}
 
