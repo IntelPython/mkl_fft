@@ -416,3 +416,55 @@ def test_irfft_dtype(dt):
     result = mkl_fft.irfft(x)
     expected = np.fft.irfft(x)
     assert_allclose(result, expected, rtol=1e-7, atol=1e-7, strict=True)
+
+
+@pytest.mark.parametrize("step", [2, -1, -3])
+@pytest.mark.parametrize("func", ["fft", "ifft"])
+def test_fft_real_input_out_strided_1d(func, step):
+    # ifft of real input conjugates the result in place in out,
+    # which must honor the strides of out
+    x = rnd.random(48)[::step]
+    base = np.full(48, -1 - 1j)
+    out = base[::step]
+    result = getattr(mkl_fft, func)(x, out=out)
+    expected = getattr(np.fft, func)(x)
+
+    assert result is out
+    assert_allclose(result, expected)
+    # nothing outside of out was written to
+    out[...] = -1 - 1j
+    assert np.all(base == -1 - 1j)
+
+
+@pytest.mark.parametrize("axis", [0, 1, 2])
+@pytest.mark.parametrize("dt", [np.float32, np.float64])
+@pytest.mark.parametrize("func", ["fft", "ifft"])
+def test_fft_real_input_out_strided(func, dt, axis):
+    shape = (20, 33, 54)
+    x = rnd.random(shape).astype(dt)[::2, ::3, ::4]
+    base = np.full(shape, -1 - 1j, dtype=np.result_type(dt, np.complex64))
+    out = base[::2, ::3, ::4]
+    result = getattr(mkl_fft, func)(x, axis=axis, out=out)
+    expected = getattr(np.fft, func)(x.astype(np.float64), axis=axis)
+
+    assert result is out
+    tol = 1e-5 if dt == np.float32 else 1e-10
+    assert_allclose(result, expected, rtol=tol, atol=tol)
+    # nothing outside of out was written to
+    out[...] = -1 - 1j
+    assert np.all(base == -1 - 1j)
+
+
+@pytest.mark.parametrize("axis", [0, 1, 2])
+@pytest.mark.parametrize("dt", ["i8", "f2", "f8", "g"])
+def test_rfft_out_fortran(dt, axis):
+    # dtypes other than f4/f8 are cast to a C-contiguous float64 copy
+    x = np.asfortranarray(rnd.randint(-50, 50, size=(6, 7, 8)).astype(dt))
+    out_shape = list(x.shape)
+    out_shape[axis] = x.shape[axis] // 2 + 1
+    out = np.full(out_shape, -1 - 1j, order="F")
+    result = mkl_fft.rfft(x, axis=axis, out=out)
+    expected = np.fft.rfft(x.astype(np.float64), axis=axis)
+
+    assert result is out
+    assert_allclose(result, expected, atol=1e-10)
