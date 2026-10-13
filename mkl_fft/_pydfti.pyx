@@ -426,9 +426,7 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
     x_arr = _process_arguments(x, n, axis, &axis_, &n_, &in_place, &xnd, 0)
     x_type = cnp.PyArray_TYPE(x_arr)
 
-    if out is not None:
-        in_place = 0
-    elif x_type is cnp.NPY_CFLOAT or x_type is cnp.NPY_CDOUBLE:
+    if x_type is cnp.NPY_CFLOAT or x_type is cnp.NPY_CDOUBLE:
         # we can operate in place if requested.
         if in_place:
             if not cnp.PyArray_ISONESEGMENT(x_arr):
@@ -452,6 +450,10 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
             )
         x_type = cnp.PyArray_TYPE(x_arr)
         in_place = 1
+
+    # checked only after the cast above, which is needed even if out is given
+    if out is not None:
+        in_place = 0
 
     if in_place:
         _cache_capsule = _tls_dfti_cache_capsule()
@@ -502,8 +504,9 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
             _validate_out_array(out, x, out_dtype, axis=axis_, n=n_)
             # out array that is used in OneMKL c2c FFT must have the exact same
             # stride as input array. If not, we need to allocate a new array.
+            # Compare with x_arr, which may be a cast or padded copy of x.
             # TODO: check to see if this condition can be relaxed
-            if _get_element_strides(x) == _get_element_strides(out):
+            if _get_element_strides(x_arr) == _get_element_strides(out):
                 f_arr = <cnp.ndarray> out
             else:
                 f_arr = _allocate_result(x_arr, n_, axis_, f_type)
@@ -544,6 +547,10 @@ def _c2c_fft1d_impl(x, n=None, axis=-1, direction=+1, double fsc=1.0, out=None):
                     status = cdouble_cdouble_mkl_fft1d_out(
                         x_arr, n_, <int> axis_, f_arr, fsc, _cache
                     )
+            else:
+                raise ValueError(
+                    "An input argument x is not of a supported type"
+                )
         else:
             if x_type is cnp.NPY_FLOAT:
                 if direction < 0:

@@ -367,6 +367,73 @@ def test_fft_out_strided(axis, func):
     assert_allclose(result, expected)
 
 
+@pytest.mark.parametrize("n", [None, 8, 24])
+@pytest.mark.parametrize("dt", ["?", "i1", "u1", "i4", "i8", "f2"])
+@pytest.mark.parametrize("func", ["fft", "ifft"])
+def test_fft_out_cast_input(func, dt, n):
+    # dtypes other than f4/f8/c8/c16 are cast to complex128
+    x = np.arange(1, 17).astype(dt)
+    # sentinel: catches out being returned untouched
+    out = np.full(16 if n is None else n, -1 - 1j)
+    result = getattr(mkl_fft, func)(x, n=n, out=out)
+    expected = getattr(np.fft, func)(x.astype(np.float64), n=n)
+
+    assert result is out
+    assert_allclose(result, expected, atol=1e-12)
+
+
+@pytest.mark.parametrize("axis", [0, 1, 2])
+@pytest.mark.parametrize("dt", ["i8", "c16"])
+@pytest.mark.parametrize("func", ["fft", "ifft"])
+def test_fft_out_strided_input_copied(func, dt, axis):
+    # x and out have the same strides, but x is cast (i8) or padded (c16)
+    # into a contiguous copy, so out cannot be handed to MKL as is
+    shape = (20, 33, 54)
+    base = np.full(shape, -1 - 1j)
+    out = base[::2, ::3, ::4]
+    x = rnd.randint(-50, 50, size=shape).astype(dt)[::2, ::3, ::4]
+    n = None
+    if dt == "c16":
+        ind = [slice(None)] * x.ndim
+        ind[axis] = slice(0, x.shape[axis] - 3)
+        x = x[tuple(ind)]
+        n = out.shape[axis]
+
+    result = getattr(mkl_fft, func)(x, n=n, axis=axis, out=out)
+    expected = getattr(np.fft, func)(x.astype(np.complex128), n=n, axis=axis)
+
+    assert result is out
+    assert_allclose(result, expected, atol=1e-10)
+    # nothing outside of out was written to
+    out[...] = -1 - 1j
+    assert np.all(base == -1 - 1j)
+
+
+@pytest.mark.parametrize("axis", [0, 1, 2])
+@pytest.mark.parametrize("func", ["fft", "ifft"])
+def test_fft_out_fortran_cast_input(func, axis):
+    x = np.asfortranarray(rnd.randint(-50, 50, size=(4, 5, 6)))
+    out = np.full(x.shape, -1 - 1j, order="F")
+    result = getattr(mkl_fft, func)(x, axis=axis, out=out)
+    expected = getattr(np.fft, func)(x.astype(np.float64), axis=axis)
+
+    assert result is out
+    assert_allclose(result, expected, atol=1e-10)
+
+
+@pytest.mark.skipif(
+    np.can_cast(np.longdouble, np.complex128),
+    reason="long double is the same as double",
+)
+@pytest.mark.parametrize("dt", [np.longdouble, np.clongdouble])
+@pytest.mark.parametrize("use_out", [False, True])
+def test_fft_longdouble_unsupported(dt, use_out):
+    x = np.ones(8, dtype=dt)
+    out = np.empty(8, dtype=np.complex128) if use_out else None
+    with pytest.raises(ValueError, match="single or double precision"):
+        mkl_fft.fft(x, out=out)
+
+
 @requires_numpy_2
 @pytest.mark.parametrize("axis", [0, 1, 2])
 def test_rfft_out_strided(axis):
