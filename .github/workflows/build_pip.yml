@@ -44,8 +44,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
         with:
           miniforge-version: latest
-          # conda-forge/label/python_rc carries the 3.15 release candidate
-          channels: conda-forge,conda-forge/label/python_rc
+          channels: conda-forge
           activate-environment: test
           python-version: ${{ matrix.python }}
 
