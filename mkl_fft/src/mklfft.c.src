@@ -926,7 +926,9 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
     }
 
     if (@POST_CONJUGATE@) {
+        Py_BEGIN_ALLOW_THREADS
         status = @COMPLEXOUT@_conj_inplace(x_out);
+        Py_END_ALLOW_THREADS
         if (status != 0) goto failed;
     }
 
