@@ -1,0 +1,38 @@
+name: Feature request
+description: Propose a new transform, interface, or capability
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: The use case, not the implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: |
+        What you would like `mkl_fft` to do. If it mirrors a `numpy.fft` or
+        `scipy.fft` function, name it — upstream signature and semantics are the
+        contract for the interface layer.
+    validations:
+      required: true
+
+  - type: input
+    id: upstream
+    attributes:
+      label: Upstream equivalent
+      description: Link to the NumPy or SciPy docs for the equivalent API, if there is one.
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. Workarounds you are using today.
+    validations:
+      required: false
