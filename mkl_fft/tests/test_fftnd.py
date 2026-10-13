@@ -375,16 +375,17 @@ def test_empty_axes_returns_same_object(dtype, func):
     ), f"{func} with axes=() should return the same object, not a copy"
 
 
+@pytest.mark.parametrize("sl", [np.s_[::2, ::3, ::4], np.s_[::-2, ::-3, ::-4]])
 @pytest.mark.parametrize("axes", [None, (0, 1), (1, 2)])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("func", ["fftn", "ifftn"])
-def test_out_strided_real_input(func, dtype, axes):
+def test_out_strided_real_input(func, dtype, axes, sl):
     # ifftn of real input conjugates the result in place in out,
     # which must honor the strides of out
     shape = (20, 30, 40)
-    x = rnd.random(shape).astype(dtype)[::2, ::3, ::4]
+    x = rnd.random(shape).astype(dtype)[sl]
     base = np.full(shape, -1 - 1j, dtype=np.result_type(dtype, np.complex64))
-    out = base[::2, ::3, ::4]
+    out = base[sl]
     result = getattr(mkl_fft, func)(x, axes=axes, out=out)
     expected = getattr(np.fft, func)(x.astype(np.float64), axes=axes)
 

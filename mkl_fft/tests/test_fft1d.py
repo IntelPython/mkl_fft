@@ -436,14 +436,15 @@ def test_fft_real_input_out_strided_1d(func, step):
     assert np.all(base == -1 - 1j)
 
 
+@pytest.mark.parametrize("sl", [np.s_[::2, ::3, ::4], np.s_[::-2, ::-3, ::-4]])
 @pytest.mark.parametrize("axis", [0, 1, 2])
 @pytest.mark.parametrize("dt", [np.float32, np.float64])
 @pytest.mark.parametrize("func", ["fft", "ifft"])
-def test_fft_real_input_out_strided(func, dt, axis):
+def test_fft_real_input_out_strided(func, dt, axis, sl):
     shape = (20, 33, 54)
-    x = rnd.random(shape).astype(dt)[::2, ::3, ::4]
+    x = rnd.random(shape).astype(dt)[sl]
     base = np.full(shape, -1 - 1j, dtype=np.result_type(dt, np.complex64))
-    out = base[::2, ::3, ::4]
+    out = base[sl]
     result = getattr(mkl_fft, func)(x, axis=axis, out=out)
     expected = getattr(np.fft, func)(x.astype(np.float64), axis=axis)
 
