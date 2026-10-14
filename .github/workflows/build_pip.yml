@@ -28,12 +28,12 @@ jobs:
           - python: "3.14"
             python_spec: "3.14.* *_cp314"
             use_pre: "--pre"
-          # - python: "3.14"
-            # python_spec: "3.14.* *_cp314t"
-            # use_pre: ""
-          # - python: "3.14"
-            # python_spec: "3.14.* *_cp314t"
-            # use_pre: "--pre"
+          - python: "3.14"
+            python_spec: "3.14.* *_cp314t"
+            use_pre: ""
+          - python: "3.14"
+            python_spec: "3.14.* *_cp314t"
+            use_pre: "--pre"
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -50,7 +50,7 @@ jobs:
 
       - name: Install MKL
         run: |
-          conda install mkl-devel "python=${{ matrix.python_spec || matrix.python }}"
+          conda install mkl-devel mkl-service "python=${{ matrix.python_spec || matrix.python }}"
 
       - name: Build conda package
         run: |
