@@ -709,9 +709,6 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
     for(i=axis+1; i < xin_rank; i++)
         assert(xin_shape[i] == xout_shape[i]);
 
-    /* output buffer is created in Cython as C_CONTIGUOUS */
-    assert(PyArray_ISONESEGMENT(x_out));
-
     xin_data = (@MKL_IN_TYPE@*) PyArray_DATA(x_in);
     xout_data = (@MKL_OUT_TYPE@*) PyArray_DATA(x_out);
     {
@@ -724,7 +721,6 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
         for(i=0; i < xin_rank; i++) {
             assert( (xin_strides[i] % xin_itemsize) == 0 );
             assert( (xout_strides[i] % xout_itemsize) == 0 );
-            assert( xout_strides[i] > 0 );
         }
 
         /* Compute output strides */
@@ -992,9 +988,6 @@ int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
     for(i=0; i < xin_rank; i++)
         assert( xin_shape[i] >= xout_shape[i]);
 
-    /* output buffer is created in Cython as C_CONTIGUOUS */
-    assert(PyArray_ISONESEGMENT(x_out));
-
     xin_data = (@MKL_TYPE@*) PyArray_DATA(x_in);
     xout_data = (@MKL_TYPE@*) PyArray_DATA(x_out);
     {
@@ -1007,7 +1000,6 @@ int @COMPLEXIN@_@COMPLEXOUT@_mkl_@mode@_out(
         for(i=0; i < xin_rank; i++) {
             assert( (xin_strides[i] % xin_itemsize) == 0 );
             assert( (xout_strides[i] % xout_itemsize) == 0 );
-            assert( xout_strides[i] > 0 );
         }
 
         /* Compute output strides */
@@ -1188,9 +1180,6 @@ int
     assert(xout_itemsize == sizeof(@MKL_OUT_TYPE@));
     assert(xin_itemsize == sizeof(@MKL_IN_TYPE@));
 
-    /* output buffer is created in Cython as C_CONTIGUOUS */
-    assert(PyArray_ISONESEGMENT(x_out));
-
     xin_data = (@MKL_IN_TYPE@*) PyArray_DATA(x_in);
     xout_data = (@MKL_OUT_TYPE@*) PyArray_DATA(x_out);
     {
@@ -1203,7 +1192,6 @@ int
         for(i=0; i < xin_rank; i++) {
             assert( (xin_strides[i] % xin_itemsize) == 0 );
             assert( (xout_strides[i] % xout_itemsize) == 0 );
-            assert( xout_strides[i] > 0 );
         }
 
         /* Compute output strides */
