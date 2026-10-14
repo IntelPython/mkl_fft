@@ -705,7 +705,7 @@ int @REALIN@_@COMPLEXOUT@_mkl_@mode@_out(
 
     for(i=0; i < axis; i++)
         assert(xin_shape[i] == xout_shape[i]);
-    assert( xout_shape[axis] == (all_harmonics) ? n : n/2 + 1);
+    assert( xout_shape[axis] == ((all_harmonics) ? n : n/2 + 1) );
     for(i=axis+1; i < xin_rank; i++)
         assert(xin_shape[i] == xout_shape[i]);
 
