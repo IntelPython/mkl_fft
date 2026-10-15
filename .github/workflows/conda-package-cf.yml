@@ -38,6 +38,10 @@ jobs:
             numpy: "2.3"
             python_spec: "3.14.* *_cp314t"
             python_tag: "3.14t"
+          - python: "3.15"
+            numpy: "2.5"
+            python_spec: "3.15.* *_cp315"
+            python_tag: "3.15"
 
     steps:
       - name: Cancel Previous Runs
@@ -110,6 +114,12 @@ jobs:
           - python: "3.14"
             python_spec: "3.14.* *_cp314t"
             python_tag: "3.14t"
+            numpy: 'numpy">=2"'
+            experimental: false
+            runner: ubuntu-latest
+          - python: "3.15"
+            python_spec: "3.15.* *_cp315"
+            python_tag: "3.15"
             numpy: 'numpy">=2"'
             experimental: false
             runner: ubuntu-latest
@@ -198,6 +208,10 @@ jobs:
             numpy: "2.3"
             python_spec: "3.14.* *_cp314t"
             python_tag: "3.14t"
+          - python: "3.15"
+            numpy: "2.5"
+            python_spec: "3.15.* *_cp315"
+            python_tag: "3.15"
 
     steps:
       - name: Cancel Previous Runs
@@ -272,6 +286,12 @@ jobs:
           - python: "3.14"
             python_spec: "3.14.* *_cp314t"
             python_tag: "3.14t"
+            numpy: 'numpy">=2"'
+            experimental: false
+            runner: windows-latest
+          - python: "3.15"
+            python_spec: "3.15.* *_cp315"
+            python_tag: "3.15"
             numpy: 'numpy">=2"'
             experimental: false
             runner: windows-latest
