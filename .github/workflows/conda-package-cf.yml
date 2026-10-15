@@ -40,6 +40,8 @@ jobs:
             python_tag: "3.14t"
           - python: "3.15"
             numpy: "2.5"
+            python_spec: "3.15.* *_cp315"
+            python_tag: "3.15"
 
     steps:
       - name: Cancel Previous Runs
@@ -98,7 +100,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+        python: ["3.10", "3.11", "3.12", "3.13"]
         numpy: ['numpy">=2"']
         experimental: [false]
         runner: [ubuntu-latest]
@@ -112,6 +114,12 @@ jobs:
           - python: "3.14"
             python_spec: "3.14.* *_cp314t"
             python_tag: "3.14t"
+            numpy: 'numpy">=2"'
+            experimental: false
+            runner: ubuntu-latest
+          - python: "3.15"
+            python_spec: "3.15.* *_cp315"
+            python_tag: "3.15"
             numpy: 'numpy">=2"'
             experimental: false
             runner: ubuntu-latest
@@ -202,6 +210,8 @@ jobs:
             python_tag: "3.14t"
           - python: "3.15"
             numpy: "2.5"
+            python_spec: "3.15.* *_cp315"
+            python_tag: "3.15"
 
     steps:
       - name: Cancel Previous Runs
@@ -262,7 +272,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+        python: ["3.10", "3.11", "3.12", "3.13"]
         numpy: ['numpy">=2"']
         experimental: [false]
         runner: [windows-latest]
@@ -276,6 +286,12 @@ jobs:
           - python: "3.14"
             python_spec: "3.14.* *_cp314t"
             python_tag: "3.14t"
+            numpy: 'numpy">=2"'
+            experimental: false
+            runner: windows-latest
+          - python: "3.15"
+            python_spec: "3.15.* *_cp315"
+            python_tag: "3.15"
             numpy: 'numpy">=2"'
             experimental: false
             runner: windows-latest
