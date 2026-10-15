@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [dev] - YYYY-MM-DD
+## [2.4.0] - 2026-10-15
 
 ### Added
 * Added support for free-threaded (GIL-disabled) CPython builds: the Cython extension is compiled with `freethreading_compatible=True` [gh-357](https://github.com/IntelPython/mkl_fft/pull/357)
@@ -16,8 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Multi-iterator constructors now return a status corresponding to allocation success or failure, and raise `MemoryError` instead of `ValueError` [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
 * `_direct_fftnd` now also checks the status returned by the backend instead of discarding it [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
 * Pinned Cython in the Coverity Scan workflow so generated code stays stable between scans, and added `coverity/README.md` documenting the known false-positive families and the scan review checklist [gh-374](https://github.com/IntelPython/mkl_fft/pull/374)
+* Removed a redundant full-array copy in the `hfft` and `hfftn` adapters of `mkl_fft.interfaces.scipy_fft` [gh-382](https://github.com/IntelPython/mkl_fft/pull/382)
 * Reduced Python overhead in `norm="forward"`/`"ortho"` scaling by computing the scale factor without `numpy.prod` [gh-384](https://github.com/IntelPython/mkl_fft/pull/384)
-* `rfft` now casts input of dtypes other than `float32`/`float64` to `float64` keeping its memory order instead of making it C-contiguous, avoiding a slow reordering copy for Fortran-ordered input [gh-389](https://github.com/IntelPython/mkl_fft/pull/389)
+* `rfft` now casts input of dtypes other than `float32`/`float64` to `float64` keeping its memory order instead of making it C-contiguous, avoiding a slow reordering copy for Fortran-ordered input; as with `numpy.fft.rfft`, the result of such a cast input now keeps the memory order of the input [gh-389](https://github.com/IntelPython/mkl_fft/pull/389)
+* The GIL is now released during the final conjugation of 1-D `ifft` of real input, as it already was in the N-D backend [gh-389](https://github.com/IntelPython/mkl_fft/pull/389)
 
 ### Fixed
 * Fixed `norm="forward"`/`"ortho"` scaling in `fftn`, `ifftn`, `rfftn`, `irfftn` and the `fft2` family when only a subset of axes is transformed: the scale used the full array shape instead of the transformed axes [gh-336](https://github.com/IntelPython/mkl_fft/issues/336), [gh-370](https://github.com/IntelPython/mkl_fft/pull/370)
