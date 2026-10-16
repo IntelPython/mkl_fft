@@ -4,29 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [dev] - YYYY-MM-DD
+## [2.4.0] - 2026-10-16
 
 ### Added
-* Added support for free-threaded (GIL-disabled) CPython builds: the Cython extension is compiled with `freethreading_compatible=True` [gh-357](https://github.com/IntelPython/mkl_fft/pull/357)
-* Enabled support of Python 3.15 [gh-378](https://github.com/IntelPython/mkl_fft/pull/378)
+* Added support for free-threaded (GIL-disabled) CPython builds: the Cython extension is compiled with `freethreading_compatible=True`; the free-threaded configuration is built and tested in CI on 3.14t [gh-357](https://github.com/IntelPython/mkl_fft/pull/357)
+* Enabled support of Python 3.15 [gh-378](https://github.com/IntelPython/mkl_fft/pull/378). The `scipy_interface` and `test` extras cannot be installed from PyPI on 3.15 yet, because `mkl-service` publishes neither a 3.15 wheel nor an sdist there
 
 ### Changed
 * Raised the minimum build-time `Cython` requirement to `3.1.0`, the first release providing the `freethreading_compatible` directive [gh-357](https://github.com/IntelPython/mkl_fft/pull/357)
 * Removed the `python-gil` constraint from the conda recipes, which pinned `mkl_fft` to GIL-enabled Python 3.14 builds [gh-357](https://github.com/IntelPython/mkl_fft/pull/357)
-* Multi-iterator constructors now return a status corresponding to allocation success or failure, and raise `MemoryError` instead of `ValueError` [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
-* `_direct_fftnd` now also checks the status returned by the backend instead of discarding it [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
-* Pinned Cython in the Coverity Scan workflow so generated code stays stable between scans, and added `coverity/README.md` documenting the known false-positive families and the scan review checklist [gh-374](https://github.com/IntelPython/mkl_fft/pull/374)
+* Out-of-memory failures reported by MKL (`DFTI_MEMORY_ERROR`) are now raised as `MemoryError` instead of `ValueError` [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
+* Removed a redundant full-array copy in the `hfft` and `hfftn` adapters of `mkl_fft.interfaces.scipy_fft` [gh-382](https://github.com/IntelPython/mkl_fft/pull/382)
 * Reduced Python overhead in `norm="forward"`/`"ortho"` scaling by computing the scale factor without `numpy.prod` [gh-384](https://github.com/IntelPython/mkl_fft/pull/384)
 * `rfft` now casts input of dtypes other than `float32`/`float64` to `float64` keeping its memory order instead of making it C-contiguous, avoiding a slow reordering copy for Fortran-ordered input [gh-389](https://github.com/IntelPython/mkl_fft/pull/389)
+* For Fortran-contiguous input of a dtype other than `float32`/`float64`, the result of `rfft`, `rfft2`, `rfftn` and of their counterparts in the `numpy_fft` and `scipy_fft` interfaces is now Fortran- rather than C-contiguous: the output order follows the input, Fortran for Fortran-contiguous input and C otherwise [gh-389](https://github.com/IntelPython/mkl_fft/pull/389)
+* The GIL is now released during the final conjugation of 1-D `ifft` of real input, as it already was in the N-D backend [gh-389](https://github.com/IntelPython/mkl_fft/pull/389)
 
 ### Fixed
 * Fixed `norm="forward"`/`"ortho"` scaling in `fftn`, `ifftn`, `rfftn`, `irfftn` and the `fft2` family when only a subset of axes is transformed: the scale used the full array shape instead of the transformed axes [gh-336](https://github.com/IntelPython/mkl_fft/issues/336), [gh-370](https://github.com/IntelPython/mkl_fft/pull/370)
 * Fixed `norm="forward"`/`"ortho"` scaling in `irfftn` and `irfft2`, which normalized over the input length `n` rather than the complex-to-real output length `2 * (n - 1)` [gh-370](https://github.com/IntelPython/mkl_fft/pull/370)
-* Declared `f_ndim` as a C `int` in `_allocate_result` so the buffer size is computed in C rather than through a Python object, resolving a Coverity out-of-bounds (OVERRUN) false positive [gh-364](https://github.com/IntelPython/mkl_fft/pull/364)
-* Silenced a Coverity `UNUSED_VALUE` finding in `__create_descriptor_1d` by marking the `DftiFreeDescriptor` status (used only by a debug-only `assert`) as intentionally unused [gh-365](https://github.com/IntelPython/mkl_fft/pull/365)
 * Fixed possible memory leaks when `PyMem_Malloc` fails, and raise `MemoryError` [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
 * Fixed possible memory leaks when multi-iterator constructors fail [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
 * Fixed N-D transforms returning a success status when a scratch allocation fails [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
+* Fixed `fftn`, `ifftn` and the `fft2` family returning an uncomputed result instead of raising when MKL reports an error for a transform over all axes: the status of the N-D backend call was never checked [gh-373](https://github.com/IntelPython/mkl_fft/pull/373)
 * Fixed `fft`, `ifft`, and the `fftn`/`fft2` family returning `out` unmodified when `out` is given and the input dtype is not `float32`, `float64`, `complex64` or `complex128` (e.g. integer, `bool`, `float16`) [gh-387](https://github.com/IntelPython/mkl_fft/pull/387)
 * Fixed wrong results and writes outside of `out` in `fft`/`ifft` when the input is cast or zero-padded into a contiguous copy while `out` has the same non-contiguous layout as the original input [gh-387](https://github.com/IntelPython/mkl_fft/pull/387)
 * Fixed wrong results and writes outside of `out` in `ifft` and `ifftn` of real input when `out` is not contiguous: the final complex conjugation treated `out` as one contiguous block [gh-389](https://github.com/IntelPython/mkl_fft/pull/389)
