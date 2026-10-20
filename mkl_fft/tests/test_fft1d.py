@@ -497,6 +497,28 @@ def test_irfft_dtype(dt):
     assert_allclose(result, expected, rtol=1e-7, atol=1e-7, strict=True)
 
 
+@pytest.mark.parametrize(
+    "shape, axis", [((5, 1), 1), ((1, 5), 0), ((4, 1, 1), 2), ((1, 1, 4), 0)]
+)
+@pytest.mark.parametrize("func", ["fft", "ifft", "rfft", "irfft"])
+def test_pad_both_contiguous_input(func, shape, axis):
+    # x is both C- and F-contiguous and is zero-padded along a unit axis,
+    # the padded copy and so the result are C-contiguous as in NumPy
+    x = rnd.random(shape)
+    if func == "irfft":
+        x = x + 1j * rnd.random(shape)
+    expected = getattr(np.fft, func)(x, n=8, axis=axis)
+
+    result = getattr(mkl_fft, func)(x, n=8, axis=axis)
+    assert result.flags.c_contiguous
+    assert_allclose(result, expected, atol=1e-12)
+
+    out = np.full_like(expected, -1, order="C")
+    result = getattr(mkl_fft, func)(x, n=8, axis=axis, out=out)
+    assert result is out
+    assert_allclose(result, expected, atol=1e-12)
+
+
 @pytest.mark.parametrize("step", [2, -1, -3])
 @pytest.mark.parametrize("func", ["fft", "ifft"])
 def test_fft_real_input_out_strided_1d(func, step):
