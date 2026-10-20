@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Zero-padding (`n` larger than the input length along the axis) of input that is both C- and F-contiguous, such as shape `(m, 1)` padded along axis 1, now gives a C-contiguous result as NumPy does instead of a Fortran-contiguous one, so a C-ordered `out` is also written directly without a temporary copy [gh-397](https://github.com/IntelPython/mkl_fft/pull/397)
 
 ## [2.4.0] - 2026-10-16
 
