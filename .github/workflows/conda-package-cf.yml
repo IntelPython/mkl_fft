@@ -57,10 +57,10 @@ jobs:
         with:
           path: ~/.conda/pkgs
           key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('**/meta.yaml') }}
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('**/meta.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-
 
       - name: Add conda to system path
         run: echo "$CONDA"/bin >> "$GITHUB_PATH"
@@ -156,10 +156,10 @@ jobs:
         with:
           path: ~/.conda/pkgs
           key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('lockfile') }}
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('lockfile') }}
           restore-keys: |
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-
 
       - name: Install mkl_fft
         run: |
@@ -225,10 +225,10 @@ jobs:
         with:
           path: ~/conda_pkgs_dir
           key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('**/meta.yaml') }}
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('**/meta.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-
 
       - name: Build conda package with NumPy 2.x
         run: |
@@ -345,10 +345,10 @@ jobs:
         with:
           path: ~/conda_pkgs_dir
           key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('lockfile') }}
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('lockfile') }}
           restore-keys: |
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-
 
       - name: Install mkl_fft
         shell: cmd /C CALL {0}
