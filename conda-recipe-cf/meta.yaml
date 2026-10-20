@@ -9,7 +9,6 @@ build:
     number: {{ GIT_DESCRIBE_NUMBER }}
     ignore_run_exports:
       - blas
-      - numpy
 
 requirements:
     build:
@@ -28,7 +27,6 @@ requirements:
     run:
       - python
       - {{ pin_compatible('mkl') }}
-      - numpy
 
 test:
     commands:
