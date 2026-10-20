@@ -22,24 +22,16 @@ jobs:
     strategy:
       matrix:
         include:
-          - python: "3.10"
-            numpy: "2.2"
           - python: "3.11"
-            numpy: "2.3"
           - python: "3.12"
-            numpy: "2.3"
           - python: "3.13"
-            numpy: "2.3"
           - python: "3.14"
-            numpy: "2.3"
             python_spec: "3.14.* *_cp314"
             python_tag: "3.14"
           - python: "3.14"
-            numpy: "2.3"
             python_spec: "3.14.* *_cp314t"
             python_tag: "3.14t"
           - python: "3.15"
-            numpy: "2.5"
             python_spec: "3.15.* *_cp315"
             python_tag: "3.15"
 
@@ -65,10 +57,10 @@ jobs:
         with:
           path: ~/.conda/pkgs
           key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('**/meta.yaml') }}
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('**/meta.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-
 
       - name: Add conda to system path
         run: echo "$CONDA"/bin >> "$GITHUB_PATH"
@@ -79,11 +71,9 @@ jobs:
       - name: Build conda package with NumPy 2.x
         run: |
           CHANNELS=(-c conda-forge --override-channels)
-          VERSIONS=(--python "${{ matrix.python_spec || matrix.python }}" --numpy "${{ matrix.numpy }}")
-          TEST=(--no-test)
+          VERSIONS=(--python "${{ matrix.python_spec || matrix.python }}")
 
           conda build \
-            "${TEST[@]}" \
             "${VERSIONS[@]}" \
             "${CHANNELS[@]}" \
             conda-recipe-cf
@@ -100,7 +90,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13"]
+        python: ["3.11", "3.12", "3.13"]
         numpy: ['numpy">=2"']
         experimental: [false]
         runner: [ubuntu-latest]
@@ -166,10 +156,10 @@ jobs:
         with:
           path: ~/.conda/pkgs
           key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('lockfile') }}
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('lockfile') }}
           restore-keys: |
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-
 
       - name: Install mkl_fft
         run: |
@@ -185,31 +175,23 @@ jobs:
           pytest -v --pyargs "$MODULE_NAME"
 
   build_windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     defaults:
       run:
         shell: cmd /C CALL {0}
     strategy:
       matrix:
         include:
-          - python: "3.10"
-            numpy: "2.2"
           - python: "3.11"
-            numpy: "2.3"
           - python: "3.12"
-            numpy: "2.3"
           - python: "3.13"
-            numpy: "2.3"
           - python: "3.14"
-            numpy: "2.3"
             python_spec: "3.14.* *_cp314"
             python_tag: "3.14"
           - python: "3.14"
-            numpy: "2.3"
             python_spec: "3.14.* *_cp314t"
             python_tag: "3.14t"
           - python: "3.15"
-            numpy: "2.5"
             python_spec: "3.15.* *_cp315"
             python_tag: "3.15"
 
@@ -241,16 +223,16 @@ jobs:
         env:
           CACHE_NUMBER: 3  # Increase to reset cache
         with:
-          path: /home/runner/conda_pkgs_dir
+          path: ~/conda_pkgs_dir
           key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('**/meta.yaml') }}
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('**/meta.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-
 
       - name: Build conda package with NumPy 2.x
         run: |
-          conda build --no-test --python "${{ matrix.python_spec || matrix.python }}" --numpy ${{ matrix.numpy }} -c conda-forge --override-channels conda-recipe-cf
+          conda build --python "${{ matrix.python_spec || matrix.python }}" -c conda-forge --override-channels conda-recipe-cf
 
       - name: Store conda paths as envs
         shell: bash -l {0}
@@ -272,7 +254,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13"]
+        python: ["3.11", "3.12", "3.13"]
         numpy: ['numpy">=2"']
         experimental: [false]
         runner: [windows-latest]
@@ -361,12 +343,12 @@ jobs:
         env:
           CACHE_NUMBER: 0  # Increase to reset cache
         with:
-          path: /home/runner/conda_pkgs_dir
+          path: ~/conda_pkgs_dir
           key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('lockfile') }}
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-${{hashFiles('lockfile') }}
           restore-keys: |
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
+            ${{ runner.os }}-conda-cf-${{ env.CACHE_NUMBER }}-
 
       - name: Install mkl_fft
         shell: cmd /C CALL {0}
