@@ -54,9 +54,10 @@ jobs:
           # The recipe takes its version from git describe.
           fetch-depth: 0
 
+      # Miniforge 26.9.4-0 fails setup-miniconda's conda init on Windows runners; 26.7.2-0 works.
       - uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
         with:
-          miniforge-version: latest
+          miniforge-version: 26.7.2-0
           activate-environment: ""
           conda-remove-defaults: "true"
 
@@ -109,7 +110,7 @@ jobs:
 
       - uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
         with:
-          miniforge-version: latest
+          miniforge-version: 26.7.2-0
           activate-environment: ""
           conda-remove-defaults: "true"
 
