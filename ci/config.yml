@@ -1,0 +1,12 @@
+# How Intel Python CI (gh-ci) tests mkl_fft. .github/workflows/intel-ci.yml builds
+# conda-recipe-cf for every platform and Python version the recipe declares, as ci/matrix.py
+# reads them, and tests each package with ci/test.py. Intel's Jenkins then installs each package
+# into a clean conda-forge environment on its own machines, runs ci/test.py there with the test
+# requirements below, and scans it. {platform} and {python} match what the run built, so
+# nothing here lists them.
+version: 1
+workflow: intel-ci.yml
+artifacts:
+  conda: "mkl_fft {platform} Python {python}"
+test:
+  requires: [pytest, "scipy >=1.10", mkl-service]

@@ -14,6 +14,7 @@ It provides accelerated FFT transforms while aiming to preserve upstream API beh
 - **Tests:** `mkl_fft/tests/`
 - **Vendored helpers:** `_vendored/`
 - **Packaging:** `conda-recipe/`, `conda-recipe-cf/`
+- **Intel Python CI:** `ci/`, `.github/workflows/intel-ci.yml`; see `ci/README.md`
 - **Benchmarks:** `benchmarks/`
 
 ## Build/runtime basics
