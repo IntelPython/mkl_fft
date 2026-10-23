@@ -8,3 +8,4 @@ Conda-forge recipe context for `mkl_fft`.
 ## Guardrails
 - Keep conda-forge recipe semantics separate from Intel-channel recipe.
 - Align changes with `conda-package-cf.yml` workflow behavior.
+- `conda_build_config.yaml`'s `python:` list is the Intel Python CI matrix, read by `ci/matrix.py`: plain versions, no selectors.
