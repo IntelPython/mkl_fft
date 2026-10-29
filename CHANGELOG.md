@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* `irfft` with `out=` now writes directly into `out` when the cast or zero-padded copy of a non-contiguous input has the same memory order as `out`, avoiding a temporary array and an extra copy [gh-396](https://github.com/IntelPython/mkl_fft/pull/396)
 
 ### Fixed
 

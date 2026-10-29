@@ -488,6 +488,31 @@ def test_irfft_out_strided(axis):
     assert np.all(base == -1.0)
 
 
+@pytest.mark.parametrize("order", ["C", "F"])
+@pytest.mark.parametrize("axis", [0, 1, 2])
+@pytest.mark.parametrize("dt", ["i8", "f4", "f8", "c16"])
+def test_irfft_out_strided_input_copied(dt, axis, order):
+    # x is strided, but it is cast (i8, f4, f8) or padded (c16) into a
+    # contiguous copy, whose layout decides if MKL can write into out directly
+    x = rnd.randint(-50, 50, size=(20, 33, 54)).astype(dt)
+    x = np.asarray(x, order=order)[::2, ::3, ::4]
+    n = None
+    if dt == "c16":
+        # n // 2 + 1 > x.shape[axis] forces a zero-padded copy
+        n = 2 * x.shape[axis] + 4
+    out_shape = list(x.shape)
+    out_shape[axis] = 2 * (x.shape[axis] - 1) if n is None else n
+    out_dtype = np.float32 if dt == "f4" else np.float64
+    # sentinel: catches out being returned untouched
+    out = np.full(out_shape, -1.0, dtype=out_dtype, order=order)
+    result = mkl_fft.irfft(x, n=n, axis=axis, out=out)
+    expected = np.fft.irfft(x.astype(np.complex128), n=n, axis=axis)
+
+    assert result is out
+    tol = 1e-4 if dt == "f4" else 1e-10
+    assert_allclose(result, expected, rtol=tol, atol=tol)
+
+
 @requires_numpy_2
 @pytest.mark.parametrize("dt", ["i4", "f4", "f8", "c8", "c16"])
 def test_irfft_dtype(dt):
