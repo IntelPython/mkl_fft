@@ -32,7 +32,10 @@ if np.__version__ < "2.0":
 else:
     from numpy import permute_dims
 
-import mkl_fft.interfaces.scipy_fft as fft
+try:
+    import mkl_fft.interfaces.scipy_fft as fft
+except ImportError:
+    pytest.skip("This test file needs mkl-service", allow_module_level=True)
 
 skip_xp_backends = pytest.mark.skip_xp_backends
 

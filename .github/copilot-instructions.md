@@ -35,7 +35,7 @@ Higher-precedence file overrides lower-precedence context.
 
 ## Source-of-truth files
 - Build/config: `pyproject.toml`, `meson.build`
-- Dependencies: `pyproject.toml`, `conda-recipe/meta.yaml`, `conda-recipe-cf/meta.yaml`
+- Dependencies: `pyproject.toml`, `conda-recipe-cf/meta.yaml`
 - CI: `.github/workflows/*.{yml,yaml}`
 - API: `mkl_fft/__init__.py`, `mkl_fft/interfaces/*.py`, `mkl_fft/_pydfti.pyx` (interface wrappers are integration/patch entry points)
 - Tests: `mkl_fft/tests/`

@@ -1,0 +1,14 @@
+# Intel Python CI (gh-ci) settings for mkl_fft, see ci/README.md
+version: 1
+workflow: intel-ci.yml
+artifacts:
+  conda: "mkl_fft {platform} Python {python}"
+  wheel: "mkl_fft {platform} Wheels Python {python}"
+test:
+  requires: [pytest, "scipy >=1.10", mkl-service]
+  # PyPI has no mkl-service for Python 3.15 yet
+  wheel_requires: [pytest, "scipy >=1.10", "mkl-service; python_version < '3.15'"]
+benchmark:
+  requires: [psutil, "scipy >=1.10", mkl-service]
+  # conda-forge lacks asv for some Python the recipe declares; the abi3 wheel on PyPI fits all.
+  pip_requires: [asv]
