@@ -25,6 +25,17 @@
 
 import numpy as np
 
+# Computed once at import time: the set of dtypes mkl_fft cannot handle and
+# that `scipy.fft` must therefore reject with NotImplementedError. Whether
+# `np.float128`/`np.complex256` exist is fixed by the NumPy build and cannot
+# change at runtime, so recomputing this list on every call (as
+# `_supported_array_or_not_implemented` used to) is pure per-call overhead.
+_UNSUPPORTED_DTYPES = [np.half]
+if hasattr(np, "float128"):
+    _UNSUPPORTED_DTYPES.append(np.float128)
+if hasattr(np, "complex256"):
+    _UNSUPPORTED_DTYPES.append(np.complex256)
+
 
 def _upcast_float16_array(x):
     """
@@ -78,11 +89,6 @@ def _supported_array_or_not_implemented(x):
     or complex128 type or raise NotImplementedError
     """
     _x = np.asarray(x)
-    black_list = [np.half]
-    if hasattr(np, "float128"):
-        black_list.append(np.float128)
-    if hasattr(np, "complex256"):
-        black_list.append(np.complex256)
-    if _x.dtype in black_list:
+    if _x.dtype in _UNSUPPORTED_DTYPES:
         raise NotImplementedError
     return _x
