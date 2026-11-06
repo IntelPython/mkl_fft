@@ -3,15 +3,18 @@
 
 import multiprocessing
 
-import mkl
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
 try:
+    import mkl
+
     import mkl_fft.interfaces.scipy_fft as fft
 except ImportError:
-    pytest.skip("This test file needs scipy", allow_module_level=True)
+    pytest.skip(
+        "This test file needs scipy and mkl-service", allow_module_level=True
+    )
 
 
 @pytest.fixture(scope="module")
