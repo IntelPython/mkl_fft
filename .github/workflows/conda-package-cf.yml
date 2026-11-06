@@ -85,7 +85,7 @@ jobs:
             "${TEST[@]}" \
             "${VERSIONS[@]}" \
             "${CHANNELS[@]}" \
-            conda-recipe-cf
+            conda-recipe
 
       - name: Upload artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -248,7 +248,7 @@ jobs:
 
       - name: Build conda package with NumPy 2.x
         run: |
-          conda build --no-test --python "${{ matrix.python_spec || matrix.python }}" --numpy ${{ matrix.numpy }} -c conda-forge --override-channels conda-recipe-cf
+          conda build --no-test --python "${{ matrix.python_spec || matrix.python }}" --numpy ${{ matrix.numpy }} -c conda-forge --override-channels conda-recipe
 
       - name: Store conda paths as envs
         shell: bash -l {0}
