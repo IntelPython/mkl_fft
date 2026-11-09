@@ -7,6 +7,8 @@ installed mkl_fft rather than the source tree. The test requirements come from
 ci/config.yml. Writes a JUnit report to $GH_CI_RESULTS.
 """
 
+import importlib
+import importlib.util
 import os
 import pathlib
 import sys
@@ -24,11 +26,27 @@ def running_python() -> str:
     return version + ("t" if threaded else "")
 
 
+def scipy_interface_error() -> str | None:
+    """Why mkl_fft.interfaces.scipy_fft fails to import with SciPy and mkl-service installed."""
+    if not all(importlib.util.find_spec(name) for name in ("scipy", "mkl")):
+        return None
+    try:
+        importlib.import_module("mkl_fft.interfaces.scipy_fft")
+    except ImportError as error:
+        return f"{type(error).__name__}: {error}"
+    return None
+
+
 def main() -> int:
     """Runs the installed package's test suite."""
     expected = os.environ["GH_CI_PYTHON"]
     if running_python() != expected:
         print(f"running Python {running_python()}, expected {expected}")
+        return 1
+    # Its tests skip without the interface, which would hide a broken import
+    error = scipy_interface_error()
+    if error:
+        print(f"mkl_fft.interfaces.scipy_fft does not import: {error}")
         return 1
     # The suite name says which platform and Python ran.
     cell = f"{os.environ.get('GH_CI_PLATFORM', 'linux')}.py{expected}"

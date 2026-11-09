@@ -3,7 +3,6 @@
 CI/CD workflows and repo automation.
 
 ## Workflows (source of truth)
-- `conda-package-cf.yml` — conda-forge-oriented build/test pipeline
 - `intel-ci.yml` — Intel CI: builds and tests the conda packages of `conda-recipe` and the wheels, for the platforms and Python versions the recipe and `pyproject.toml` declare (`ci/matrix.py`); see `ci/README.md`; its `Agent guidance` job (`ci/guidance.py`) fails a pull request that adds a broken claim to a changed guidance file
 - `build-with-clang.yml` — clang compatibility checks
 - `build_pip.yml` — editable pip build pipeline

@@ -103,6 +103,8 @@ jobs:
   test:
     name: Test ${{ matrix.name }} Python ${{ matrix.python }}
     needs: [matrix, build]
+    # Test every package that built, even when another build failed
+    if: ${{ !cancelled() && needs.matrix.result == 'success' }}
     runs-on: ${{ matrix.platform == 'windows' && (vars.GH_CI_WINDOWS_RUNNER || 'windows-2022') || matrix.platform == 'macos' && (vars.GH_CI_MACOS_RUNNER || 'macos-26-intel') || (vars.GH_CI_RUNNER || 'ubuntu-latest') }}
     timeout-minutes: 45
     strategy:
@@ -174,6 +176,8 @@ jobs:
   test-wheel:
     name: Test ${{ matrix.name }} Wheels Python ${{ matrix.python }}
     needs: [matrix, build-wheel]
+    # Test every package that built, even when another build failed
+    if: ${{ !cancelled() && needs.matrix.result == 'success' }}
     runs-on: ${{ matrix.platform == 'windows' && (vars.GH_CI_WINDOWS_RUNNER || 'windows-2022') || matrix.platform == 'macos' && (vars.GH_CI_MACOS_RUNNER || 'macos-26-intel') || (vars.GH_CI_RUNNER || 'ubuntu-latest') }}
     timeout-minutes: 45
     strategy:
