@@ -7,11 +7,8 @@ source:
 
 build:
     number: {{ GIT_DESCRIBE_NUMBER }}
-    script_env:
-      - WHEELS_OUTPUT_FOLDER
     ignore_run_exports:
       - blas
-      - numpy
 
 requirements:
     build:
@@ -19,7 +16,6 @@ requirements:
       - {{ stdlib('c') }}
     host:
       - meson-python >=0.13.0
-      - python-build >=1.2.2
       - cmake
       - ninja
       - python
@@ -35,8 +31,10 @@ requirements:
 
 test:
     commands:
+      - pip check
       - pytest -v --pyargs mkl_fft
     requires:
+      - pip
       - pytest
       - scipy >=1.10
       - mkl-service

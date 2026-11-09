@@ -1,6 +1,5 @@
-[![Conda package](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package.yml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package.yml)
 [![Editable build using pip and pre-release NumPy](https://github.com/IntelPython/mkl_fft/actions/workflows/build_pip.yml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/build_pip.yml)
-[![Conda package with conda-forge channel only](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package-cf.yml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/conda-package-cf.yml)
+[![Intel CI](https://github.com/IntelPython/mkl_fft/actions/workflows/intel-ci.yml/badge.svg)](https://github.com/IntelPython/mkl_fft/actions/workflows/intel-ci.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/IntelPython/mkl_fft/badge)](https://securityscorecards.dev/viewer/?uri=github.com/IntelPython/mkl_fft)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/33202/badge.svg)](https://scan.coverity.com/projects/intelpython-mkl_fft)
 
