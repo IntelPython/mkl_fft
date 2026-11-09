@@ -229,9 +229,9 @@ cdef cnp.ndarray _pad_array(
         b_shape[axis] = n
 
         # allocating temporary buffer
-        x_arr_is_fortran = cnp.PyArray_CHKFLAGS(
-            x_arr, cnp.NPY_ARRAY_F_CONTIGUOUS
-        )
+        # F order only if x_arr is not also C-contiguous (e.g. shape (m, 1)),
+        # as NumPy does, otherwise padding along a unit axis gives an F array
+        x_arr_is_fortran = cnp.PyArray_ISFORTRAN(x_arr)
         b_arr = <cnp.ndarray> cnp.PyArray_EMPTY(
             b_ndim, b_shape, <cnp.NPY_TYPES> b_type, x_arr_is_fortran
         )  # 0 for C-contiguous
