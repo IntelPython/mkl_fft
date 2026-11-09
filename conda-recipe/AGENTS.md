@@ -1,11 +1,11 @@
 # AGENTS.md — conda-recipe/
 
-Intel-channel conda packaging context.
+The conda recipe for `mkl_fft`, built against conda-forge only.
 
 ## Scope
-- `meta.yaml` — package metadata and dependency pins
-- `build.sh` / `bld.bat` — platform build scripts
+- conda-forge specific recipe files under this directory.
 
 ## Guardrails
-- Treat recipe files as canonical for packaging intent.
-- Keep recipe updates synchronized with CI workflow behavior.
+- Align changes with `conda-package-cf.yml` workflow behavior.
+- `conda_build_config.yaml`'s `python:` list is the Intel CI conda matrix, read by `ci/matrix.py`: one version per line, no selectors.
+- Wheels don't come from this recipe: `intel-ci.yml` builds them from `pyproject.toml` with `ci/build.py`.
