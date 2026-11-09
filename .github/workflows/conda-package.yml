@@ -54,10 +54,6 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Set pkgs_dirs
-        run: |
-          echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
-
       - name: Cache conda packages
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         env:
@@ -70,12 +66,15 @@ jobs:
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-python-${{ matrix.python_tag || matrix.python }}-
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
 
-      - name: Add conda to system path
-        run: echo "$CONDA"/bin >> "$GITHUB_PATH"
+      - uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
+        with:
+          miniforge-version: latest
+          activate-environment: ""
+          pkgs-dirs: ~/.conda/pkgs
 
       - name: Store conda paths as envs
         run: |
-          echo "CONDA_BLD=/usr/share/miniconda/conda-bld/linux-64/" >> "$GITHUB_ENV"
+          echo "CONDA_BLD=$CONDA/conda-bld/linux-64/" >> "$GITHUB_ENV"
           echo "WHEELS_OUTPUT_FOLDER=$GITHUB_WORKSPACE/" >> "$GITHUB_ENV"
 
       - name: Update conda
@@ -156,8 +155,11 @@ jobs:
         with:
           name: ${{ env.PACKAGE_NAME }} ${{ runner.os }} Python ${{ matrix.python_tag || matrix.python }}
 
-      - name: Add conda to system path
-        run: echo "$CONDA"/bin >> "$GITHUB_PATH"
+      - uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
+        with:
+          miniforge-version: latest
+          activate-environment: ""
+          pkgs-dirs: ~/.conda/pkgs
 
       - name: Update conda
         run: |
@@ -195,10 +197,6 @@ jobs:
 
       - name: Display lockfile
         run: cat lockfile
-
-      - name: Set pkgs_dirs
-        run: |
-          echo "pkgs_dirs: [~/.conda/pkgs]" >> ~/.condarc
 
       - name: Cache conda packages
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
