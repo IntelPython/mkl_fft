@@ -95,7 +95,7 @@ Style is loose, and the pre-commit hooks enforce most of it:
 - Keep patching reversible and observable: anything installed can be
   uninstalled, and `is_patched()` reports the truth.
 - Cite the source-of-truth file for mutable details: `pyproject.toml`,
-  `meson.build`, `conda-recipe*/meta.yaml`, `.github/workflows/`.
+  `meson.build`, `conda-recipe/meta.yaml`, `.github/workflows/`.
 - Give benchmark numbers reproducible context — hardware, versions, and the
   command you ran.
 

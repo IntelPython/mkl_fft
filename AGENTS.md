@@ -13,7 +13,8 @@ It provides accelerated FFT transforms while aiming to preserve upstream API beh
 - **Interface adapters:** `mkl_fft/interfaces/`
 - **Tests:** `mkl_fft/tests/`
 - **Vendored helpers:** `_vendored/`
-- **Packaging:** `conda-recipe/`, `conda-recipe-cf/`
+- **Packaging:** `conda-recipe/` for conda, `pyproject.toml` for wheels
+- **Intel CI:** `ci/`, `.github/workflows/intel-ci.yml`; see `ci/README.md`
 - **Benchmarks:** `benchmarks/`
 
 ## Build/runtime basics
@@ -30,7 +31,7 @@ It provides accelerated FFT transforms while aiming to preserve upstream API beh
 
 ## Where truth lives
 - Build/config: `pyproject.toml`, `meson.build`
-- Dependencies: `pyproject.toml`, `conda-recipe*/meta.yaml`
+- Dependencies: `pyproject.toml`, `conda-recipe/meta.yaml`
 - CI/workflows: `.github/workflows/*.{yml,yaml}`
 - Public API: `mkl_fft/__init__.py`, `mkl_fft/interfaces/` (including wrapper/patch adapter modules)
 - Tests: `mkl_fft/tests/`
@@ -44,7 +45,6 @@ Use nearest local `AGENTS.md` when present:
 - `mkl_fft/interfaces/AGENTS.md` — NumPy/SciPy interface adapters
 - `mkl_fft/src/AGENTS.md` — C template backend rules
 - `mkl_fft/tests/AGENTS.md` — test scope/conventions
-- `conda-recipe/AGENTS.md` — Intel-channel conda packaging
-- `conda-recipe-cf/AGENTS.md` — conda-forge recipe context
+- `conda-recipe/AGENTS.md` — conda-forge recipe context
 - `_vendored/AGENTS.md` — vendored tooling boundaries
 - `benchmarks/AGENTS.md` — ASV performance suite
