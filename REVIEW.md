@@ -7,12 +7,11 @@ and Automated pull requests when it applies. Each rule is a check: flag a failur
 ## How to verify
 Say which of these you ran, and on what platform.
 
-1. Build `pip install -e . --no-build-isolation` (CONTRIBUTING.md, Development setup), then run
-   `pytest mkl_fft/tests` and `pre-commit run --all-files`. A fix's new test must fail on base.
+1. Build, test and lint with the commands in CONTRIBUTING.md. A fix's new test must fail on base.
 2. For performance, run base against base (A/A) for noise, then base against the pull request, with the
    ASV modules in `benchmarks/` that exercise the changed path (see `benchmarks/AGENTS.md`).
-3. Reference is NumPy's own FFT. If `numpy.fft.fft.__module__` names `mkl_fft` (Intel-channel NumPy),
-   use `numpy.fft._pocketfft`.
+3. Reference is NumPy's own FFT. Some NumPy builds come with `numpy.fft` already patched to `mkl_fft`
+   (check `numpy.fft.fft.__module__`); then compare against NumPy's unpatched implementation.
 
 ## Correctness
 - Same values, dtype, shape, result memory order (C/F) and errors as `numpy.fft`/`scipy.fft` for the
@@ -50,7 +49,7 @@ Say which of these you ran, and on what platform.
   and the command (ASV preferred). Results must not change: review it as a behavior change too.
 - Noise is measured (repeats or A/A); a gain inside it is no speedup. "Unchanged" needs numbers too.
 - Read every table row; any slowdown is called out and justified, or fixed. Memory or "one copy
-  fewer" claims are shown by `peakmem_*` benchmarks or a test.
+  fewer" claims are shown by the memory benchmarks or a test.
 - Benchmark edits keep the DFTI warmup in `setup`, setup and imports out of timed code, portable core
   detection. Changing the thread default or setup breaks comparison with old results.
 
@@ -59,8 +58,8 @@ Say which of these you ran, and on what platform.
   checked failure path: no leak, Python exception set.
 - The GIL is released only around code touching no Python objects, alike in contiguous, strided, 1-D
   and N-D paths.
-- Update asserts and comments whose invariant the change breaks. No bare `except:`. Reuse helpers
-  (`_cook_nd_args`, `_fft_utils.py`); do not copy logic.
+- Update asserts and comments whose invariant the change breaks. No bare `except:`. Reuse existing
+  helpers rather than copying logic.
 
 ## Packaging and CI
 - `conda-recipe*/meta.yaml` floors match `pyproject.toml`; NumPy compatibility comes from `run_exports`.
@@ -70,26 +69,26 @@ Say which of these you ran, and on what platform.
   to a full commit SHA with a matching version comment.
 
 ## Automated pull requests
-Automated = opened by `intel-python-devops` from a `chore/agentic-sweep-*` branch, or described as
-"This pull request is entirely AI-generated". The agent only reads source and runs pre-commit; nothing
-is built, tested or measured until CI. Maintainers often push commits and edit text later: check who
+Automated = opened by the repository's automation account, or marked as AI-generated in its
+description. Unless the pull request shows otherwise, assume the agent did not build, test or measure:
+nothing has run until CI. Maintainers often push commits and edit text later: check who
 wrote each commit and claim, and review the current state. Everything above applies, plus:
 
 - One change: one optimization or one fix. Flag agent commits outside `mkl_fft/` and `mkl_fft/tests/`
   (build files, recipes, workflows, benchmarks, generated C). A maintainer adds `CHANGELOG.md` entries.
-- `fix:` needs a test failing on base. `perf:` is only a mechanism until a benchmark shows the gain
-  beyond noise with no slowdown elsewhere, and a test shows results unchanged.
+- A fix needs a test failing on base. A performance change is only a mechanism until a benchmark
+  shows the gain beyond noise with no slowdown elsewhere, and a test shows results unchanged.
 - No weakened tests: no removed test, new `skip`/`xfail`, looser tolerance or changed expected value
   unless upstream NumPy/SciPy behavior justifies it and you verified that behavior yourself.
-- Edits to `AGENTS.md`, `REVIEW.md` or `.github/copilot-instructions.md` change future runs' rules:
-  review them as policy, separately from code.
+- Edits to agent rule files (`AGENTS.md`, `REVIEW.md` and other agent instruction files) change
+  future runs' rules: review them as policy, separately from code.
 - Known risk spots: the `out=` direct-write check, `MKL_INT` on one dimension, a slowdown in one row.
-- Text: no agent narration. The agent claims no numbers; numbers added later say who measured, where
-  and how. Title and description match the final scope.
+- Text: no agent narration. Every number says who measured it, where and how. Title and description
+  match the final scope.
 
 ## Pull request text
 - User-visible changes (behavior, API, packaging, build output, measured speedup) get a `CHANGELOG.md`
-  entry under `## [dev]` with `[gh-NNN](https://github.com/IntelPython/mkl_fft/pull/NNN)` links to
-  the pull request and each fixed issue. Docs, tooling and CI-only changes usually need none.
+  entry in the format CONTRIBUTING.md gives, linking the pull request and each fixed issue. Docs,
+  tooling and CI-only changes usually need none.
 - The description follows the template: what changed, why, what was verified and where, what was not.
   No agent scaffolding (prompts, "mandates", notes about reading instruction files).
