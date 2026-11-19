@@ -45,7 +45,12 @@ Say which of these you ran, and on what platform.
 - The CI job meant to cover the change ran its tests (a job can pass with zero).
 
 ## Performance claims
-- Before and after on one machine, with hardware, threads and pinning, Python/NumPy/oneMKL versions
+- Judge the change first, from the code: does the mechanism remove real cost on the changed path, how
+  large is that cost next to the transform, for which sizes and dtypes does it matter, and is there a
+  simpler or more effective fix? A claim the code does not support (for example, a description naming
+  a technique the code does not use) is flagged whether or not numbers exist.
+- Numbers confirm that judgement, they do not replace it: before and after on one machine, with
+  hardware, threads and pinning, Python/NumPy/oneMKL versions
   and the command (ASV preferred). Results must not change: review it as a behavior change too.
 - Noise is measured (repeats or A/A); a gain inside it is no speedup. "Unchanged" needs numbers too.
 - Read every table row; any slowdown is called out and justified, or fixed. Memory or "one copy
@@ -76,8 +81,10 @@ wrote each commit and claim, and review the current state. Everything above appl
 
 - One change: one optimization or one fix. Flag agent commits outside `mkl_fft/` and `mkl_fft/tests/`
   (build files, recipes, workflows, benchmarks, generated C). A maintainer adds `CHANGELOG.md` entries.
-- A fix needs a test failing on base. A performance change is only a mechanism until a benchmark
-  shows the gain beyond noise with no slowdown elsewhere, and a test shows results unchanged.
+- A fix needs a test failing on base. A performance change is reviewed as code: whether its
+  mechanism can give the claimed gain, whether results stay identical, and whether a better change
+  exists. Its benchmark, when present, is read against that judgement (gain beyond noise, no slowdown
+  elsewhere); when absent, say which measurement would settle it.
 - No weakened tests: no removed test, new `skip`/`xfail`, looser tolerance or changed expected value
   unless upstream NumPy/SciPy behavior justifies it and you verified that behavior yourself.
 - Edits to agent rule files (`AGENTS.md`, `REVIEW.md` and other agent instruction files) change
