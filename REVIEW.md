@@ -83,8 +83,9 @@ prove before it is merged.
 
 Pull requests opened by an automated agent (their description starts with "This pull request is entirely
 AI-generated") get the full review above, plus these checks. The agent writes code from reading the
-source; it does not build, run tests or measure anything, so nothing in such a pull request has run
-until its CI has.
+source and runs only the pre-commit hooks; it does not build, run tests or measure anything, so the code
+has not run until CI has. Maintainers may later push commits or edit the description of such a pull
+request, so check who wrote each commit and each claim.
 
 - **One change.** The pull request does exactly one optimization or one bug fix, never both, and touches
   only `mkl_fft/` sources and `mkl_fft/tests/`. Changes to build files, recipes, workflows, benchmarks,
@@ -105,8 +106,9 @@ until its CI has.
 - **Known risk spots.** Past automated changes went wrong in the check deciding whether oneMKL writes
   into `out=` directly (wrong array checked: wrong values and writes outside `out`), in integer counts
   checked on one dimension only, and in benchmark tables hiding a slowdown in one row.
-- **Text.** The description lists the changed paths and a short motivation. It contains no claimed
-  numbers, no commands that were not run, and no agent narration.
+- **Text.** The description lists the changed paths and a short motivation, with no agent narration.
+  The agent itself claims no numbers; any measured numbers added later state who measured them, on
+  what machine and with which command.
 
 ## Pull request text
 
