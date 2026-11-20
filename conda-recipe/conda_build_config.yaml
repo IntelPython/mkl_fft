@@ -1,16 +1,33 @@
+# Python versions for ci/matrix.py, one per line, without selectors
+python:
+    - "3.11.* *_cpython"
+    - "3.12.* *_cpython"
+    - "3.13.* *_cp313"
+    - "3.14.* *_cp314"
+    - "3.14.* *_cp314t"
+    - "3.15.* *_cp315"
+    # No 3.15t: conda-forge has no SciPy for it yet, which the recipe test needs
+numpy:
+    - '2'
 c_compiler:                   # [linux]
     - gcc                     # [linux]
-cxx_compiler:                 # [linux]
-    - gxx                     # [linux]
-cxx_compiler_version:         # [linux]
-    - '14'                    # [linux]
+c_compiler_version:           # [linux]
+    - '15'                    # [linux]
 c_stdlib:                     # [linux]
     - sysroot                 # [linux]
 c_stdlib_version:             # [linux]
     - '2.28'                  # [linux]
 c_stdlib:                     # [win]
     - vs                      # [win]
-cxx_compiler:                 # [win]
-    - vs2022                  # [win]
 c_compiler:                   # [win]
     - vs2022                  # [win]
+c_compiler:                   # [osx]
+    - clang                   # [osx]
+c_compiler_version:           # [osx]
+    - '21'                    # [osx]
+c_stdlib:                     # [osx]
+    - macosx_deployment_target  # [osx]
+c_stdlib_version:             # [osx]
+    - '11.0'                  # [osx]
+MACOSX_DEPLOYMENT_TARGET:     # [osx]
+    - '11.0'                  # [osx]
