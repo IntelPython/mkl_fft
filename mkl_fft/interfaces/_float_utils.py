@@ -25,6 +25,13 @@
 
 import numpy as np
 
+# dtypes the scipy.fft interface rejects; np.dtype keys make `in` a hash lookup
+_UNSUPPORTED_DTYPES = frozenset(
+    np.dtype(getattr(np, name))
+    for name in ("half", "float128", "complex256")
+    if hasattr(np, name)
+)
+
 
 def _upcast_float16_array(x):
     """
@@ -78,11 +85,6 @@ def _supported_array_or_not_implemented(x):
     or complex128 type or raise NotImplementedError
     """
     _x = np.asarray(x)
-    black_list = [np.half]
-    if hasattr(np, "float128"):
-        black_list.append(np.float128)
-    if hasattr(np, "complex256"):
-        black_list.append(np.complex256)
-    if _x.dtype in black_list:
+    if _x.dtype in _UNSUPPORTED_DTYPES:
         raise NotImplementedError
     return _x
